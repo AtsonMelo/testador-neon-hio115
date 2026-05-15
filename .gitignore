@@ -1,0 +1,8 @@
+# Arquivos temporários
+*.bak
+*.tmp
+*.log
+
+# Windows
+Thumbs.db
+Desktop.ini
