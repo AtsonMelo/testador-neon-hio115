@@ -55,3 +55,13 @@ No `PROGRAM_01`:
 | `TESTE_OK_GERAL` | Indica que há canal OK e não há falha nem erro ativo. |
 | `TESTE_FALHA_GERAL` | Indica falha de retorno em pelo menos um canal ativo. |
 | `TESTE_ERRO_GERAL` | Indica retorno cruzado em pelo menos um canal ativo. |
+
+## Variáveis de segurança e app
+
+| Variável | Endereço | Função |
+|---|---:|---|
+| `HABILITA_TESTE` | `%MW70` | Trava principal. Se estiver 0, todas as saídas físicas ficam desligadas. |
+| `RESET_SAIDAS` | `%MW71` | Quando recebe 1, zera modos e comandos manuais. |
+| `WATCHDOG_APP` | `%MW72` | Sinal vivo que o app deverá alternar periodicamente. |
+| `FALHA_WATCHDOG` | `%MW73` | Liga quando o watchdog ativo não recebe atualização dentro do tempo. |
+| `WATCHDOG_ATIVO` | `%MW74` | Habilita a supervisão de watchdog. Pode ficar 0 durante teste manual no HIstudio. |

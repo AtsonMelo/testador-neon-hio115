@@ -2,6 +2,8 @@
 T_STEP; Local; TON; ; ; 0; publ; Temporizador do sequenciador;
 STEP_TESTE; Local; INT; ; ; 0; publ; Passo atual do teste;
 RESET_TIMER; Local; BOOL; ; ; FALSE; publ; Reset do temporizador;
+T_WATCHDOG; Local; TON; ; ; 0; publ; Temporizador do watchdog do app;
+WATCHDOG_ULTIMO; Local; INT; ; ; 0; publ; Ultimo valor recebido do watchdog;
 COMANDO_D000; Local; INT; ; ; 0; publ; Comando interno D000;
 COMANDO_D001; Local; INT; ; ; 0; publ; Comando interno D001;
 COMANDO_D002; Local; INT; ; ; 0; publ; Comando interno D002;
@@ -31,3 +33,8 @@ ERRO_D003; Externa; INT; ; ; 0; publ; Retorno cruzado D003;
 TESTE_OK_GERAL; Externa; INT; ; ; 0; publ; Resultado geral OK;
 TESTE_FALHA_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com falha;
 TESTE_ERRO_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com erro de retorno cruzado;
+HABILITA_TESTE; Externa; INT; ; ; 0; publ; Habilita acionamento fisico do testador;
+RESET_SAIDAS; Externa; INT; ; ; 0; publ; Solicita reset de modos e comandos;
+WATCHDOG_APP; Externa; INT; ; ; 0; publ; Sinal vivo alternado pelo app;
+FALHA_WATCHDOG; Externa; INT; ; ; 0; publ; Falha de watchdog do app;
+WATCHDOG_ATIVO; Externa; INT; ; ; 0; publ; Habilita supervisao de watchdog;
