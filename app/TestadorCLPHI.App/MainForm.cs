@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using System.IO.Ports;
 using TestadorCLPHI.App.Plc;
 
 namespace TestadorCLPHI.App;
@@ -17,13 +18,18 @@ public sealed class MainForm : Form
     private readonly RadioButton _temaEscuroRadioButton;
 
     private readonly GroupBox _conexaoGroupBox;
-    private readonly Label _portaLabel;
-    private readonly Label _baudRateLabel;
-    private readonly Label _paridadeLabel;
-    private readonly Label _dataBitsLabel;
-    private readonly Label _stopBitsLabel;
-    private readonly Label _slaveIdLabel;
-    private readonly Label _timeoutLabel;
+    private readonly Label _portaTituloLabel;
+    private readonly ComboBox _portaComboBox;
+    private readonly Button _atualizarPortasButton;
+
+    private readonly Label _baudRateTituloLabel;
+    private readonly TextBox _baudRateTextBox;
+
+    private readonly Label _slaveIdTituloLabel;
+    private readonly TextBox _slaveIdTextBox;
+
+    private readonly Label _conexaoResumoLabel;
+    private readonly Button _aplicarConexaoButton;
 
     public MainForm()
     {
@@ -97,17 +103,67 @@ public sealed class MainForm : Form
             Text = "Conexão com CLP",
             Left = 320,
             Top = 190,
-            Width = 300,
-            Height = 210
+            Width = 380,
+            Height = 250
         };
 
-        _portaLabel = CriarLabelConexao(15, 30);
-        _baudRateLabel = CriarLabelConexao(15, 55);
-        _paridadeLabel = CriarLabelConexao(15, 80);
-        _dataBitsLabel = CriarLabelConexao(15, 105);
-        _stopBitsLabel = CriarLabelConexao(15, 130);
-        _slaveIdLabel = CriarLabelConexao(15, 155);
-        _timeoutLabel = CriarLabelConexao(15, 180);
+        _portaTituloLabel = CriarLabelConexao("Porta COM:", 15, 30);
+
+        _portaComboBox = new ComboBox
+        {
+            Left = 110,
+            Top = 27,
+            Width = 120,
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+
+        _atualizarPortasButton = new Button
+        {
+            Text = "Atualizar portas",
+            Left = 240,
+            Top = 25,
+            Width = 120,
+            Height = 28
+        };
+
+        _baudRateTituloLabel = CriarLabelConexao("Baud rate:", 15, 70);
+
+        _baudRateTextBox = new TextBox
+        {
+            Left = 110,
+            Top = 67,
+            Width = 120,
+            Text = _connectionSettings.BaudRate.ToString()
+        };
+
+        _slaveIdTituloLabel = CriarLabelConexao("Slave ID:", 15, 110);
+
+        _slaveIdTextBox = new TextBox
+        {
+            Left = 110,
+            Top = 107,
+            Width = 120,
+            Text = _connectionSettings.SlaveId.ToString()
+        };
+
+        _aplicarConexaoButton = new Button
+        {
+            Text = "Aplicar configuração",
+            Left = 15,
+            Top = 145,
+            Width = 160,
+            Height = 32
+        };
+
+        _conexaoResumoLabel = new Label
+        {
+            AutoSize = false,
+            Left = 15,
+            Top = 190,
+            Width = 340,
+            Height = 45,
+            Font = new Font("Segoe UI", 9)
+        };
 
         _pararTudoButton.Click += PararTudoButton_Click;
 
@@ -115,17 +171,22 @@ public sealed class MainForm : Form
         _temaClaroRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
         _temaEscuroRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
 
+        _atualizarPortasButton.Click += AtualizarPortasButton_Click;
+        _aplicarConexaoButton.Click += AplicarConexaoButton_Click;
+
         _temaGroupBox.Controls.Add(_usarTemaWindowsRadioButton);
         _temaGroupBox.Controls.Add(_temaClaroRadioButton);
         _temaGroupBox.Controls.Add(_temaEscuroRadioButton);
 
-        _conexaoGroupBox.Controls.Add(_portaLabel);
-        _conexaoGroupBox.Controls.Add(_baudRateLabel);
-        _conexaoGroupBox.Controls.Add(_paridadeLabel);
-        _conexaoGroupBox.Controls.Add(_dataBitsLabel);
-        _conexaoGroupBox.Controls.Add(_stopBitsLabel);
-        _conexaoGroupBox.Controls.Add(_slaveIdLabel);
-        _conexaoGroupBox.Controls.Add(_timeoutLabel);
+        _conexaoGroupBox.Controls.Add(_portaTituloLabel);
+        _conexaoGroupBox.Controls.Add(_portaComboBox);
+        _conexaoGroupBox.Controls.Add(_atualizarPortasButton);
+        _conexaoGroupBox.Controls.Add(_baudRateTituloLabel);
+        _conexaoGroupBox.Controls.Add(_baudRateTextBox);
+        _conexaoGroupBox.Controls.Add(_slaveIdTituloLabel);
+        _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
+        _conexaoGroupBox.Controls.Add(_aplicarConexaoButton);
+        _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
 
         Controls.Add(_tituloLabel);
         Controls.Add(_statusLabel);
@@ -133,16 +194,18 @@ public sealed class MainForm : Form
         Controls.Add(_temaGroupBox);
         Controls.Add(_conexaoGroupBox);
 
-        AtualizarLabelsConexao();
+        AtualizarListaDePortas();
+        AtualizarResumoConexao();
 
         _usarTemaWindowsRadioButton.Checked = true;
         AplicarTemaSelecionado();
     }
 
-    private static Label CriarLabelConexao(int left, int top)
+    private static Label CriarLabelConexao(string text, int left, int top)
     {
         return new Label
         {
+            Text = text,
             AutoSize = true,
             Left = left,
             Top = top,
@@ -150,15 +213,102 @@ public sealed class MainForm : Form
         };
     }
 
-    private void AtualizarLabelsConexao()
+    private void AtualizarListaDePortas()
     {
-        _portaLabel.Text = $"Porta: {_connectionSettings.PortName}";
-        _baudRateLabel.Text = $"Baud rate: {_connectionSettings.BaudRate}";
-        _paridadeLabel.Text = $"Paridade: {_connectionSettings.Parity}";
-        _dataBitsLabel.Text = $"Bits de dados: {_connectionSettings.DataBits}";
-        _stopBitsLabel.Text = $"Stop bits: {_connectionSettings.StopBits}";
-        _slaveIdLabel.Text = $"Slave ID: {_connectionSettings.SlaveId}";
-        _timeoutLabel.Text = $"Timeout: {_connectionSettings.TimeoutMilliseconds} ms";
+        string portaSelecionada = _portaComboBox.SelectedItem?.ToString()
+            ?? _connectionSettings.PortName;
+
+        string[] portas = SerialPort.GetPortNames()
+            .OrderBy(porta => porta)
+            .ToArray();
+
+        _portaComboBox.Items.Clear();
+
+        foreach (string porta in portas)
+        {
+            _portaComboBox.Items.Add(porta);
+        }
+
+        if (_portaComboBox.Items.Count == 0)
+        {
+            _portaComboBox.Items.Add(_connectionSettings.PortName);
+        }
+
+        int indice = _portaComboBox.Items.IndexOf(portaSelecionada);
+
+        if (indice < 0)
+        {
+            indice = 0;
+        }
+
+        _portaComboBox.SelectedIndex = indice;
+    }
+
+    private void AtualizarResumoConexao()
+    {
+        _conexaoResumoLabel.Text =
+            $"Atual: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}" +
+            $"{Environment.NewLine}Paridade: {_connectionSettings.Parity}, Stop bits: {_connectionSettings.StopBits}, Timeout: {_connectionSettings.TimeoutMilliseconds} ms";
+    }
+
+    private void AtualizarPortasButton_Click(object? sender, EventArgs e)
+    {
+        AtualizarListaDePortas();
+    }
+
+    private void AplicarConexaoButton_Click(object? sender, EventArgs e)
+    {
+        if (_portaComboBox.SelectedItem is null)
+        {
+            MessageBox.Show(
+                "Selecione uma porta COM.",
+                "Configuração inválida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (!int.TryParse(_baudRateTextBox.Text, out int baudRate) || baudRate <= 0)
+        {
+            MessageBox.Show(
+                "Informe um baud rate válido. Exemplo: 9600.",
+                "Configuração inválida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (!byte.TryParse(_slaveIdTextBox.Text, out byte slaveId) || slaveId == 0)
+        {
+            MessageBox.Show(
+                "Informe um Slave ID válido entre 1 e 247.",
+                "Configuração inválida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (slaveId > 247)
+        {
+            MessageBox.Show(
+                "No Modbus, o Slave ID normalmente deve ficar entre 1 e 247.",
+                "Configuração inválida",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        _connectionSettings.PortName = _portaComboBox.SelectedItem.ToString()!;
+        _connectionSettings.BaudRate = baudRate;
+        _connectionSettings.SlaveId = slaveId;
+
+        AtualizarResumoConexao();
+
+        MessageBox.Show(
+            "Configuração aplicada apenas no app. Ainda não houve comunicação com o CLP.",
+            "Configuração aplicada",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
     }
 
     private void PararTudoButton_Click(object? sender, EventArgs e)
@@ -201,6 +351,7 @@ public sealed class MainForm : Form
         Color corTexto;
         Color corBotao;
         Color corTextoBotao;
+        Color corCampo;
 
         if (temaEscuro)
         {
@@ -208,6 +359,7 @@ public sealed class MainForm : Form
             corTexto = Color.WhiteSmoke;
             corBotao = Color.FromArgb(55, 55, 55);
             corTextoBotao = Color.White;
+            corCampo = Color.FromArgb(45, 45, 45);
         }
         else
         {
@@ -215,6 +367,7 @@ public sealed class MainForm : Form
             corTexto = Color.Black;
             corBotao = SystemColors.Control;
             corTextoBotao = Color.Black;
+            corCampo = Color.White;
         }
 
         BackColor = corFundo;
@@ -237,17 +390,30 @@ public sealed class MainForm : Form
         _conexaoGroupBox.ForeColor = corTexto;
         _conexaoGroupBox.BackColor = corFundo;
 
-        _portaLabel.ForeColor = corTexto;
-        _baudRateLabel.ForeColor = corTexto;
-        _paridadeLabel.ForeColor = corTexto;
-        _dataBitsLabel.ForeColor = corTexto;
-        _stopBitsLabel.ForeColor = corTexto;
-        _slaveIdLabel.ForeColor = corTexto;
-        _timeoutLabel.ForeColor = corTexto;
+        _portaTituloLabel.ForeColor = corTexto;
+        _baudRateTituloLabel.ForeColor = corTexto;
+        _slaveIdTituloLabel.ForeColor = corTexto;
+        _conexaoResumoLabel.ForeColor = corTexto;
 
-        _pararTudoButton.BackColor = corBotao;
-        _pararTudoButton.ForeColor = corTextoBotao;
-        _pararTudoButton.FlatStyle = FlatStyle.Flat;
+        _portaComboBox.BackColor = corCampo;
+        _portaComboBox.ForeColor = corTexto;
+
+        _baudRateTextBox.BackColor = corCampo;
+        _baudRateTextBox.ForeColor = corTexto;
+
+        _slaveIdTextBox.BackColor = corCampo;
+        _slaveIdTextBox.ForeColor = corTexto;
+
+        AplicarTemaBotao(_pararTudoButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_atualizarPortasButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_aplicarConexaoButton, corBotao, corTextoBotao);
+    }
+
+    private static void AplicarTemaBotao(Button button, Color corFundo, Color corTexto)
+    {
+        button.BackColor = corFundo;
+        button.ForeColor = corTexto;
+        button.FlatStyle = FlatStyle.Flat;
     }
 
     private static bool WindowsEstaEmTemaEscuro()
