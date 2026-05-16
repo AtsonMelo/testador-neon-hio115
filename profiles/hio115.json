@@ -1,0 +1,13 @@
+{
+  "modelo": "HIO115",
+  "descricao": "Modulo HIO115 no slot 1 - 4 DO, 8 DI, 3 AI",
+  "slot": 1,
+  "total_do": 4,
+  "total_di": 8,
+  "total_ai": 3,
+  "tipo_saida": "PNP",
+  "do_sysvars": [1128, 1129, 1130, 1131],
+  "di_sysvars": [1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127],
+  "ai_sysvars": [1132, 1133, 1134],
+  "tempo_passo_segundos": 2
+}
