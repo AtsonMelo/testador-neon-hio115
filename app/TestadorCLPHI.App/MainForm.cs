@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System.IO.Ports;
 using TestadorCLPHI.App.Plc;
+using TestadorCLPHI.App.Ui;
 
 namespace TestadorCLPHI.App;
 
@@ -371,6 +372,7 @@ public sealed class MainForm : Form
         }
 
         BackColor = corFundo;
+        WindowsTitleBarTheme.Apply(this, temaEscuro);
 
         _tituloLabel.ForeColor = corTexto;
         _statusLabel.ForeColor = corTexto;
