@@ -10,3 +10,6 @@ Desktop.ini
 backup-local/
 histudio-export/
 TESTADOR_NEON_HIO115_1_1/TESTADOR_NEON_HIO115_1_1_1/
+# Backups e temporarios do HIstudio
+*.dpk_
+*_backup_*.dpk
