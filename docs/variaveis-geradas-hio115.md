@@ -44,3 +44,14 @@ No `PROGRAM_01`:
 | DI05 | DI05 | 1125 |
 | DI06 | DI06 | 1126 |
 | DI07 | DI07 | 1127 |
+
+## Diagnósticos gerados
+
+| Variável | Função |
+|---|---|
+| `OK_Dxxx` | Indica que a saída acionada recebeu retorno correto e nenhum retorno cruzado. |
+| `FALHA_Dxxx` | Indica que a saída foi acionada, mas o retorno esperado não apareceu. |
+| `ERRO_Dxxx` | Indica que apareceu retorno em entrada diferente da esperada. |
+| `TESTE_OK_GERAL` | Indica que há canal OK e não há falha nem erro ativo. |
+| `TESTE_FALHA_GERAL` | Indica falha de retorno em pelo menos um canal ativo. |
+| `TESTE_ERRO_GERAL` | Indica retorno cruzado em pelo menos um canal ativo. |
