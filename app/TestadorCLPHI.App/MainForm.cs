@@ -1,9 +1,12 @@
 using Microsoft.Win32;
+using TestadorCLPHI.App.Plc;
 
 namespace TestadorCLPHI.App;
 
 public sealed class MainForm : Form
 {
+    private readonly PlcConnectionSettings _connectionSettings = new();
+
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
     private readonly Button _pararTudoButton;
@@ -12,6 +15,15 @@ public sealed class MainForm : Form
     private readonly RadioButton _usarTemaWindowsRadioButton;
     private readonly RadioButton _temaClaroRadioButton;
     private readonly RadioButton _temaEscuroRadioButton;
+
+    private readonly GroupBox _conexaoGroupBox;
+    private readonly Label _portaLabel;
+    private readonly Label _baudRateLabel;
+    private readonly Label _paridadeLabel;
+    private readonly Label _dataBitsLabel;
+    private readonly Label _stopBitsLabel;
+    private readonly Label _slaveIdLabel;
+    private readonly Label _timeoutLabel;
 
     public MainForm()
     {
@@ -80,6 +92,23 @@ public sealed class MainForm : Form
             Top = 85
         };
 
+        _conexaoGroupBox = new GroupBox
+        {
+            Text = "Conexão com CLP",
+            Left = 320,
+            Top = 190,
+            Width = 300,
+            Height = 210
+        };
+
+        _portaLabel = CriarLabelConexao(15, 30);
+        _baudRateLabel = CriarLabelConexao(15, 55);
+        _paridadeLabel = CriarLabelConexao(15, 80);
+        _dataBitsLabel = CriarLabelConexao(15, 105);
+        _stopBitsLabel = CriarLabelConexao(15, 130);
+        _slaveIdLabel = CriarLabelConexao(15, 155);
+        _timeoutLabel = CriarLabelConexao(15, 180);
+
         _pararTudoButton.Click += PararTudoButton_Click;
 
         _usarTemaWindowsRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
@@ -90,13 +119,46 @@ public sealed class MainForm : Form
         _temaGroupBox.Controls.Add(_temaClaroRadioButton);
         _temaGroupBox.Controls.Add(_temaEscuroRadioButton);
 
+        _conexaoGroupBox.Controls.Add(_portaLabel);
+        _conexaoGroupBox.Controls.Add(_baudRateLabel);
+        _conexaoGroupBox.Controls.Add(_paridadeLabel);
+        _conexaoGroupBox.Controls.Add(_dataBitsLabel);
+        _conexaoGroupBox.Controls.Add(_stopBitsLabel);
+        _conexaoGroupBox.Controls.Add(_slaveIdLabel);
+        _conexaoGroupBox.Controls.Add(_timeoutLabel);
+
         Controls.Add(_tituloLabel);
         Controls.Add(_statusLabel);
         Controls.Add(_pararTudoButton);
         Controls.Add(_temaGroupBox);
+        Controls.Add(_conexaoGroupBox);
+
+        AtualizarLabelsConexao();
 
         _usarTemaWindowsRadioButton.Checked = true;
         AplicarTemaSelecionado();
+    }
+
+    private static Label CriarLabelConexao(int left, int top)
+    {
+        return new Label
+        {
+            AutoSize = true,
+            Left = left,
+            Top = top,
+            Font = new Font("Segoe UI", 10)
+        };
+    }
+
+    private void AtualizarLabelsConexao()
+    {
+        _portaLabel.Text = $"Porta: {_connectionSettings.PortName}";
+        _baudRateLabel.Text = $"Baud rate: {_connectionSettings.BaudRate}";
+        _paridadeLabel.Text = $"Paridade: {_connectionSettings.Parity}";
+        _dataBitsLabel.Text = $"Bits de dados: {_connectionSettings.DataBits}";
+        _stopBitsLabel.Text = $"Stop bits: {_connectionSettings.StopBits}";
+        _slaveIdLabel.Text = $"Slave ID: {_connectionSettings.SlaveId}";
+        _timeoutLabel.Text = $"Timeout: {_connectionSettings.TimeoutMilliseconds} ms";
     }
 
     private void PararTudoButton_Click(object? sender, EventArgs e)
@@ -171,6 +233,17 @@ public sealed class MainForm : Form
 
         _temaEscuroRadioButton.ForeColor = corTexto;
         _temaEscuroRadioButton.BackColor = corFundo;
+
+        _conexaoGroupBox.ForeColor = corTexto;
+        _conexaoGroupBox.BackColor = corFundo;
+
+        _portaLabel.ForeColor = corTexto;
+        _baudRateLabel.ForeColor = corTexto;
+        _paridadeLabel.ForeColor = corTexto;
+        _dataBitsLabel.ForeColor = corTexto;
+        _stopBitsLabel.ForeColor = corTexto;
+        _slaveIdLabel.ForeColor = corTexto;
+        _timeoutLabel.ForeColor = corTexto;
 
         _pararTudoButton.BackColor = corBotao;
         _pararTudoButton.ForeColor = corTextoBotao;
