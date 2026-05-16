@@ -82,8 +82,9 @@ def generate_auto_manual_st(profile):
     di_sysvars = profile["di_sysvars"]
 
     lines = [
-        "(* Programa HIO115 - modo automatico e modo manual *)",
+        "(* Programa HIO115 - modo automatico, modo manual e diagnostico *)",
         "(* Gerado automaticamente por scripts/gerar-programa-clp.py *)",
+        "(* Nao editar diretamente no HIstudio sem atualizar o projeto Git *)",
         "",
         "(* Leitura dos retornos digitais *)",
     ]
@@ -154,7 +155,7 @@ def generate_auto_manual_st(profile):
 
     lines += [
         "",
-        "(* Zera diagnosticos *)",
+        "(* Zera diagnosticos por ciclo *)",
     ]
 
     for index in range(total_do):
@@ -165,26 +166,62 @@ def generate_auto_manual_st(profile):
     for index in range(total_do):
         lines.append(f"FALHA_{d_name(index)} := 0;")
 
+    lines.append("")
+
+    for index in range(total_do):
+        lines.append(f"ERRO_{d_name(index)} := 0;")
+
     lines += [
         "",
-        "(* Diagnostico simples de retorno *)",
+        "TESTE_OK_GERAL := 0;",
+        "TESTE_FALHA_GERAL := 0;",
+        "TESTE_ERRO_GERAL := 0;",
+        "",
+        "(* Diagnostico de retorno correto, falha e retorno cruzado *)",
     ]
 
     for index in range(total_do):
+        expected_di = di_name(index)
+        other_dis = [di_name(other) for other in range(total_do) if other != index]
+        other_expression = " OR ".join([f"RETORNO_{name} = 1" for name in other_dis])
+
         lines += [
             f"IF COMANDO_{d_name(index)} = 1 THEN",
-            f"    IF RETORNO_{di_name(index)} = 1 THEN",
+            f"    IF (RETORNO_{expected_di} = 1) AND NOT ({other_expression}) THEN",
             f"        OK_{d_name(index)} := 1;",
-            "    ELSE",
+            "    END_IF;",
+            "",
+            f"    IF RETORNO_{expected_di} = 0 THEN",
             f"        FALHA_{d_name(index)} := 1;",
+            "    END_IF;",
+            "",
+            f"    IF {other_expression} THEN",
+            f"        ERRO_{d_name(index)} := 1;",
             "    END_IF;",
             "END_IF;",
             "",
         ]
 
+    falha_expression = " OR ".join([f"FALHA_{d_name(index)} = 1" for index in range(total_do)])
+    erro_expression = " OR ".join([f"ERRO_{d_name(index)} = 1" for index in range(total_do)])
+    ok_expression = " OR ".join([f"OK_{d_name(index)} = 1" for index in range(total_do)])
+
+    lines += [
+        "(* Resultado geral do teste *)",
+        f"IF {falha_expression} THEN",
+        "    TESTE_FALHA_GERAL := 1;",
+        "END_IF;",
+        "",
+        f"IF {erro_expression} THEN",
+        "    TESTE_ERRO_GERAL := 1;",
+        "END_IF;",
+        "",
+        f"IF ({ok_expression}) AND (TESTE_FALHA_GERAL = 0) AND (TESTE_ERRO_GERAL = 0) THEN",
+        "    TESTE_OK_GERAL := 1;",
+        "END_IF;",
+    ]
+
     return "\n".join(lines).rstrip() + "\n"
-
-
 def generate_globals_csv(profile):
     total_do = int(profile["total_do"])
 
@@ -223,9 +260,18 @@ def generate_globals_csv(profile):
             f"FALHA_{d_name(index)}; Global; INT; %MW{40 + index}; ; 0; publ; Falha {d_name(index)};"
         )
 
+    for index in range(total_do):
+        rows.append(
+            f"ERRO_{d_name(index)}; Global; INT; %MW{50 + index}; ; 0; publ; Retorno cruzado {d_name(index)};"
+        )
+
+    rows += [
+        "TESTE_OK_GERAL; Global; INT; %MW60; ; 0; publ; Resultado geral OK;",
+        "TESTE_FALHA_GERAL; Global; INT; %MW61; ; 0; publ; Resultado geral com falha;",
+        "TESTE_ERRO_GERAL; Global; INT; %MW62; ; 0; publ; Resultado geral com erro de retorno cruzado;",
+    ]
+
     return "\n".join(rows) + "\n"
-
-
 def generate_program_vars_csv(profile):
     total_do = int(profile["total_do"])
 
@@ -266,9 +312,18 @@ def generate_program_vars_csv(profile):
             f"FALHA_{d_name(index)}; Externa; INT; ; ; 0; publ; Falha {d_name(index)};"
         )
 
+    for index in range(total_do):
+        rows.append(
+            f"ERRO_{d_name(index)}; Externa; INT; ; ; 0; publ; Retorno cruzado {d_name(index)};"
+        )
+
+    rows += [
+        "TESTE_OK_GERAL; Externa; INT; ; ; 0; publ; Resultado geral OK;",
+        "TESTE_FALHA_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com falha;",
+        "TESTE_ERRO_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com erro de retorno cruzado;",
+    ]
+
     return "\n".join(rows) + "\n"
-
-
 def generate_vars_doc(profile):
     lines = [
         "# Variáveis geradas - HIO115",
@@ -316,9 +371,21 @@ def generate_vars_doc(profile):
     for index, sysvar in enumerate(profile["di_sysvars"]):
         lines.append(f"| DI{index:02d} | {di_name(index)} | {sysvar} |")
 
+    lines += [
+        "",
+        "## Diagnósticos gerados",
+        "",
+        "| Variável | Função |",
+        "|---|---|",
+        "| `OK_Dxxx` | Indica que a saída acionada recebeu retorno correto e nenhum retorno cruzado. |",
+        "| `FALHA_Dxxx` | Indica que a saída foi acionada, mas o retorno esperado não apareceu. |",
+        "| `ERRO_Dxxx` | Indica que apareceu retorno em entrada diferente da esperada. |",
+        "| `TESTE_OK_GERAL` | Indica que há canal OK e não há falha nem erro ativo. |",
+        "| `TESTE_FALHA_GERAL` | Indica falha de retorno em pelo menos um canal ativo. |",
+        "| `TESTE_ERRO_GERAL` | Indica retorno cruzado em pelo menos um canal ativo. |",
+    ]
+
     return "\n".join(lines).rstrip() + "\n"
-
-
 def main():
     profile = load_profile()
 

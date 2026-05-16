@@ -1,5 +1,6 @@
-(* Programa HIO115 - modo automatico e modo manual *)
+(* Programa HIO115 - modo automatico, modo manual e diagnostico *)
 (* Gerado automaticamente por scripts/gerar-programa-clp.py *)
+(* Nao editar diretamente no HIstudio sem atualizar o projeto Git *)
 
 (* Leitura dos retornos digitais *)
 RETORNO_DI00 := HILS.GET_SYSVAR(1120);  (* DI00 *)
@@ -62,7 +63,7 @@ HILS.SET_SYSVAR(1129, COMANDO_D001);  (* D001 / DO01 *)
 HILS.SET_SYSVAR(1130, COMANDO_D002);  (* D002 / DO02 *)
 HILS.SET_SYSVAR(1131, COMANDO_D003);  (* D003 / DO03 *)
 
-(* Zera diagnosticos *)
+(* Zera diagnosticos por ciclo *)
 OK_D000 := 0;
 OK_D001 := 0;
 OK_D002 := 0;
@@ -73,35 +74,81 @@ FALHA_D001 := 0;
 FALHA_D002 := 0;
 FALHA_D003 := 0;
 
-(* Diagnostico simples de retorno *)
+ERRO_D000 := 0;
+ERRO_D001 := 0;
+ERRO_D002 := 0;
+ERRO_D003 := 0;
+
+TESTE_OK_GERAL := 0;
+TESTE_FALHA_GERAL := 0;
+TESTE_ERRO_GERAL := 0;
+
+(* Diagnostico de retorno correto, falha e retorno cruzado *)
 IF COMANDO_D000 = 1 THEN
-    IF RETORNO_DI00 = 1 THEN
+    IF (RETORNO_DI00 = 1) AND NOT (RETORNO_DI01 = 1 OR RETORNO_DI02 = 1 OR RETORNO_DI03 = 1) THEN
         OK_D000 := 1;
-    ELSE
+    END_IF;
+
+    IF RETORNO_DI00 = 0 THEN
         FALHA_D000 := 1;
+    END_IF;
+
+    IF RETORNO_DI01 = 1 OR RETORNO_DI02 = 1 OR RETORNO_DI03 = 1 THEN
+        ERRO_D000 := 1;
     END_IF;
 END_IF;
 
 IF COMANDO_D001 = 1 THEN
-    IF RETORNO_DI01 = 1 THEN
+    IF (RETORNO_DI01 = 1) AND NOT (RETORNO_DI00 = 1 OR RETORNO_DI02 = 1 OR RETORNO_DI03 = 1) THEN
         OK_D001 := 1;
-    ELSE
+    END_IF;
+
+    IF RETORNO_DI01 = 0 THEN
         FALHA_D001 := 1;
+    END_IF;
+
+    IF RETORNO_DI00 = 1 OR RETORNO_DI02 = 1 OR RETORNO_DI03 = 1 THEN
+        ERRO_D001 := 1;
     END_IF;
 END_IF;
 
 IF COMANDO_D002 = 1 THEN
-    IF RETORNO_DI02 = 1 THEN
+    IF (RETORNO_DI02 = 1) AND NOT (RETORNO_DI00 = 1 OR RETORNO_DI01 = 1 OR RETORNO_DI03 = 1) THEN
         OK_D002 := 1;
-    ELSE
+    END_IF;
+
+    IF RETORNO_DI02 = 0 THEN
         FALHA_D002 := 1;
+    END_IF;
+
+    IF RETORNO_DI00 = 1 OR RETORNO_DI01 = 1 OR RETORNO_DI03 = 1 THEN
+        ERRO_D002 := 1;
     END_IF;
 END_IF;
 
 IF COMANDO_D003 = 1 THEN
-    IF RETORNO_DI03 = 1 THEN
+    IF (RETORNO_DI03 = 1) AND NOT (RETORNO_DI00 = 1 OR RETORNO_DI01 = 1 OR RETORNO_DI02 = 1) THEN
         OK_D003 := 1;
-    ELSE
+    END_IF;
+
+    IF RETORNO_DI03 = 0 THEN
         FALHA_D003 := 1;
     END_IF;
+
+    IF RETORNO_DI00 = 1 OR RETORNO_DI01 = 1 OR RETORNO_DI02 = 1 THEN
+        ERRO_D003 := 1;
+    END_IF;
+END_IF;
+
+(* Resultado geral do teste *)
+IF FALHA_D000 = 1 OR FALHA_D001 = 1 OR FALHA_D002 = 1 OR FALHA_D003 = 1 THEN
+    TESTE_FALHA_GERAL := 1;
+END_IF;
+
+IF ERRO_D000 = 1 OR ERRO_D001 = 1 OR ERRO_D002 = 1 OR ERRO_D003 = 1 THEN
+    TESTE_ERRO_GERAL := 1;
+END_IF;
+
+IF (OK_D000 = 1 OR OK_D001 = 1 OR OK_D002 = 1 OR OK_D003 = 1) AND (TESTE_FALHA_GERAL = 0) AND (TESTE_ERRO_GERAL = 0) THEN
+    TESTE_OK_GERAL := 1;
 END_IF;
