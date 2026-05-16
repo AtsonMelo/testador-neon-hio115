@@ -63,3 +63,26 @@ Seleciona o modelo do CLP/módulo e ajusta automaticamente a quantidade de entra
 6. Estudar RION
 7. Criar simulador 4–20 mA
 8. Futuramente criar aplicativo Windows
+
+## Complemento - diagnóstico físico por relés
+
+O teste do HIO115 valida o caminho físico completo:
+
+DOxx -> relé de interface -> contato do relé -> DIxx -> diagnóstico no programa.
+
+Isso evita depender apenas da indicação visual do HIstudio.
+
+Resultado esperado por canal:
+
+- OK: saída acionada e entrada correta recebeu retorno.
+- FALHA: saída acionada, mas entrada esperada não recebeu retorno.
+- ERRO: retorno apareceu em entrada errada.
+
+Mapa base validado:
+
+| Saída | Nome lógico | Relé | Entrada de retorno |
+|---|---|---|---|
+| DO00 | D000 | Relé 00 | DI00 |
+| DO01 | D001 | Relé 01 | DI01 |
+| DO02 | D002 | Relé 02 | DI02 |
+| DO03 | D003 | Relé 03 | DI03 |

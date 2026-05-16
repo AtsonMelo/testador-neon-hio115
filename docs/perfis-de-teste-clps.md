@@ -55,3 +55,24 @@ Criar no programa ST:
 - FALHA_DO00 a FALHA_DO03
 
 Primeiro alvo: HIO115 com modo automático e modo manual.
+
+## Mapeamento físico validado - HIO115
+
+| Canal | Saída lógica | SysVar saída | Entrada retorno | SysVar entrada | Status |
+|---|---|---:|---|---:|---|
+| 0 | D000 / DO00 | 1128 | DI00 | 1120 | Base validada |
+| 1 | D001 / DO01 | 1129 | DI01 | 1121 | Base validada |
+| 2 | D002 / DO02 | 1130 | DI02 | 1122 | Base validada |
+| 3 | D003 / DO03 | 1131 | DI03 | 1123 | Base validada |
+
+Regra para expansão futura:
+
+Primeiro estabilizar o perfil HIO115 com 4 saídas digitais e 4 retornos digitais.
+
+Depois expandir para:
+
+1. Modo manual.
+2. Módulos de 8 canais.
+3. Módulos de 16 canais.
+4. RION.
+5. Simulador 4-20 mA.
