@@ -82,7 +82,7 @@ def generate_auto_manual_st(profile):
     di_sysvars = profile["di_sysvars"]
 
     lines = [
-        "(* Programa HIO115 - modo automatico, modo manual e diagnostico *)",
+        "(* Programa HIO115 - modo automatico, modo manual, diagnostico e travas de seguranca *)",
         "(* Gerado automaticamente por scripts/gerar-programa-clp.py *)",
         "(* Nao editar diretamente no HIstudio sem atualizar o projeto Git *)",
         "",
@@ -96,6 +96,38 @@ def generate_auto_manual_st(profile):
 
     lines += [
         "",
+        "(* Reset geral de seguranca solicitado pelo operador ou app *)",
+        "IF RESET_SAIDAS = 1 THEN",
+        "    MODO_AUTO := 0;",
+        "    MODO_MANUAL := 0;",
+        "    STEP_TESTE := 0;",
+        "    RESET_TIMER := TRUE;",
+    ]
+
+    for index in range(total_do):
+        lines.append(f"    CMD_MANUAL_{d_name(index)} := 0;")
+
+    lines += [
+        "    RESET_SAIDAS := 0;",
+        "END_IF;",
+        "",
+        "(* Supervisao de watchdog do app *)",
+        "IF WATCHDOG_ATIVO = 1 THEN",
+        "    IF WATCHDOG_APP <> WATCHDOG_ULTIMO THEN",
+        "        WATCHDOG_ULTIMO := WATCHDOG_APP;",
+        "        FALHA_WATCHDOG := 0;",
+        "        T_WATCHDOG(IN := FALSE);",
+        "    ELSE",
+        "        T_WATCHDOG(IN := TRUE, PT := T#5s);",
+        "        IF T_WATCHDOG.Q THEN",
+        "            FALHA_WATCHDOG := 1;",
+        "        END_IF;",
+        "    END_IF;",
+        "ELSE",
+        "    FALHA_WATCHDOG := 0;",
+        "    T_WATCHDOG(IN := FALSE);",
+        "END_IF;",
+        "",
         "(* Zera comandos internos *)",
     ]
 
@@ -104,8 +136,8 @@ def generate_auto_manual_st(profile):
 
     lines += [
         "",
-        "(* Modo automatico *)",
-        "IF MODO_AUTO = 1 THEN",
+        "(* Modo automatico - somente com teste habilitado e sem falha de watchdog *)",
+        "IF (HABILITA_TESTE = 1) AND (FALHA_WATCHDOG = 0) AND (MODO_AUTO = 1) THEN",
         "",
         f"    T_STEP(IN := NOT RESET_TIMER, PT := T#{tempo}s);",
         "",
@@ -135,12 +167,22 @@ def generate_auto_manual_st(profile):
     lines += [
         "END_IF;",
         "",
-        "(* Modo manual *)",
-        "IF MODO_MANUAL = 1 THEN",
+        "(* Modo manual - somente com teste habilitado e sem falha de watchdog *)",
+        "IF (HABILITA_TESTE = 1) AND (FALHA_WATCHDOG = 0) AND (MODO_MANUAL = 1) THEN",
     ]
 
     for index in range(total_do):
         lines.append(f"    COMANDO_{d_name(index)} := CMD_MANUAL_{d_name(index)};")
+
+    lines += [
+        "END_IF;",
+        "",
+        "(* Trava final antes de escrever nas saidas fisicas *)",
+        "IF (HABILITA_TESTE = 0) OR (FALHA_WATCHDOG = 1) THEN",
+    ]
+
+    for index in range(total_do):
+        lines.append(f"    COMANDO_{d_name(index)} := 0;")
 
     lines += [
         "END_IF;",
@@ -236,7 +278,7 @@ def generate_globals_csv(profile):
         )
 
     rows += [
-        "MODO_AUTO; Global; INT; %MW10; ; 1; publ; Modo automatico habilitado;",
+        "MODO_AUTO; Global; INT; %MW10; ; 0; publ; Modo automatico habilitado;",
         "MODO_MANUAL; Global; INT; %MW11; ; 0; publ; Modo manual habilitado;",
     ]
 
@@ -269,6 +311,11 @@ def generate_globals_csv(profile):
         "TESTE_OK_GERAL; Global; INT; %MW60; ; 0; publ; Resultado geral OK;",
         "TESTE_FALHA_GERAL; Global; INT; %MW61; ; 0; publ; Resultado geral com falha;",
         "TESTE_ERRO_GERAL; Global; INT; %MW62; ; 0; publ; Resultado geral com erro de retorno cruzado;",
+        "HABILITA_TESTE; Global; INT; %MW70; ; 0; publ; Habilita acionamento fisico do testador;",
+        "RESET_SAIDAS; Global; INT; %MW71; ; 0; publ; Solicita reset de modos e comandos;",
+        "WATCHDOG_APP; Global; INT; %MW72; ; 0; publ; Sinal vivo alternado pelo app;",
+        "FALHA_WATCHDOG; Global; INT; %MW73; ; 0; publ; Falha de watchdog do app;",
+        "WATCHDOG_ATIVO; Global; INT; %MW74; ; 0; publ; Habilita supervisao de watchdog;",
     ]
 
     return "\n".join(rows) + "\n"
@@ -280,6 +327,8 @@ def generate_program_vars_csv(profile):
         "T_STEP; Local; TON; ; ; 0; publ; Temporizador do sequenciador;",
         "STEP_TESTE; Local; INT; ; ; 0; publ; Passo atual do teste;",
         "RESET_TIMER; Local; BOOL; ; ; FALSE; publ; Reset do temporizador;",
+        "T_WATCHDOG; Local; TON; ; ; 0; publ; Temporizador do watchdog do app;",
+        "WATCHDOG_ULTIMO; Local; INT; ; ; 0; publ; Ultimo valor recebido do watchdog;",
     ]
 
     for index in range(total_do):
@@ -321,6 +370,11 @@ def generate_program_vars_csv(profile):
         "TESTE_OK_GERAL; Externa; INT; ; ; 0; publ; Resultado geral OK;",
         "TESTE_FALHA_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com falha;",
         "TESTE_ERRO_GERAL; Externa; INT; ; ; 0; publ; Resultado geral com erro de retorno cruzado;",
+        "HABILITA_TESTE; Externa; INT; ; ; 0; publ; Habilita acionamento fisico do testador;",
+        "RESET_SAIDAS; Externa; INT; ; ; 0; publ; Solicita reset de modos e comandos;",
+        "WATCHDOG_APP; Externa; INT; ; ; 0; publ; Sinal vivo alternado pelo app;",
+        "FALHA_WATCHDOG; Externa; INT; ; ; 0; publ; Falha de watchdog do app;",
+        "WATCHDOG_ATIVO; Externa; INT; ; ; 0; publ; Habilita supervisao de watchdog;",
     ]
 
     return "\n".join(rows) + "\n"
@@ -383,6 +437,16 @@ def generate_vars_doc(profile):
         "| `TESTE_OK_GERAL` | Indica que há canal OK e não há falha nem erro ativo. |",
         "| `TESTE_FALHA_GERAL` | Indica falha de retorno em pelo menos um canal ativo. |",
         "| `TESTE_ERRO_GERAL` | Indica retorno cruzado em pelo menos um canal ativo. |",
+        "",
+        "## Variáveis de segurança e app",
+        "",
+        "| Variável | Endereço | Função |",
+        "|---|---:|---|",
+        "| `HABILITA_TESTE` | `%MW70` | Trava principal. Se estiver 0, todas as saídas físicas ficam desligadas. |",
+        "| `RESET_SAIDAS` | `%MW71` | Quando recebe 1, zera modos e comandos manuais. |",
+        "| `WATCHDOG_APP` | `%MW72` | Sinal vivo que o app deverá alternar periodicamente. |",
+        "| `FALHA_WATCHDOG` | `%MW73` | Liga quando o watchdog ativo não recebe atualização dentro do tempo. |",
+        "| `WATCHDOG_ATIVO` | `%MW74` | Habilita a supervisão de watchdog. Pode ficar 0 durante teste manual no HIstudio. |",
     ]
 
     return "\n".join(lines).rstrip() + "\n"

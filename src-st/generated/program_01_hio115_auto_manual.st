@@ -1,4 +1,4 @@
-(* Programa HIO115 - modo automatico, modo manual e diagnostico *)
+(* Programa HIO115 - modo automatico, modo manual, diagnostico e travas de seguranca *)
 (* Gerado automaticamente por scripts/gerar-programa-clp.py *)
 (* Nao editar diretamente no HIstudio sem atualizar o projeto Git *)
 
@@ -8,14 +8,44 @@ RETORNO_DI01 := HILS.GET_SYSVAR(1121);  (* DI01 *)
 RETORNO_DI02 := HILS.GET_SYSVAR(1122);  (* DI02 *)
 RETORNO_DI03 := HILS.GET_SYSVAR(1123);  (* DI03 *)
 
+(* Reset geral de seguranca solicitado pelo operador ou app *)
+IF RESET_SAIDAS = 1 THEN
+    MODO_AUTO := 0;
+    MODO_MANUAL := 0;
+    STEP_TESTE := 0;
+    RESET_TIMER := TRUE;
+    CMD_MANUAL_D000 := 0;
+    CMD_MANUAL_D001 := 0;
+    CMD_MANUAL_D002 := 0;
+    CMD_MANUAL_D003 := 0;
+    RESET_SAIDAS := 0;
+END_IF;
+
+(* Supervisao de watchdog do app *)
+IF WATCHDOG_ATIVO = 1 THEN
+    IF WATCHDOG_APP <> WATCHDOG_ULTIMO THEN
+        WATCHDOG_ULTIMO := WATCHDOG_APP;
+        FALHA_WATCHDOG := 0;
+        T_WATCHDOG(IN := FALSE);
+    ELSE
+        T_WATCHDOG(IN := TRUE, PT := T#5s);
+        IF T_WATCHDOG.Q THEN
+            FALHA_WATCHDOG := 1;
+        END_IF;
+    END_IF;
+ELSE
+    FALHA_WATCHDOG := 0;
+    T_WATCHDOG(IN := FALSE);
+END_IF;
+
 (* Zera comandos internos *)
 COMANDO_D000 := 0;
 COMANDO_D001 := 0;
 COMANDO_D002 := 0;
 COMANDO_D003 := 0;
 
-(* Modo automatico *)
-IF MODO_AUTO = 1 THEN
+(* Modo automatico - somente com teste habilitado e sem falha de watchdog *)
+IF (HABILITA_TESTE = 1) AND (FALHA_WATCHDOG = 0) AND (MODO_AUTO = 1) THEN
 
     T_STEP(IN := NOT RESET_TIMER, PT := T#2s);
 
@@ -49,12 +79,20 @@ IF MODO_AUTO = 1 THEN
 
 END_IF;
 
-(* Modo manual *)
-IF MODO_MANUAL = 1 THEN
+(* Modo manual - somente com teste habilitado e sem falha de watchdog *)
+IF (HABILITA_TESTE = 1) AND (FALHA_WATCHDOG = 0) AND (MODO_MANUAL = 1) THEN
     COMANDO_D000 := CMD_MANUAL_D000;
     COMANDO_D001 := CMD_MANUAL_D001;
     COMANDO_D002 := CMD_MANUAL_D002;
     COMANDO_D003 := CMD_MANUAL_D003;
+END_IF;
+
+(* Trava final antes de escrever nas saidas fisicas *)
+IF (HABILITA_TESTE = 0) OR (FALHA_WATCHDOG = 1) THEN
+    COMANDO_D000 := 0;
+    COMANDO_D001 := 0;
+    COMANDO_D002 := 0;
+    COMANDO_D003 := 0;
 END_IF;
 
 (* Escrita nas saidas digitais *)
