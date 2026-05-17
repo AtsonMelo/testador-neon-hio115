@@ -7,16 +7,27 @@ namespace TestadorCLPHI.App;
 
 public sealed class MainForm : Form
 {
+    private enum ThemeSelection
+    {
+        Windows,
+        Light,
+        Dark
+    }
+
     private readonly PlcConnectionSettings _connectionSettings = new();
+    private readonly PlcConnectionState _connectionState = new();
+
+    private ThemeSelection _themeSelection = ThemeSelection.Windows;
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
     private readonly Button _pararTudoButton;
 
-    private readonly GroupBox _temaGroupBox;
-    private readonly RadioButton _usarTemaWindowsRadioButton;
-    private readonly RadioButton _temaClaroRadioButton;
-    private readonly RadioButton _temaEscuroRadioButton;
+    private readonly Button _temaButton;
+    private readonly ContextMenuStrip _temaMenu;
+    private readonly ToolStripMenuItem _usarTemaWindowsMenuItem;
+    private readonly ToolStripMenuItem _temaClaroMenuItem;
+    private readonly ToolStripMenuItem _temaEscuroMenuItem;
 
     private readonly GroupBox _conexaoGroupBox;
     private readonly Label _portaTituloLabel;
@@ -32,11 +43,19 @@ public sealed class MainForm : Form
     private readonly Label _conexaoResumoLabel;
     private readonly Button _aplicarConexaoButton;
 
+    private readonly GroupBox _estadoGroupBox;
+    private readonly Label _estadoStatusLabel;
+    private readonly Label _estadoMensagemLabel;
+    private readonly Label _estadoAtualizacaoLabel;
+    private readonly Button _simularConectarButton;
+    private readonly Button _simularErroButton;
+    private readonly Button _desconectarButton;
+
     public MainForm()
     {
         Text = "Testador CLP HI";
         Width = 900;
-        Height = 600;
+        Height = 620;
         StartPosition = FormStartPosition.CenterScreen;
 
         _tituloLabel = new Label
@@ -44,7 +63,7 @@ public sealed class MainForm : Form
             Text = "Testador CLP HI",
             AutoSize = true,
             Left = 20,
-            Top = 20,
+            Top = 25,
             Font = new Font("Segoe UI", 18, FontStyle.Bold)
         };
 
@@ -53,7 +72,7 @@ public sealed class MainForm : Form
             Text = "App em desenvolvimento. Comunicação com CLP ainda não implementada.",
             AutoSize = true,
             Left = 20,
-            Top = 70,
+            Top = 80,
             Font = new Font("Segoe UI", 10)
         };
 
@@ -61,54 +80,80 @@ public sealed class MainForm : Form
         {
             Text = "Parar tudo",
             Left = 20,
-            Top = 120,
+            Top = 130,
             Width = 160,
             Height = 40
         };
 
-        _temaGroupBox = new GroupBox
+        _temaButton = new Button
         {
             Text = "Tema",
+            Left = 760,
+            Top = 25,
+            Width = 90,
+            Height = 32
+        };
+
+        _temaMenu = new ContextMenuStrip();
+
+        _usarTemaWindowsMenuItem = new ToolStripMenuItem("Usar tema do Windows");
+        _temaClaroMenuItem = new ToolStripMenuItem("Claro");
+        _temaEscuroMenuItem = new ToolStripMenuItem("Escuro");
+
+        _temaMenu.Items.Add(_usarTemaWindowsMenuItem);
+        _temaMenu.Items.Add(_temaClaroMenuItem);
+        _temaMenu.Items.Add(_temaEscuroMenuItem);
+
+        _estadoGroupBox = new GroupBox
+        {
+            Text = "Estado da conexão",
             Left = 20,
-            Top = 190,
-            Width = 260,
-            Height = 120
+            Top = 220,
+            Width = 270,
+            Height = 250
         };
 
-        _usarTemaWindowsRadioButton = new RadioButton
+        _estadoStatusLabel = CriarLabel(string.Empty, 15, 30);
+        _estadoMensagemLabel = CriarLabelEstadoMensagem(15, 55);
+        _estadoAtualizacaoLabel = CriarLabel(string.Empty, 15, 120);
+
+        _simularConectarButton = new Button
         {
-            Text = "Usar tema do Windows",
-            AutoSize = true,
+            Text = "Simular conectar",
             Left = 15,
-            Top = 25
+            Top = 155,
+            Width = 115,
+            Height = 28
         };
 
-        _temaClaroRadioButton = new RadioButton
+        _simularErroButton = new Button
         {
-            Text = "Claro",
-            AutoSize = true,
-            Left = 15,
-            Top = 55
+            Text = "Simular erro",
+            Left = 140,
+            Top = 155,
+            Width = 105,
+            Height = 28
         };
 
-        _temaEscuroRadioButton = new RadioButton
+        _desconectarButton = new Button
         {
-            Text = "Escuro",
-            AutoSize = true,
+            Text = "Desconectar",
             Left = 15,
-            Top = 85
+            Top = 195,
+            Width = 115,
+            Height = 28
         };
 
         _conexaoGroupBox = new GroupBox
         {
             Text = "Conexão com CLP",
             Left = 320,
-            Top = 190,
-            Width = 380,
+            Top = 220,
+            Width = 390,
             Height = 250
         };
 
-        _portaTituloLabel = CriarLabelConexao("Porta COM:", 15, 30);
+        _portaTituloLabel = CriarLabel("Porta COM:", 15, 30);
 
         _portaComboBox = new ComboBox
         {
@@ -123,11 +168,11 @@ public sealed class MainForm : Form
             Text = "Atualizar portas",
             Left = 240,
             Top = 25,
-            Width = 120,
+            Width = 125,
             Height = 28
         };
 
-        _baudRateTituloLabel = CriarLabelConexao("Baud rate:", 15, 70);
+        _baudRateTituloLabel = CriarLabel("Baud rate:", 15, 70);
 
         _baudRateTextBox = new TextBox
         {
@@ -137,7 +182,7 @@ public sealed class MainForm : Form
             Text = _connectionSettings.BaudRate.ToString()
         };
 
-        _slaveIdTituloLabel = CriarLabelConexao("Slave ID:", 15, 110);
+        _slaveIdTituloLabel = CriarLabel("Slave ID:", 15, 110);
 
         _slaveIdTextBox = new TextBox
         {
@@ -151,8 +196,8 @@ public sealed class MainForm : Form
         {
             Text = "Aplicar configuração",
             Left = 15,
-            Top = 145,
-            Width = 160,
+            Top = 150,
+            Width = 165,
             Height = 32
         };
 
@@ -160,24 +205,32 @@ public sealed class MainForm : Form
         {
             AutoSize = false,
             Left = 15,
-            Top = 190,
-            Width = 340,
+            Top = 195,
+            Width = 350,
             Height = 45,
             Font = new Font("Segoe UI", 9)
         };
 
         _pararTudoButton.Click += PararTudoButton_Click;
+        _temaButton.Click += TemaButton_Click;
 
-        _usarTemaWindowsRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
-        _temaClaroRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
-        _temaEscuroRadioButton.CheckedChanged += TemaRadioButton_CheckedChanged;
+        _usarTemaWindowsMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Windows);
+        _temaClaroMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Light);
+        _temaEscuroMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Dark);
 
         _atualizarPortasButton.Click += AtualizarPortasButton_Click;
         _aplicarConexaoButton.Click += AplicarConexaoButton_Click;
 
-        _temaGroupBox.Controls.Add(_usarTemaWindowsRadioButton);
-        _temaGroupBox.Controls.Add(_temaClaroRadioButton);
-        _temaGroupBox.Controls.Add(_temaEscuroRadioButton);
+        _simularConectarButton.Click += SimularConectarButton_Click;
+        _simularErroButton.Click += SimularErroButton_Click;
+        _desconectarButton.Click += DesconectarButton_Click;
+
+        _estadoGroupBox.Controls.Add(_estadoStatusLabel);
+        _estadoGroupBox.Controls.Add(_estadoMensagemLabel);
+        _estadoGroupBox.Controls.Add(_estadoAtualizacaoLabel);
+        _estadoGroupBox.Controls.Add(_simularConectarButton);
+        _estadoGroupBox.Controls.Add(_simularErroButton);
+        _estadoGroupBox.Controls.Add(_desconectarButton);
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -192,17 +245,19 @@ public sealed class MainForm : Form
         Controls.Add(_tituloLabel);
         Controls.Add(_statusLabel);
         Controls.Add(_pararTudoButton);
-        Controls.Add(_temaGroupBox);
+        Controls.Add(_temaButton);
+        Controls.Add(_estadoGroupBox);
         Controls.Add(_conexaoGroupBox);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
+        AtualizarEstadoConexao();
+        AtualizarMenuTema();
 
-        _usarTemaWindowsRadioButton.Checked = true;
         AplicarTemaSelecionado();
     }
 
-    private static Label CriarLabelConexao(string text, int left, int top)
+    private static Label CriarLabel(string text, int left, int top)
     {
         return new Label
         {
@@ -210,6 +265,19 @@ public sealed class MainForm : Form
             AutoSize = true,
             Left = left,
             Top = top,
+            Font = new Font("Segoe UI", 10)
+        };
+    }
+
+    private static Label CriarLabelEstadoMensagem(int left, int top)
+    {
+        return new Label
+        {
+            AutoSize = false,
+            Left = left,
+            Top = top,
+            Width = 230,
+            Height = 55,
             Font = new Font("Segoe UI", 10)
         };
     }
@@ -250,6 +318,32 @@ public sealed class MainForm : Form
         _conexaoResumoLabel.Text =
             $"Atual: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}" +
             $"{Environment.NewLine}Paridade: {_connectionSettings.Parity}, Stop bits: {_connectionSettings.StopBits}, Timeout: {_connectionSettings.TimeoutMilliseconds} ms";
+    }
+
+    private void AtualizarEstadoConexao()
+    {
+        _estadoStatusLabel.Text = $"Status: {_connectionState.Status}";
+        _estadoMensagemLabel.Text = $"Mensagem: {_connectionState.Message}";
+        _estadoAtualizacaoLabel.Text = $"Atualizado: {_connectionState.LastUpdatedAt:HH:mm:ss}";
+    }
+
+    private void TemaButton_Click(object? sender, EventArgs e)
+    {
+        _temaMenu.Show(_temaButton, new Point(0, _temaButton.Height));
+    }
+
+    private void SelecionarTema(ThemeSelection themeSelection)
+    {
+        _themeSelection = themeSelection;
+        AtualizarMenuTema();
+        AplicarTemaSelecionado();
+    }
+
+    private void AtualizarMenuTema()
+    {
+        _usarTemaWindowsMenuItem.Checked = _themeSelection == ThemeSelection.Windows;
+        _temaClaroMenuItem.Checked = _themeSelection == ThemeSelection.Light;
+        _temaEscuroMenuItem.Checked = _themeSelection == ThemeSelection.Dark;
     }
 
     private void AtualizarPortasButton_Click(object? sender, EventArgs e)
@@ -312,6 +406,27 @@ public sealed class MainForm : Form
             MessageBoxIcon.Information);
     }
 
+    private void SimularConectarButton_Click(object? sender, EventArgs e)
+    {
+        _connectionState.SetConnecting("Tentando conectar...");
+        AtualizarEstadoConexao();
+
+        _connectionState.SetConnected("Conectado - simulação");
+        AtualizarEstadoConexao();
+    }
+
+    private void SimularErroButton_Click(object? sender, EventArgs e)
+    {
+        _connectionState.SetError("Erro simulado de comunicação");
+        AtualizarEstadoConexao();
+    }
+
+    private void DesconectarButton_Click(object? sender, EventArgs e)
+    {
+        _connectionState.SetDisconnected();
+        AtualizarEstadoConexao();
+    }
+
     private void PararTudoButton_Click(object? sender, EventArgs e)
     {
         MessageBox.Show(
@@ -321,27 +436,14 @@ public sealed class MainForm : Form
             MessageBoxIcon.Information);
     }
 
-    private void TemaRadioButton_CheckedChanged(object? sender, EventArgs e)
-    {
-        AplicarTemaSelecionado();
-    }
-
     private void AplicarTemaSelecionado()
     {
-        bool temaEscuro;
-
-        if (_usarTemaWindowsRadioButton.Checked)
+        bool temaEscuro = _themeSelection switch
         {
-            temaEscuro = WindowsEstaEmTemaEscuro();
-        }
-        else if (_temaEscuroRadioButton.Checked)
-        {
-            temaEscuro = true;
-        }
-        else
-        {
-            temaEscuro = false;
-        }
+            ThemeSelection.Windows => WindowsEstaEmTemaEscuro(),
+            ThemeSelection.Dark => true,
+            _ => false
+        };
 
         AplicarTema(temaEscuro);
     }
@@ -377,17 +479,11 @@ public sealed class MainForm : Form
         _tituloLabel.ForeColor = corTexto;
         _statusLabel.ForeColor = corTexto;
 
-        _temaGroupBox.ForeColor = corTexto;
-        _temaGroupBox.BackColor = corFundo;
-
-        _usarTemaWindowsRadioButton.ForeColor = corTexto;
-        _usarTemaWindowsRadioButton.BackColor = corFundo;
-
-        _temaClaroRadioButton.ForeColor = corTexto;
-        _temaClaroRadioButton.BackColor = corFundo;
-
-        _temaEscuroRadioButton.ForeColor = corTexto;
-        _temaEscuroRadioButton.BackColor = corFundo;
+        _estadoGroupBox.ForeColor = corTexto;
+        _estadoGroupBox.BackColor = corFundo;
+        _estadoStatusLabel.ForeColor = corTexto;
+        _estadoMensagemLabel.ForeColor = corTexto;
+        _estadoAtualizacaoLabel.ForeColor = corTexto;
 
         _conexaoGroupBox.ForeColor = corTexto;
         _conexaoGroupBox.BackColor = corFundo;
@@ -406,9 +502,22 @@ public sealed class MainForm : Form
         _slaveIdTextBox.BackColor = corCampo;
         _slaveIdTextBox.ForeColor = corTexto;
 
+        _temaMenu.BackColor = corCampo;
+        _temaMenu.ForeColor = corTexto;
+
+        foreach (ToolStripItem item in _temaMenu.Items)
+        {
+            item.BackColor = corCampo;
+            item.ForeColor = corTexto;
+        }
+
         AplicarTemaBotao(_pararTudoButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_temaButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_atualizarPortasButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_aplicarConexaoButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_simularConectarButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_simularErroButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_desconectarButton, corBotao, corTextoBotao);
     }
 
     private static void AplicarTemaBotao(Button button, Color corFundo, Color corTexto)
