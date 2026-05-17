@@ -382,35 +382,10 @@ public sealed class MainForm : Form
 
     private void AtualizarListaDePortas()
     {
-        string portaSelecionada = _portaComboBox.SelectedItem?.ToString()
-            ?? _connectionSettings.PortName;
-
-        string[] portas = SerialPort.GetPortNames()
-            .OrderBy(porta => porta)
-            .ToArray();
-
-        _portaComboBox.Items.Clear();
-
-        foreach (string porta in portas)
-        {
-            _portaComboBox.Items.Add(porta);
-        }
-
-        if (_portaComboBox.Items.Count == 0)
-        {
-            _portaComboBox.Items.Add(_connectionSettings.PortName);
-        }
-
-        int indice = _portaComboBox.Items.IndexOf(portaSelecionada);
-
-        if (indice < 0)
-        {
-            indice = 0;
-        }
-
-        _portaComboBox.SelectedIndex = indice;
+        PlcConnectionSettingsUiService.UpdatePortList(
+            _portaComboBox,
+            _connectionSettings.PortName);
     }
-
     private void AtualizarResumoConexao()
     {
         _conexaoResumoLabel.Text =
@@ -453,42 +428,21 @@ public sealed class MainForm : Form
 
     private bool TryUpdateConnectionSettingsFromUi()
     {
-        if (_portaComboBox.SelectedItem is null)
+        if (!PlcConnectionSettingsUiService.TryUpdateSettingsFromUi(
+                _portaComboBox,
+                _baudRateComboBox,
+                _slaveIdTextBox,
+                _connectionSettings,
+                out string? errorMessage))
         {
             MessageBox.Show(
-                "Selecione uma porta COM.",
+                errorMessage,
                 "Configuração inválida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
 
             return false;
         }
-
-        if (!int.TryParse(_baudRateComboBox.Text, out int baudRate) || baudRate <= 0)
-        {
-            MessageBox.Show(
-                "Informe um baud rate válido. Exemplo: 9600.",
-                "Configuração inválida",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-
-            return false;
-        }
-
-        if (!byte.TryParse(_slaveIdTextBox.Text, out byte slaveId) || slaveId is < 1 or > 247)
-        {
-            MessageBox.Show(
-                "Informe um Slave ID válido entre 1 e 247.",
-                "Configuração inválida",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-
-            return false;
-        }
-
-        _connectionSettings.PortName = _portaComboBox.SelectedItem.ToString()!;
-        _connectionSettings.BaudRate = baudRate;
-        _connectionSettings.SlaveId = slaveId;
 
         AtualizarResumoConexao();
 
@@ -496,29 +450,10 @@ public sealed class MainForm : Form
     }
     private int[] ObterBaudRatesSelecionadosParaBusca()
     {
-        List<int> baudRates = [];
-
-        if (int.TryParse(_baudRateComboBox.Text, out int baudRateAtual))
-        {
-            baudRates.Add(baudRateAtual);
-        }
-
-        foreach (object? item in _baudRateBuscaCheckedListBox.CheckedItems)
-        {
-            if (item is not null && int.TryParse(item.ToString(), out int baudRateMarcado))
-            {
-                baudRates.Add(baudRateMarcado);
-            }
-        }
-
-        if (baudRates.Count == 0)
-        {
-            baudRates.Add(_connectionSettings.BaudRate);
-        }
-
-        return baudRates
-            .Distinct()
-            .ToArray();
+        return PlcConnectionSettingsUiService.GetSelectedBaudRatesForSearch(
+            _baudRateComboBox,
+            _baudRateBuscaCheckedListBox,
+            _connectionSettings.BaudRate);
     }
     private async void DetectarClpButton_Click(object? sender, EventArgs e)
     {
@@ -862,6 +797,7 @@ public sealed class MainForm : Form
 
 
 }
+
 
 
 
