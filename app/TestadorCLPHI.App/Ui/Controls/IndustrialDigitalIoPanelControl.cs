@@ -21,7 +21,7 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
             Padding = new Padding(0)
         };
 
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 66));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 152));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 108));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -54,8 +54,8 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
             AutoSize = true,
             ForeColor = Color.FromArgb(226, 232, 240),
             Font = new Font("Segoe UI", 13F, FontStyle.Bold),
-            Left = 16,
-            Top = 10
+            Left = 18,
+            Top = 8
         };
 
         Label subtitle = new()
@@ -65,7 +65,7 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
             ForeColor = Color.FromArgb(148, 163, 184),
             Font = new Font("Segoe UI", 9F),
             Left = 18,
-            Top = 34
+            Top = 36
         };
 
         panel.Controls.Add(title);
