@@ -7,29 +7,16 @@ namespace TestadorCLPHI.App;
 
 public sealed class MainForm : Form
 {
-    private enum ThemeSelection
-    {
-        Windows,
-        Light,
-        Dark
-    }
-
     private readonly PlcConnectionSettings _connectionSettings = new();
     private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
     private readonly PlcRegisterCommandService _registerCommandService;
     private readonly PlcAutoDetectionService _autoDetectionService;
 
-    private ThemeSelection _themeSelection = ThemeSelection.Windows;
-
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
     private readonly Button _pararTudoButton;
 
-    private readonly Button _temaButton;
-    private readonly ContextMenuStrip _temaMenu;
-    private readonly ToolStripMenuItem _usarTemaWindowsMenuItem;
-    private readonly ToolStripMenuItem _temaClaroMenuItem;
-    private readonly ToolStripMenuItem _temaEscuroMenuItem;
+    private readonly ThemeSelectorControl _themeSelector;
 
     private readonly GroupBox _conexaoGroupBox;
     private readonly Label _portaTituloLabel;
@@ -88,24 +75,11 @@ public sealed class MainForm : Form
             Height = 40
         };
 
-        _temaButton = new Button
+        _themeSelector = new ThemeSelectorControl
         {
-            Text = "Tema",
             Left = 760,
-            Top = 25,
-            Width = 90,
-            Height = 32
+            Top = 25
         };
-
-        _temaMenu = new ContextMenuStrip();
-
-        _usarTemaWindowsMenuItem = new ToolStripMenuItem("Usar tema do Windows");
-        _temaClaroMenuItem = new ToolStripMenuItem("Claro");
-        _temaEscuroMenuItem = new ToolStripMenuItem("Escuro");
-
-        _temaMenu.Items.Add(_usarTemaWindowsMenuItem);
-        _temaMenu.Items.Add(_temaClaroMenuItem);
-        _temaMenu.Items.Add(_temaEscuroMenuItem);
 
         _connectionStatePanel = new ConnectionStatePanelControl
         {
@@ -225,11 +199,7 @@ public sealed class MainForm : Form
         };
 
         _pararTudoButton.Click += PararTudoButton_Click;
-        _temaButton.Click += TemaButton_Click;
-
-        _usarTemaWindowsMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Windows);
-        _temaClaroMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Light);
-        _temaEscuroMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Dark);
+        _themeSelector.ThemeChanged += (_, _) => AplicarTemaSelecionado();
 
         _atualizarPortasButton.Click += AtualizarPortasButton_Click;
         _detectarClpButton.Click += DetectarClpButton_Click;
@@ -257,7 +227,7 @@ public sealed class MainForm : Form
         Controls.Add(_tituloLabel);
         Controls.Add(_statusLabel);
         Controls.Add(_pararTudoButton);
-        Controls.Add(_temaButton);
+        Controls.Add(_themeSelector);
         Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_testerCommandPanel);
@@ -265,8 +235,6 @@ public sealed class MainForm : Form
         AtualizarListaDePortas();
         AtualizarResumoConexao();
         AtualizarEstadoConexao();
-        AtualizarMenuTema();
-
         AplicarTemaSelecionado();
     }
 
@@ -314,25 +282,6 @@ public sealed class MainForm : Form
 
         _connectionStatePanel.UpdateState(state);
     }
-    private void TemaButton_Click(object? sender, EventArgs e)
-    {
-        _temaMenu.Show(_temaButton, new Point(0, _temaButton.Height));
-    }
-
-    private void SelecionarTema(ThemeSelection themeSelection)
-    {
-        _themeSelection = themeSelection;
-        AtualizarMenuTema();
-        AplicarTemaSelecionado();
-    }
-
-    private void AtualizarMenuTema()
-    {
-        _usarTemaWindowsMenuItem.Checked = _themeSelection == ThemeSelection.Windows;
-        _temaClaroMenuItem.Checked = _themeSelection == ThemeSelection.Light;
-        _temaEscuroMenuItem.Checked = _themeSelection == ThemeSelection.Dark;
-    }
-
     private void AtualizarPortasButton_Click(object? sender, EventArgs e)
     {
         AtualizarListaDePortas();
@@ -613,14 +562,15 @@ public sealed class MainForm : Form
     }
     private void AplicarTemaSelecionado()
     {
-        bool temaEscuro = _themeSelection switch
+        bool temaEscuro = _themeSelector.SelectedTheme switch
         {
             ThemeSelection.Windows => AppThemeService.WindowsIsInDarkTheme(),
             ThemeSelection.Dark => true,
             _ => false
         };
 
-        AppThemeService.ApplyTheme(this, _temaMenu, temaEscuro);
+        AppThemeService.ApplyTheme(this, _themeSelector.ThemeMenu, temaEscuro);
     }
 }
+
 
