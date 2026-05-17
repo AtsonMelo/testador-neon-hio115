@@ -515,56 +515,46 @@ public sealed class MainForm : Form
 
     private async void HabilitarTesteButton_Click(object? sender, EventArgs e)
     {
-        try
-        {
-            await GarantirServicoFakeConectadoAsync();
-
-            await _plcService.WriteHoldingRegisterAsync(
-                Hio115MemoryMap.HabilitaTeste,
-                1);
-
-            ushort value = await _plcService.ReadHoldingRegisterAsync(
-                Hio115MemoryMap.HabilitaTeste);
-
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                $"HABILITA_TESTE aplicado no fake: %MW{Hio115MemoryMap.HabilitaTeste} = {value}",
-                "Comando fake",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            _plcService.State.SetError(ex.Message);
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                ex.Message,
-                "Erro no comando fake",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-        }
+        await ExecutarComandoRegistradorAsync(
+            Hio115MemoryMap.HabilitaTeste,
+            1,
+            "HABILITA_TESTE",
+            "Comando fake",
+            "Erro no comando fake");
+    }
+    private async void ResetarSaidasButton_Click(object? sender, EventArgs e)
+    {
+        await ExecutarComandoRegistradorAsync(
+            Hio115MemoryMap.ResetSaidas,
+            1,
+            "RESET_SAIDAS",
+            "Comando fake",
+            "Erro no comando fake");
     }
 
-    private async void ResetarSaidasButton_Click(object? sender, EventArgs e)
+    private async System.Threading.Tasks.Task ExecutarComandoRegistradorAsync(
+        int registerAddress,
+        ushort valueToWrite,
+        string commandName,
+        string dialogTitle,
+        string errorTitle)
     {
         try
         {
-            await GarantirServicoFakeConectadoAsync();
+            await GarantirServicoConectadoAsync();
 
             await _plcService.WriteHoldingRegisterAsync(
-                Hio115MemoryMap.ResetSaidas,
-                1);
+                registerAddress,
+                valueToWrite);
 
             ushort value = await _plcService.ReadHoldingRegisterAsync(
-                Hio115MemoryMap.ResetSaidas);
+                registerAddress);
 
             AtualizarEstadoConexao();
 
             MessageBox.Show(
-                $"RESET_SAIDAS aplicado no fake: %MW{Hio115MemoryMap.ResetSaidas} = {value}",
-                "Comando fake",
+                $"{commandName} aplicado no fake: %MW{registerAddress} = {value}",
+                dialogTitle,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
@@ -575,13 +565,12 @@ public sealed class MainForm : Form
 
             MessageBox.Show(
                 ex.Message,
-                "Erro no comando fake",
+                errorTitle,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
     }
-
-    private async System.Threading.Tasks.Task GarantirServicoFakeConectadoAsync()
+    private async System.Threading.Tasks.Task GarantirServicoConectadoAsync()
     {
         if (!_plcService.State.IsConnected)
         {
@@ -590,15 +579,15 @@ public sealed class MainForm : Form
         }
     }
 
-    private void PararTudoButton_Click(object? sender, EventArgs e)
+    private async void PararTudoButton_Click(object? sender, EventArgs e)
     {
-        MessageBox.Show(
-            "Futuramente este botão vai acionar RESET_SAIDAS no CLP.",
+        await ExecutarComandoRegistradorAsync(
+            Hio115MemoryMap.ResetSaidas,
+            1,
+            "RESET_SAIDAS",
             "Parar tudo",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+            "Erro no parar tudo");
     }
-
     private void AplicarTemaSelecionado()
     {
         bool temaEscuro = _themeSelection switch
@@ -705,6 +694,7 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
 
 
 
