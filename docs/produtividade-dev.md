@@ -136,3 +136,20 @@ Critério:
 - usar o último commit e o estado atual como referência;
 - commitar o documento quando fechar um bloco relevante de trabalho.
 
+
+## 2026-05-17 — Issue #9: detecção automática do CLP
+
+- PR concluído: #13
+- Merge na main: db53979
+- Branch de trabalho: feat/issue-9-deteccao-automatica-clp
+- Objetivo: exibir a quantidade de tentativas durante a detecção automática do CLP.
+- Alterações principais:
+  - PlcAutoDetectionResult recebeu AttemptCount.
+  - PlcAutoDetectionService passou a contar e exibir tentativas.
+  - MainForm passou a mostrar o total de tentativas ao detectar o CLP.
+- Validação:
+  - PR sem conflito: mergeStateStatus CLEAN.
+  - GitGuardian Security Checks aprovado.
+  - Build final na main com 0 erros e 0 avisos.
+- Resultado:
+  - Issue #9 integrada com sucesso na main.
