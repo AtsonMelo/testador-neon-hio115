@@ -81,6 +81,15 @@ def generate_auto_manual_st(profile):
     tempo = int(profile.get("tempo_passo_segundos", 2))
     do_sysvars = profile["do_sysvars"]
     di_sysvars = profile["di_sysvars"]
+    retornos_por_saida = profile.get(
+        "retornos_por_saida",
+        [[index] for index in range(total_do)]
+    )
+
+    if len(retornos_por_saida) != total_do:
+        raise ValueError(
+            "retornos_por_saida deve ter uma lista de retornos para cada saida digital."
+        )
 
     lines = [
         "(* Programa HIO115 - modo automatico, modo manual, diagnostico e travas de seguranca *)",
@@ -224,17 +233,32 @@ def generate_auto_manual_st(profile):
     ]
 
     for index in range(total_do):
-        expected_di = di_name(index)
-        other_dis = [di_name(other) for other in range(total_di) if other != index]
-        other_expression = " OR ".join([f"RETORNO_{name} = 1" for name in other_dis])
+        expected_di_indexes = retornos_por_saida[index]
+        expected_expression = " AND ".join(
+            [f"RETORNO_{di_name(di_index)} = 1" for di_index in expected_di_indexes]
+        )
+        missing_expression = " OR ".join(
+            [f"RETORNO_{di_name(di_index)} = 0" for di_index in expected_di_indexes]
+        )
+        other_di_indexes = [
+            other for other in range(total_di)
+            if other not in expected_di_indexes
+        ]
+        other_expression = " OR ".join(
+            [f"RETORNO_{di_name(di_index)} = 1" for di_index in other_di_indexes]
+        ) or "FALSE"
+        expected_names = " + ".join(
+            [di_name(di_index) for di_index in expected_di_indexes]
+        )
 
         lines += [
             f"IF COMANDO_{d_name(index)} = 1 THEN",
-            f"    IF (RETORNO_{expected_di} = 1) AND NOT ({other_expression}) THEN",
+            f"    (* Retorno esperado: {expected_names} *)",
+            f"    IF ({expected_expression}) AND NOT ({other_expression}) THEN",
             f"        OK_{d_name(index)} := 1;",
             "    END_IF;",
             "",
-            f"    IF RETORNO_{expected_di} = 0 THEN",
+            f"    IF {missing_expression} THEN",
             f"        FALHA_{d_name(index)} := 1;",
             "    END_IF;",
             "",
