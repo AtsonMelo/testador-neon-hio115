@@ -109,3 +109,28 @@ Sempre usar o último commit, branch e resultado informado como estado atual.
 Antes de novo commit, validar build, teste manual mínimo, git status --short e git diff --stat.
 
 
+
+## Registro por ciclo de 1 hora
+
+Além do registro por tarefa concluída, manter um acompanhamento por ciclos aproximados de 1 hora.
+
+Objetivo:
+
+- medir produtividade real;
+- identificar retrabalho;
+- melhorar estimativa de tempo;
+- acompanhar evolução técnica;
+- comparar o fluxo com práticas profissionais.
+
+Modelo de registro por hora:
+
+| Data | Hora | Foco do ciclo | Resultado | Build | Teste manual | Retrabalho | Próximo foco |
+|---|---|---|---|---|---|---|---|
+
+Critério:
+
+- registrar o ciclo mesmo que a tarefa ainda não tenha sido concluída;
+- não medir apenas quantidade de código;
+- registrar bloqueios, erros e decisões;
+- usar o último commit e o estado atual como referência;
+- commitar o documento quando fechar um bloco relevante de trabalho.
