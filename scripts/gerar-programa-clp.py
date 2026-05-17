@@ -77,6 +77,7 @@ def generate_auto_st(profile):
 
 def generate_auto_manual_st(profile):
     total_do = int(profile["total_do"])
+    total_di = int(profile.get("total_di", len(profile["di_sysvars"])))
     tempo = int(profile.get("tempo_passo_segundos", 2))
     do_sysvars = profile["do_sysvars"]
     di_sysvars = profile["di_sysvars"]
@@ -89,7 +90,7 @@ def generate_auto_manual_st(profile):
         "(* Leitura dos retornos digitais *)",
     ]
 
-    for index in range(total_do):
+    for index in range(total_di):
         lines.append(
             f"RETORNO_{di_name(index)} := HILS.GET_SYSVAR({di_sysvars[index]});  (* {di_name(index)} *)"
         )
@@ -224,7 +225,7 @@ def generate_auto_manual_st(profile):
 
     for index in range(total_do):
         expected_di = di_name(index)
-        other_dis = [di_name(other) for other in range(total_do) if other != index]
+        other_dis = [di_name(other) for other in range(total_di) if other != index]
         other_expression = " OR ".join([f"RETORNO_{name} = 1" for name in other_dis])
 
         lines += [
@@ -266,6 +267,7 @@ def generate_auto_manual_st(profile):
     return "\n".join(lines).rstrip() + "\n"
 def generate_globals_csv(profile):
     total_do = int(profile["total_do"])
+    total_di = int(profile.get("total_di", len(profile["di_sysvars"])))
 
     rows = [
         "Nome; Classe; Tipo; Endereço; Dimensão; Valor Inicial; Opções; Descrição;",
@@ -287,7 +289,7 @@ def generate_globals_csv(profile):
             f"CMD_MANUAL_{d_name(index)}; Global; INT; %MW{12 + index}; ; 0; publ; Comando manual {d_name(index)};"
         )
 
-    for index in range(total_do):
+    for index in range(total_di):
         rows.append(
             f"RETORNO_{di_name(index)}; Global; INT; %MW{20 + index}; ; 0; publ; Retorno {di_name(index)};"
         )
@@ -321,6 +323,7 @@ def generate_globals_csv(profile):
     return "\n".join(rows) + "\n"
 def generate_program_vars_csv(profile):
     total_do = int(profile["total_do"])
+    total_di = int(profile.get("total_di", len(profile["di_sysvars"])))
 
     rows = [
         "Nome; Classe; Tipo; Endereço; Dimensão; Valor Inicial; Opções; Descrição;",
@@ -346,7 +349,7 @@ def generate_program_vars_csv(profile):
             f"CMD_MANUAL_{d_name(index)}; Externa; INT; ; ; 0; publ; Comando manual {d_name(index)};"
         )
 
-    for index in range(total_do):
+    for index in range(total_di):
         rows.append(
             f"RETORNO_{di_name(index)}; Externa; INT; ; ; 0; publ; Retorno {di_name(index)};"
         )
@@ -479,3 +482,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
