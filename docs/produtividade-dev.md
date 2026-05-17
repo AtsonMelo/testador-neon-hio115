@@ -182,3 +182,165 @@ Critério:
   - Issue #16: melhorar layout, visual e preparar área para terminal.
   - Issue #17: tornar o estado Habilitar teste mais chamativo.
   - Criar/atacar botão de teste automático.
+
+## 2026-05-17 — Issue #16: protótipo industrial por assets
+
+### Resultado
+
+Foi criado um fluxo mais controlado para evolução visual do painel manual 4DO/8DI.
+
+Commits principais:
+
+- `89da715` — adiciona assets de LEDs industriais;
+- `fda5a13` — copia assets UI para output do app;
+- `5f4362b` — registra decisão de layout industrial;
+- `9208201` — adiciona preview isolado do painel industrial;
+- `3634aca` — prototipa painel industrial com LEDs normalizados.
+
+### Validações
+
+- `validate-ui-assets.ps1 -Strict` aprovado;
+- assets `led_on_green.png` e `led_off_gray.png` com `256x256` e transparência real;
+- `dotnet build` aprovado;
+- preview isolado executado com `--preview-industrial-panel`.
+
+### Retrabalho evitado
+
+A tentativa de aplicar os LEDs diretamente no `DigitalIoManualPanelControl` foi revertida porque gerou:
+
+- painel apertado;
+- texto sobreposto;
+- perda de espaço do terminal/log;
+- ajuste excessivo de coordenadas;
+- resultado visual inferior ao esperado.
+
+### Decisão técnica
+
+A causa principal foi identificada como arquitetura de layout, não como problema dos PNGs.
+
+A solução adotada foi criar um protótipo isolado com:
+
+- `IndustrialDigitalIoPanelControl`;
+- `IndustrialLedIndicatorControl`;
+- preview por argumento `--preview-industrial-panel`.
+
+### Próximo foco
+
+Refinar o protótipo isolado antes de integrar no `MainForm`.
+
+Próximas etapas:
+
+1. melhorar layout dos DO;
+2. gerar/adicionar assets de botoeiras industriais;
+3. validar DO e DI juntos no preview;
+4. só depois decidir substituição do painel principal.
+
+## 2026-05-17 - Issue #16 - Preview industrial 4DO/8DI
+
+### Resultado
+- Preview isolado `--preview-industrial-panel` validado visualmente.
+- Saídas digitais DO renderizadas com botoeiras industriais:
+  - D000 vermelho.
+  - D001 verde.
+  - D002 amarelo.
+  - D003 azul.
+  - STOP com botoeira de emergência.
+- Entradas digitais DI renderizadas com LEDs industriais melhorados.
+- Header do preview ajustado para não cortar título/subtítulo.
+- Área inferior reservada para terminal/log preservada.
+- Nenhuma alteração feita no MainForm.
+- Nenhuma alteração feita no HIstudio ou `.dpk`.
+
+### Decisões técnicas
+- Interrompida a tentativa cega diretamente no MainForm.
+- Mantida abordagem por preview isolado antes da integração real.
+- Assets industriais finais mantidos em `app/TestadorCLPHI.App/Assets/Ui`.
+- Corrigido crash runtime causado por `BackColor` com alpha/transparência em controle WinForms.
+- Criado `IndustrialPushButtonControl` para desenhar botoeiras industriais por PNG.
+- Refeito `IndustrialLedIndicatorControl` para desenhar LEDs com `Graphics` em vez de `PictureBox`.
+
+### Validações
+- `git diff --check`: OK.
+- `dotnet build .\testador-neon-hio115.sln`: OK.
+- Preview abriu e permaneceu ativo.
+- Validação visual aprovada.
+
+### Commits
+- `81b8874 ui: aplica controles industriais no preview`
+- `f38bd68 ui: ajusta header do preview industrial`
+
+### Próximo foco
+- Abrir PR da branch `ui/issue-16-layout-terminal`.
+- Revisar diff no GitHub.
+- Depois do merge, planejar Issue separada para integração gradual no app principal.
+
+## 2026-05-17 - Aprendizado do dia - Ferramentas de UI e redução de retrabalho
+
+### Problema observado
+- Houve perda de tempo tentando melhorar visual industrial diretamente no fluxo do app.
+- A primeira abordagem misturou UI real, assets, layout e integração, aumentando retrabalho.
+- O uso de desenho procedural simples com `System.Drawing` não atingiu o visual industrial esperado.
+- A escolha inicial de ferramentas para gerar/recortar assets não estava suficientemente validada.
+- Tentativas sucessivas de ajuste visual sem uma esteira objetiva geraram ciclos longos.
+
+### Aprendizado principal
+- Para UI/front-end, antes de codar integração real, é necessário separar:
+  - visual alvo;
+  - ferramenta de criação dos assets;
+  - ferramenta de corte/transparência;
+  - preview isolado;
+  - validação visual;
+  - só depois integração no app principal.
+- A decisão de criar um preview isolado reduziu risco e permitiu validar sem quebrar o `MainForm`.
+- Para WinForms, controles visuais industriais realistas tendem a funcionar melhor com:
+  - PNGs bem preparados;
+  - alpha correto;
+  - controles customizados desenhados com `Graphics`;
+  - `InterpolationMode.HighQualityBicubic`;
+  - fundo opaco coerente com o tema;
+  - validação em tamanho real dentro do app.
+- `BackColor` com alpha/transparência em controles WinForms pode causar exceção runtime. Evitar `Color.Transparent` ou `Color.FromArgb(alpha, r, g, b)` em `BackColor` quando o controle não suportar transparência.
+
+### Regra prática para próximos ciclos de UI
+- Após 2 tentativas visuais ruins, parar a implementação e mudar para análise.
+- Antes de continuar, criar uma miniesteira:
+  1. definir visual alvo;
+  2. listar ferramentas candidatas;
+  3. escolher a menor ferramenta capaz de resolver;
+  4. criar protótipo isolado;
+  5. validar com print;
+  6. só então integrar.
+- Não misturar no mesmo commit:
+  - criação de asset;
+  - alteração de layout;
+  - integração no app principal;
+  - refatoração;
+  - correção de bug runtime.
+
+### Ferramentas e critérios futuros
+- Para assets industriais:
+  - preferir imagens geradas/curadas com visual consistente;
+  - validar `256x256`, PNG RGBA e alpha real;
+  - usar ImageMagick para inspeção, recorte, alpha e contact sheet;
+  - gerar preview dark antes de integrar.
+- Para UI WinForms:
+  - usar preview isolado por argumento de linha de comando;
+  - evitar dependência visual direta de `PictureBox` quando a qualidade cair;
+  - preferir controle customizado quando precisar de renderização consistente;
+  - testar sempre em fundo escuro real do app.
+- Para uma evolução futura maior:
+  - avaliar se WinForms continua adequado para UI industrial rica;
+  - considerar WPF, Avalonia ou WebView2/HTML/CSS apenas em uma Issue de pesquisa separada;
+  - comparar por critérios objetivos: curva de aprendizado, estabilidade, empacotamento, manutenção, performance e integração com Modbus/serial.
+
+### Ações futuras recomendadas
+- Criar uma Issue específica: `Pesquisar stack de UI para evolução visual do TestadorCLPHI.App`.
+- Criar uma matriz de decisão comparando:
+  - WinForms custom controls;
+  - WPF;
+  - Avalonia;
+  - WebView2 com front-end web local.
+- Criar pasta futura de referência visual:
+  - `docs/design/referencias-ui-industrial.md`
+  - `docs/design/criterios-assets-ui.md`
+- Manter a regra: nenhuma mudança visual grande entra direto no `MainForm` sem preview isolado aprovado.

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -12,4 +12,10 @@
     <PackageReference Include="System.IO.Ports" Version="10.0.8" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Content Include="Assets\Ui\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
