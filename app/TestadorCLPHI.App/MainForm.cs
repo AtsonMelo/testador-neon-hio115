@@ -42,6 +42,7 @@ public sealed class MainForm : Form
 
     private readonly Label _conexaoResumoLabel;
     private readonly Button _aplicarConexaoButton;
+    private readonly Button _detectarClpButton;
 
     private readonly GroupBox _estadoGroupBox;
     private readonly Label _estadoStatusLabel;
@@ -253,6 +254,15 @@ public sealed class MainForm : Form
             Height = 32
         };
 
+        _detectarClpButton = new Button
+        {
+            Text = "Detectar CLP",
+            Left = 195,
+            Top = 150,
+            Width = 160,
+            Height = 32
+        };
+
         _conexaoResumoLabel = new Label
         {
             AutoSize = false,
@@ -272,6 +282,7 @@ public sealed class MainForm : Form
 
         _atualizarPortasButton.Click += AtualizarPortasButton_Click;
         _aplicarConexaoButton.Click += AplicarConexaoButton_Click;
+        _detectarClpButton.Click += DetectarClpButton_Click;
 
         _simularConectarButton.Click += SimularConectarButton_Click;
         _simularErroButton.Click += SimularErroButton_Click;
@@ -299,6 +310,7 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_slaveIdTituloLabel);
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_aplicarConexaoButton);
+        _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
 
         Controls.Add(_tituloLabel);
@@ -465,6 +477,97 @@ public sealed class MainForm : Form
             $"Configuração aplicada: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
     }
 
+    private async void DetectarClpButton_Click(object? sender, EventArgs e)
+    {
+        _detectarClpButton.Enabled = false;
+        _simularConectarButton.Enabled = false;
+
+        try
+        {
+            string[] portas = SerialPort.GetPortNames()
+                .OrderBy(porta => porta)
+                .ToArray();
+
+            if (portas.Length == 0)
+            {
+                _statusLabel.Text = "Nenhuma porta COM encontrada.";
+                return;
+            }
+
+            int[] baudRates =
+            [
+                9600,
+                19200,
+                38400,
+                57600,
+                115200
+            ];
+
+            foreach (string porta in portas)
+            {
+                foreach (int baudRate in baudRates)
+                {
+                    for (byte slaveId = 1; slaveId <= 247; slaveId++)
+                    {
+                        _statusLabel.Text = $"Detectando: {porta}, {baudRate} bps, Slave {slaveId}...";
+                        Application.DoEvents();
+
+                        PlcConnectionSettings tentativa = new()
+                        {
+                            PortName = porta,
+                            BaudRate = baudRate,
+                            Parity = _connectionSettings.Parity,
+                            DataBits = _connectionSettings.DataBits,
+                            StopBits = _connectionSettings.StopBits,
+                            SlaveId = slaveId,
+                            TimeoutMilliseconds = 200
+                        };
+
+                        try
+                        {
+                            await _plcService.ConnectAsync(tentativa);
+
+                            ushort value = await _plcService.ReadHoldingRegisterAsync(
+                                Hio115MemoryMap.HabilitaTeste);
+
+                            _connectionSettings.PortName = porta;
+                            _connectionSettings.BaudRate = baudRate;
+                            _connectionSettings.SlaveId = slaveId;
+
+                            _portaComboBox.SelectedItem = porta;
+                            _baudRateComboBox.SelectedItem = baudRate.ToString();
+                            _slaveIdTextBox.Text = slaveId.ToString();
+
+                            AtualizarResumoConexao();
+
+                            _plcService.State.SetConnected(
+                                $"CLP detectado: {porta}, {baudRate} bps, Slave {slaveId}, %MW{Hio115MemoryMap.HabilitaTeste} = {value}");
+
+                            AtualizarEstadoConexao();
+
+                            _statusLabel.Text =
+                                $"CLP detectado em {porta}, {baudRate} bps, Slave {slaveId}.";
+
+                            return;
+                        }
+                        catch
+                        {
+                            await _plcService.DisconnectAsync();
+                        }
+                    }
+                }
+            }
+
+            _plcService.State.SetError("Nenhum CLP encontrado na varredura.");
+            AtualizarEstadoConexao();
+            _statusLabel.Text = "Nenhum CLP encontrado.";
+        }
+        finally
+        {
+            _detectarClpButton.Enabled = true;
+            _simularConectarButton.Enabled = true;
+        }
+    }
     private async void SimularConectarButton_Click(object? sender, EventArgs e)
     {
         try
@@ -693,6 +796,7 @@ public sealed class MainForm : Form
         AplicarTemaBotao(_temaButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_atualizarPortasButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_aplicarConexaoButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_detectarClpButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_simularConectarButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_simularErroButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_desconectarButton, corBotao, corTextoBotao);
@@ -720,6 +824,9 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
+
+
 
 
 
