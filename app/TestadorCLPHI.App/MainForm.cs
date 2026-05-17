@@ -52,6 +52,10 @@ public sealed class MainForm : Form
     private readonly Button _desconectarButton;
     private readonly Button _testarMw70Button;
 
+    private readonly GroupBox _comandosGroupBox;
+    private readonly Button _habilitarTesteButton;
+    private readonly Button _resetarSaidasButton;
+
     public MainForm()
     {
         Text = "Testador CLP HI";
@@ -154,6 +158,33 @@ public sealed class MainForm : Form
             Height = 28
         };
 
+        _comandosGroupBox = new GroupBox
+        {
+            Text = "Comandos do testador",
+            Left = 20,
+            Top = 490,
+            Width = 690,
+            Height = 75
+        };
+
+        _habilitarTesteButton = new Button
+        {
+            Text = "Habilitar teste",
+            Left = 15,
+            Top = 28,
+            Width = 140,
+            Height = 30
+        };
+
+        _resetarSaidasButton = new Button
+        {
+            Text = "Resetar saídas",
+            Left = 170,
+            Top = 28,
+            Width = 140,
+            Height = 30
+        };
+
         _conexaoGroupBox = new GroupBox
         {
             Text = "Conexão com CLP",
@@ -235,6 +266,8 @@ public sealed class MainForm : Form
         _simularErroButton.Click += SimularErroButton_Click;
         _desconectarButton.Click += DesconectarButton_Click;
         _testarMw70Button.Click += TestarMw70Button_Click;
+        _habilitarTesteButton.Click += HabilitarTesteButton_Click;
+        _resetarSaidasButton.Click += ResetarSaidasButton_Click;
 
         _estadoGroupBox.Controls.Add(_estadoStatusLabel);
         _estadoGroupBox.Controls.Add(_estadoMensagemLabel);
@@ -243,6 +276,9 @@ public sealed class MainForm : Form
         _estadoGroupBox.Controls.Add(_simularErroButton);
         _estadoGroupBox.Controls.Add(_desconectarButton);
         _estadoGroupBox.Controls.Add(_testarMw70Button);
+
+        _comandosGroupBox.Controls.Add(_habilitarTesteButton);
+        _comandosGroupBox.Controls.Add(_resetarSaidasButton);
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -260,6 +296,7 @@ public sealed class MainForm : Form
         Controls.Add(_temaButton);
         Controls.Add(_estadoGroupBox);
         Controls.Add(_conexaoGroupBox);
+        Controls.Add(_comandosGroupBox);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
@@ -476,6 +513,83 @@ public sealed class MainForm : Form
         }
     }
 
+    private async void HabilitarTesteButton_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            await GarantirServicoFakeConectadoAsync();
+
+            await _plcService.WriteHoldingRegisterAsync(
+                Hio115MemoryMap.HabilitaTeste,
+                1);
+
+            ushort value = await _plcService.ReadHoldingRegisterAsync(
+                Hio115MemoryMap.HabilitaTeste);
+
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                $"HABILITA_TESTE aplicado no fake: %MW{Hio115MemoryMap.HabilitaTeste} = {value}",
+                "Comando fake",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                ex.Message,
+                "Erro no comando fake",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private async void ResetarSaidasButton_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            await GarantirServicoFakeConectadoAsync();
+
+            await _plcService.WriteHoldingRegisterAsync(
+                Hio115MemoryMap.ResetSaidas,
+                1);
+
+            ushort value = await _plcService.ReadHoldingRegisterAsync(
+                Hio115MemoryMap.ResetSaidas);
+
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                $"RESET_SAIDAS aplicado no fake: %MW{Hio115MemoryMap.ResetSaidas} = {value}",
+                "Comando fake",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                ex.Message,
+                "Erro no comando fake",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
+    private async System.Threading.Tasks.Task GarantirServicoFakeConectadoAsync()
+    {
+        if (!_plcService.State.IsConnected)
+        {
+            await _plcService.ConnectAsync(_connectionSettings);
+            AtualizarEstadoConexao();
+        }
+    }
+
     private void PararTudoButton_Click(object? sender, EventArgs e)
     {
         MessageBox.Show(
@@ -568,6 +682,10 @@ public sealed class MainForm : Form
         AplicarTemaBotao(_simularErroButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_desconectarButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_testarMw70Button, corBotao, corTextoBotao);
+        _comandosGroupBox.ForeColor = corTexto;
+        _comandosGroupBox.BackColor = corFundo;
+        AplicarTemaBotao(_habilitarTesteButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_resetarSaidasButton, corBotao, corTextoBotao);
     }
 
     private static void AplicarTemaBotao(Button button, Color corFundo, Color corTexto)
@@ -587,5 +705,6 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
 
 
