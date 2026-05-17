@@ -25,3 +25,6 @@ obj/
 
 # Backups locais do projeto HIstudio
 backups-dpk/
+
+# Backups locais de experimentos de UI
+backups-ui/
