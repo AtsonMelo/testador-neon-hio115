@@ -35,7 +35,7 @@ public sealed class MainForm : Form
     private readonly Button _atualizarPortasButton;
 
     private readonly Label _baudRateTituloLabel;
-    private readonly TextBox _baudRateTextBox;
+    private readonly ComboBox _baudRateComboBox;
 
     private readonly Label _slaveIdTituloLabel;
     private readonly TextBox _slaveIdTextBox;
@@ -215,13 +215,24 @@ public sealed class MainForm : Form
 
         _baudRateTituloLabel = CriarLabel("Baud rate:", 15, 70);
 
-        _baudRateTextBox = new TextBox
+        _baudRateComboBox = new ComboBox
         {
             Left = 110,
             Top = 67,
             Width = 120,
-            Text = _connectionSettings.BaudRate.ToString()
+            DropDownStyle = ComboBoxStyle.DropDownList
         };
+
+        _baudRateComboBox.Items.AddRange(new object[]
+        {
+            "9600",
+            "19200",
+            "38400",
+            "57600",
+            "115200"
+        });
+
+        _baudRateComboBox.SelectedItem = _connectionSettings.BaudRate.ToString();
 
         _slaveIdTituloLabel = CriarLabel("Slave ID:", 15, 110);
 
@@ -284,7 +295,7 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_portaComboBox);
         _conexaoGroupBox.Controls.Add(_atualizarPortasButton);
         _conexaoGroupBox.Controls.Add(_baudRateTituloLabel);
-        _conexaoGroupBox.Controls.Add(_baudRateTextBox);
+        _conexaoGroupBox.Controls.Add(_baudRateComboBox);
         _conexaoGroupBox.Controls.Add(_slaveIdTituloLabel);
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_aplicarConexaoButton);
@@ -414,7 +425,7 @@ public sealed class MainForm : Form
             return;
         }
 
-        if (!int.TryParse(_baudRateTextBox.Text, out int baudRate) || baudRate <= 0)
+        if (!int.TryParse(_baudRateComboBox.Text, out int baudRate) || baudRate <= 0)
         {
             MessageBox.Show(
                 "Informe um baud rate válido. Exemplo: 9600.",
@@ -663,8 +674,8 @@ public sealed class MainForm : Form
         _portaComboBox.BackColor = corCampo;
         _portaComboBox.ForeColor = corTexto;
 
-        _baudRateTextBox.BackColor = corCampo;
-        _baudRateTextBox.ForeColor = corTexto;
+        _baudRateComboBox.BackColor = corCampo;
+        _baudRateComboBox.ForeColor = corTexto;
 
         _slaveIdTextBox.BackColor = corCampo;
         _slaveIdTextBox.ForeColor = corTexto;
@@ -709,6 +720,7 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
 
 
 
