@@ -4,5 +4,3 @@ public sealed record PlcAutoDetectionResult(
     PlcConnectionSettings Settings,
     ushort ProbeRegisterValue,
     int AttemptCount);
-
-

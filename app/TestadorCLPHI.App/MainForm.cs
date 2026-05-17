@@ -665,4 +665,3 @@ public sealed class MainForm : Form
         AppThemeService.ApplyTheme(this, _themeSelector.ThemeMenu, temaEscuro);
     }
 }
-
