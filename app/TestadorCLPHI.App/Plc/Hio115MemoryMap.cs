@@ -44,4 +44,3 @@ public static class Hio115MemoryMap
     public const int FalhaWatchdog = 73;
     public const int WatchdogAtivo = 74;
 }
-
