@@ -51,10 +51,10 @@ public sealed class MainForm : Form
     private readonly Label _estadoStatusLabel;
     private readonly Label _estadoMensagemLabel;
     private readonly Label _estadoAtualizacaoLabel;
-    private readonly Button _simularConectarButton;
+    private readonly Button _conectarClpButton;
     private readonly Button _simularErroButton;
     private readonly Button _desconectarButton;
-    private readonly Button _testarMw70Button;
+    private readonly Button _lerMw70Button;
 
     private readonly GroupBox _comandosGroupBox;
     private readonly Button _habilitarTesteButton;
@@ -128,7 +128,7 @@ public sealed class MainForm : Form
         _estadoMensagemLabel = CriarLabelEstadoMensagem(15, 55);
         _estadoAtualizacaoLabel = CriarLabel(string.Empty, 15, 120);
 
-        _simularConectarButton = new Button
+        _conectarClpButton = new Button
         {
             Text = "Conectar CLP",
             Left = 15,
@@ -155,7 +155,7 @@ public sealed class MainForm : Form
             Height = 28
         };
 
-        _testarMw70Button = new Button
+        _lerMw70Button = new Button
         {
             Text = "Ler %MW70",
             Left = 140,
@@ -317,20 +317,20 @@ public sealed class MainForm : Form
         _aplicarConexaoButton.Click += AplicarConexaoButton_Click;
         _detectarClpButton.Click += DetectarClpButton_Click;
 
-        _simularConectarButton.Click += SimularConectarButton_Click;
+        _conectarClpButton.Click += ConectarClpButton_Click;
         _simularErroButton.Click += SimularErroButton_Click;
         _desconectarButton.Click += DesconectarButton_Click;
-        _testarMw70Button.Click += TestarMw70Button_Click;
+        _lerMw70Button.Click += LerMw70Button_Click;
         _habilitarTesteButton.Click += HabilitarTesteButton_Click;
         _resetarSaidasButton.Click += ResetarSaidasButton_Click;
 
         _estadoGroupBox.Controls.Add(_estadoStatusLabel);
         _estadoGroupBox.Controls.Add(_estadoMensagemLabel);
         _estadoGroupBox.Controls.Add(_estadoAtualizacaoLabel);
-        _estadoGroupBox.Controls.Add(_simularConectarButton);
+        _estadoGroupBox.Controls.Add(_conectarClpButton);
         _estadoGroupBox.Controls.Add(_simularErroButton);
         _estadoGroupBox.Controls.Add(_desconectarButton);
-        _estadoGroupBox.Controls.Add(_testarMw70Button);
+        _estadoGroupBox.Controls.Add(_lerMw70Button);
 
         _comandosGroupBox.Controls.Add(_habilitarTesteButton);
         _comandosGroupBox.Controls.Add(_resetarSaidasButton);
@@ -543,7 +543,7 @@ public sealed class MainForm : Form
     private async void DetectarClpButton_Click(object? sender, EventArgs e)
     {
         _detectarClpButton.Enabled = false;
-        _simularConectarButton.Enabled = false;
+        _conectarClpButton.Enabled = false;
 
         try
         {
@@ -657,10 +657,10 @@ public sealed class MainForm : Form
         finally
         {
             _detectarClpButton.Enabled = true;
-            _simularConectarButton.Enabled = true;
+            _conectarClpButton.Enabled = true;
         }
     }
-    private async void SimularConectarButton_Click(object? sender, EventArgs e)
+    private async void ConectarClpButton_Click(object? sender, EventArgs e)
     {
         if (!TryUpdateConnectionSettingsFromUi())
         {
@@ -711,7 +711,7 @@ public sealed class MainForm : Form
         AtualizarEstadoConexao();
     }
 
-    private async void TestarMw70Button_Click(object? sender, EventArgs e)
+    private async void LerMw70Button_Click(object? sender, EventArgs e)
     {
         if (!TryUpdateConnectionSettingsFromUi())
         {
@@ -897,10 +897,10 @@ public sealed class MainForm : Form
         AppThemeService.ApplyButton(_atualizarPortasButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_aplicarConexaoButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_detectarClpButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_simularConectarButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_conectarClpButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_simularErroButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_desconectarButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_testarMw70Button, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_lerMw70Button, corBotao, corTextoBotao);
         _comandosGroupBox.ForeColor = corTexto;
         _comandosGroupBox.BackColor = corFundo;
         AppThemeService.ApplyButton(_habilitarTesteButton, corBotao, corTextoBotao);
@@ -909,6 +909,7 @@ public sealed class MainForm : Form
 
 
 }
+
 
 
 
