@@ -647,59 +647,6 @@ public sealed class MainForm : Form
             _ => false
         };
 
-        AplicarTema(temaEscuro);
-    }
-
-    private void AplicarTema(bool temaEscuro)
-    {
-        Color corFundo;
-        Color corTexto;
-        Color corBotao;
-        Color corTextoBotao;
-        Color corCampo;
-
-        if (temaEscuro)
-        {
-            corFundo = Color.FromArgb(32, 32, 32);
-            corTexto = Color.WhiteSmoke;
-            corBotao = Color.FromArgb(55, 55, 55);
-            corTextoBotao = Color.White;
-            corCampo = Color.FromArgb(45, 45, 45);
-        }
-        else
-        {
-            corFundo = SystemColors.Control;
-            corTexto = Color.Black;
-            corBotao = SystemColors.Control;
-            corTextoBotao = Color.Black;
-            corCampo = Color.White;
-        }
-
-        AppThemeService.ApplyTitleBar(this, temaEscuro);
-
-        AppThemeService.ApplyControlTree(
-            this,
-            corFundo,
-            corTexto,
-            corCampo,
-            corBotao,
-            corTextoBotao);
-
-        AppThemeService.ApplyMenuStrip(
-            _temaMenu,
-            corCampo,
-            corTexto);
+        AppThemeService.ApplyTheme(this, _temaMenu, temaEscuro);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

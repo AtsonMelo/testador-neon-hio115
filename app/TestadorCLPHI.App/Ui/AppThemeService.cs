@@ -14,6 +14,46 @@ public static class AppThemeService
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 
+    public static void ApplyTheme(Form form, ContextMenuStrip menu, bool darkMode)
+    {
+        Color backgroundColor;
+        Color textColor;
+        Color buttonColor;
+        Color buttonTextColor;
+        Color fieldColor;
+
+        if (darkMode)
+        {
+            backgroundColor = Color.FromArgb(32, 32, 32);
+            textColor = Color.WhiteSmoke;
+            buttonColor = Color.FromArgb(55, 55, 55);
+            buttonTextColor = Color.White;
+            fieldColor = Color.FromArgb(45, 45, 45);
+        }
+        else
+        {
+            backgroundColor = SystemColors.Control;
+            textColor = Color.Black;
+            buttonColor = SystemColors.Control;
+            buttonTextColor = Color.Black;
+            fieldColor = Color.White;
+        }
+
+        ApplyTitleBar(form, darkMode);
+
+        ApplyControlTree(
+            form,
+            backgroundColor,
+            textColor,
+            fieldColor,
+            buttonColor,
+            buttonTextColor);
+
+        ApplyMenuStrip(
+            menu,
+            fieldColor,
+            textColor);
+    }
     public static void ApplyTitleBar(Form form, bool darkMode)
     {
         WindowsTitleBarTheme.Apply(form, darkMode);
@@ -99,3 +139,4 @@ public static class AppThemeService
         }
     }
 }
+
