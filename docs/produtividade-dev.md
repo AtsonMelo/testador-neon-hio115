@@ -273,3 +273,74 @@ Próximas etapas:
 - Abrir PR da branch `ui/issue-16-layout-terminal`.
 - Revisar diff no GitHub.
 - Depois do merge, planejar Issue separada para integração gradual no app principal.
+
+## 2026-05-17 - Aprendizado do dia - Ferramentas de UI e redução de retrabalho
+
+### Problema observado
+- Houve perda de tempo tentando melhorar visual industrial diretamente no fluxo do app.
+- A primeira abordagem misturou UI real, assets, layout e integração, aumentando retrabalho.
+- O uso de desenho procedural simples com `System.Drawing` não atingiu o visual industrial esperado.
+- A escolha inicial de ferramentas para gerar/recortar assets não estava suficientemente validada.
+- Tentativas sucessivas de ajuste visual sem uma esteira objetiva geraram ciclos longos.
+
+### Aprendizado principal
+- Para UI/front-end, antes de codar integração real, é necessário separar:
+  - visual alvo;
+  - ferramenta de criação dos assets;
+  - ferramenta de corte/transparência;
+  - preview isolado;
+  - validação visual;
+  - só depois integração no app principal.
+- A decisão de criar um preview isolado reduziu risco e permitiu validar sem quebrar o `MainForm`.
+- Para WinForms, controles visuais industriais realistas tendem a funcionar melhor com:
+  - PNGs bem preparados;
+  - alpha correto;
+  - controles customizados desenhados com `Graphics`;
+  - `InterpolationMode.HighQualityBicubic`;
+  - fundo opaco coerente com o tema;
+  - validação em tamanho real dentro do app.
+- `BackColor` com alpha/transparência em controles WinForms pode causar exceção runtime. Evitar `Color.Transparent` ou `Color.FromArgb(alpha, r, g, b)` em `BackColor` quando o controle não suportar transparência.
+
+### Regra prática para próximos ciclos de UI
+- Após 2 tentativas visuais ruins, parar a implementação e mudar para análise.
+- Antes de continuar, criar uma miniesteira:
+  1. definir visual alvo;
+  2. listar ferramentas candidatas;
+  3. escolher a menor ferramenta capaz de resolver;
+  4. criar protótipo isolado;
+  5. validar com print;
+  6. só então integrar.
+- Não misturar no mesmo commit:
+  - criação de asset;
+  - alteração de layout;
+  - integração no app principal;
+  - refatoração;
+  - correção de bug runtime.
+
+### Ferramentas e critérios futuros
+- Para assets industriais:
+  - preferir imagens geradas/curadas com visual consistente;
+  - validar `256x256`, PNG RGBA e alpha real;
+  - usar ImageMagick para inspeção, recorte, alpha e contact sheet;
+  - gerar preview dark antes de integrar.
+- Para UI WinForms:
+  - usar preview isolado por argumento de linha de comando;
+  - evitar dependência visual direta de `PictureBox` quando a qualidade cair;
+  - preferir controle customizado quando precisar de renderização consistente;
+  - testar sempre em fundo escuro real do app.
+- Para uma evolução futura maior:
+  - avaliar se WinForms continua adequado para UI industrial rica;
+  - considerar WPF, Avalonia ou WebView2/HTML/CSS apenas em uma Issue de pesquisa separada;
+  - comparar por critérios objetivos: curva de aprendizado, estabilidade, empacotamento, manutenção, performance e integração com Modbus/serial.
+
+### Ações futuras recomendadas
+- Criar uma Issue específica: `Pesquisar stack de UI para evolução visual do TestadorCLPHI.App`.
+- Criar uma matriz de decisão comparando:
+  - WinForms custom controls;
+  - WPF;
+  - Avalonia;
+  - WebView2 com front-end web local.
+- Criar pasta futura de referência visual:
+  - `docs/design/referencias-ui-industrial.md`
+  - `docs/design/criterios-assets-ui.md`
+- Manter a regra: nenhuma mudança visual grande entra direto no `MainForm` sem preview isolado aprovado.
