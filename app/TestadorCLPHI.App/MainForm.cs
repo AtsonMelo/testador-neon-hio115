@@ -11,6 +11,7 @@ public sealed class MainForm : Form
     private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
     private readonly PlcRegisterCommandService _registerCommandService;
     private readonly PlcAutoDetectionService _autoDetectionService;
+    private readonly PlcDigitalIoManualService _digitalIoManualService;
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
@@ -37,16 +38,18 @@ public sealed class MainForm : Form
 
     private readonly ConnectionStatePanelControl _connectionStatePanel;
     private readonly TesterCommandPanelControl _testerCommandPanel;
+    private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
 
     public MainForm()
     {
         Text = "Testador CLP HI";
         Width = 900;
-        Height = 620;
+        Height = 740;
         StartPosition = FormStartPosition.CenterScreen;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
         _autoDetectionService = new PlcAutoDetectionService(_plcService);
+        _digitalIoManualService = new PlcDigitalIoManualService(_registerCommandService);
 
         _tituloLabel = new Label
         {
@@ -89,7 +92,13 @@ public sealed class MainForm : Form
         _testerCommandPanel = new TesterCommandPanelControl
         {
             Left = 20,
-            Top = 490
+            Top = 480
+        };
+
+        _digitalIoManualPanel = new DigitalIoManualPanelControl
+        {
+            Left = 20,
+            Top = 565
         };
 
         _conexaoGroupBox = new GroupBox
@@ -210,6 +219,8 @@ public sealed class MainForm : Form
         _connectionStatePanel.ReadMw70Clicked += LerMw70Button_Click;
         _testerCommandPanel.EnableTestClicked += HabilitarTesteButton_Click;
         _testerCommandPanel.ResetOutputsClicked += ResetarSaidasButton_Click;
+        _digitalIoManualPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
+        _digitalIoManualPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -231,6 +242,7 @@ public sealed class MainForm : Form
         Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_testerCommandPanel);
+        Controls.Add(_digitalIoManualPanel);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
@@ -512,6 +524,87 @@ public sealed class MainForm : Form
             "Erro no comando CLP");
     }
 
+    private async void AcionarSaidaDigitalManual(int channel)
+    {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
+        _digitalIoManualPanel.SetPanelEnabled(false);
+
+        try
+        {
+            await _digitalIoManualService.ActivateManualOutputAsync(channel);
+            await AtualizarEntradasDigitaisAsync();
+
+            _statusLabel.Text =
+                $"Saída D{channel:000} acionada em modo manual. Retornos esperados atualizados.";
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                ex.Message,
+                $"Erro ao acionar D{channel:000}",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            _digitalIoManualPanel.SetPanelEnabled(true);
+        }
+    }
+
+    private async void AtualizarEntradasDigitaisButton_Click(object? sender, EventArgs e)
+    {
+        await AtualizarEntradasDigitaisAsync();
+    }
+
+    private async System.Threading.Tasks.Task AtualizarEntradasDigitaisAsync()
+    {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
+        _digitalIoManualPanel.SetPanelEnabled(false);
+
+        try
+        {
+            bool[] inputStates =
+                await _digitalIoManualService.ReadDigitalInputsAsync();
+
+            for (int index = 0; index < inputStates.Length; index++)
+            {
+                _digitalIoManualPanel.SetInputState(
+                    index,
+                    inputStates[index]);
+            }
+
+            AtualizarEstadoConexao();
+
+            _statusLabel.Text = "Entradas digitais DI00 a DI07 atualizadas.";
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            MessageBox.Show(
+                ex.Message,
+                "Erro ao atualizar entradas digitais",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            _digitalIoManualPanel.SetPanelEnabled(true);
+        }
+    }
+
     private async System.Threading.Tasks.Task ExecutarComandoRegistradorAsync(
         int registerAddress,
         ushort valueToWrite,
@@ -572,8 +665,4 @@ public sealed class MainForm : Form
         AppThemeService.ApplyTheme(this, _themeSelector.ThemeMenu, temaEscuro);
     }
 }
-
-
-
-
 

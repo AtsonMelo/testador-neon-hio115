@@ -14,6 +14,10 @@ public static class Hio115MemoryMap
     public const int RetornoDi01 = 21;
     public const int RetornoDi02 = 22;
     public const int RetornoDi03 = 23;
+    public const int RetornoDi04 = 24;
+    public const int RetornoDi05 = 25;
+    public const int RetornoDi06 = 26;
+    public const int RetornoDi07 = 27;
 
     public const int OkD000 = 30;
     public const int OkD001 = 31;
