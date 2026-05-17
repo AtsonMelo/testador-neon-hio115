@@ -50,6 +50,7 @@ public sealed class MainForm : Form
     private readonly Button _simularConectarButton;
     private readonly Button _simularErroButton;
     private readonly Button _desconectarButton;
+    private readonly Button _testarMw70Button;
 
     public MainForm()
     {
@@ -144,6 +145,15 @@ public sealed class MainForm : Form
             Height = 28
         };
 
+        _testarMw70Button = new Button
+        {
+            Text = "Testar %MW70",
+            Left = 140,
+            Top = 195,
+            Width = 105,
+            Height = 28
+        };
+
         _conexaoGroupBox = new GroupBox
         {
             Text = "Conexão com CLP",
@@ -224,6 +234,7 @@ public sealed class MainForm : Form
         _simularConectarButton.Click += SimularConectarButton_Click;
         _simularErroButton.Click += SimularErroButton_Click;
         _desconectarButton.Click += DesconectarButton_Click;
+        _testarMw70Button.Click += TestarMw70Button_Click;
 
         _estadoGroupBox.Controls.Add(_estadoStatusLabel);
         _estadoGroupBox.Controls.Add(_estadoMensagemLabel);
@@ -231,6 +242,7 @@ public sealed class MainForm : Form
         _estadoGroupBox.Controls.Add(_simularConectarButton);
         _estadoGroupBox.Controls.Add(_simularErroButton);
         _estadoGroupBox.Controls.Add(_desconectarButton);
+        _estadoGroupBox.Controls.Add(_testarMw70Button);
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -442,6 +454,28 @@ public sealed class MainForm : Form
         AtualizarEstadoConexao();
     }
 
+    private async void TestarMw70Button_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            string resultado = await PlcFakeSmokeTest.RunAsync();
+
+            MessageBox.Show(
+                resultado,
+                "Teste fake %MW70",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                ex.Message,
+                "Erro no teste fake %MW70",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+    }
+
     private void PararTudoButton_Click(object? sender, EventArgs e)
     {
         MessageBox.Show(
@@ -533,6 +567,7 @@ public sealed class MainForm : Form
         AplicarTemaBotao(_simularConectarButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_simularErroButton, corBotao, corTextoBotao);
         AplicarTemaBotao(_desconectarButton, corBotao, corTextoBotao);
+        AplicarTemaBotao(_testarMw70Button, corBotao, corTextoBotao);
     }
 
     private static void AplicarTemaBotao(Button button, Color corFundo, Color corTexto)
@@ -552,4 +587,5 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
 
