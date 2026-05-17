@@ -36,6 +36,8 @@ public sealed class MainForm : Form
 
     private readonly Label _baudRateTituloLabel;
     private readonly ComboBox _baudRateComboBox;
+    private readonly Label _baudRateBuscaTituloLabel;
+    private readonly CheckedListBox _baudRateBuscaCheckedListBox;
 
     private readonly Label _slaveIdTituloLabel;
     private readonly TextBox _slaveIdTextBox;
@@ -43,6 +45,7 @@ public sealed class MainForm : Form
     private readonly Label _conexaoResumoLabel;
     private readonly Button _aplicarConexaoButton;
     private readonly Button _detectarClpButton;
+    private readonly CheckBox _buscarTodosBaudRatesCheckBox;
 
     private readonly GroupBox _estadoGroupBox;
     private readonly Label _estadoStatusLabel;
@@ -235,6 +238,34 @@ public sealed class MainForm : Form
 
         _baudRateComboBox.SelectedItem = _connectionSettings.BaudRate.ToString();
 
+        _baudRateBuscaTituloLabel = CriarLabel("Busca:", 240, 65);
+
+        _baudRateBuscaCheckedListBox = new CheckedListBox
+        {
+            Left = 240,
+            Top = 88,
+            Width = 125,
+            Height = 55,
+            CheckOnClick = true,
+            IntegralHeight = false
+        };
+
+        _baudRateBuscaCheckedListBox.Items.Add("9600", true);
+        _baudRateBuscaCheckedListBox.Items.Add("19200", true);
+        _baudRateBuscaCheckedListBox.Items.Add("38400", true);
+        _baudRateBuscaCheckedListBox.Items.Add("57600", false);
+        _baudRateBuscaCheckedListBox.Items.Add("115200", false);
+
+        _buscarTodosBaudRatesCheckBox = new CheckBox
+        {
+            Text = "Buscar todos",
+            Left = 240,
+            Top = 68,
+            Width = 125,
+            Height = 24,
+            Checked = false
+        };
+
         _slaveIdTituloLabel = CriarLabel("Slave ID:", 15, 110);
 
         _slaveIdTextBox = new TextBox
@@ -307,6 +338,9 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_atualizarPortasButton);
         _conexaoGroupBox.Controls.Add(_baudRateTituloLabel);
         _conexaoGroupBox.Controls.Add(_baudRateComboBox);
+        _conexaoGroupBox.Controls.Add(_baudRateBuscaTituloLabel);
+        _conexaoGroupBox.Controls.Add(_baudRateBuscaCheckedListBox);
+        _conexaoGroupBox.Controls.Add(_buscarTodosBaudRatesCheckBox);
         _conexaoGroupBox.Controls.Add(_slaveIdTituloLabel);
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_aplicarConexaoButton);
@@ -477,6 +511,32 @@ public sealed class MainForm : Form
             $"Configuração aplicada: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
     }
 
+    private int[] ObterBaudRatesSelecionadosParaBusca()
+    {
+        List<int> baudRates = [];
+
+        if (int.TryParse(_baudRateComboBox.Text, out int baudRateAtual))
+        {
+            baudRates.Add(baudRateAtual);
+        }
+
+        foreach (object? item in _baudRateBuscaCheckedListBox.CheckedItems)
+        {
+            if (item is not null && int.TryParse(item.ToString(), out int baudRateMarcado))
+            {
+                baudRates.Add(baudRateMarcado);
+            }
+        }
+
+        if (baudRates.Count == 0)
+        {
+            baudRates.Add(_connectionSettings.BaudRate);
+        }
+
+        return baudRates
+            .Distinct()
+            .ToArray();
+    }
     private async void DetectarClpButton_Click(object? sender, EventArgs e)
     {
         _detectarClpButton.Enabled = false;
@@ -484,9 +544,27 @@ public sealed class MainForm : Form
 
         try
         {
-            string[] portas = SerialPort.GetPortNames()
+            string[] portasDisponiveis = SerialPort.GetPortNames()
                 .OrderBy(porta => porta)
                 .ToArray();
+
+            List<string> portasOrdenadas = [];
+            string? portaSelecionada = _portaComboBox.SelectedItem?.ToString();
+
+            if (!string.IsNullOrWhiteSpace(portaSelecionada) && portasDisponiveis.Contains(portaSelecionada))
+            {
+                portasOrdenadas.Add(portaSelecionada);
+            }
+
+            foreach (string porta in portasDisponiveis)
+            {
+                if (!portasOrdenadas.Contains(porta))
+                {
+                    portasOrdenadas.Add(porta);
+                }
+            }
+
+            string[] portas = portasOrdenadas.ToArray();
 
             if (portas.Length == 0)
             {
@@ -494,20 +572,31 @@ public sealed class MainForm : Form
                 return;
             }
 
-            int[] baudRates =
-            [
-                9600,
-                19200,
-                38400,
-                57600,
-                115200
-            ];
+            if (!int.TryParse(_baudRateComboBox.Text, out int baudRateSelecionado))
+            {
+                _statusLabel.Text = "Selecione um baud rate válido antes da busca.";
+                return;
+            }
+
+            int[] baudRates = _buscarTodosBaudRatesCheckBox.Checked
+                ?
+                [
+                    9600,
+                    19200,
+                    38400,
+                    57600,
+                    115200
+                ]
+                :
+                [
+                    baudRateSelecionado
+                ];
 
             foreach (string porta in portas)
             {
                 foreach (int baudRate in baudRates)
                 {
-                    for (byte slaveId = 1; slaveId <= 247; slaveId++)
+                    for (byte slaveId = 1; slaveId <= 30; slaveId++)
                     {
                         _statusLabel.Text = $"Detectando: {porta}, {baudRate} bps, Slave {slaveId}...";
                         Application.DoEvents();
@@ -558,9 +647,9 @@ public sealed class MainForm : Form
                 }
             }
 
-            _plcService.State.SetError("Nenhum CLP encontrado na varredura.");
+            _plcService.State.SetError("Nenhum CLP encontrado na varredura de Slave ID 1 a 30.");
             AtualizarEstadoConexao();
-            _statusLabel.Text = "Nenhum CLP encontrado.";
+            _statusLabel.Text = "Nenhum CLP encontrado entre Slave ID 1 e 30.";
         }
         finally
         {
@@ -780,6 +869,13 @@ public sealed class MainForm : Form
         _baudRateComboBox.BackColor = corCampo;
         _baudRateComboBox.ForeColor = corTexto;
 
+        _baudRateBuscaTituloLabel.ForeColor = corTexto;
+        _baudRateBuscaCheckedListBox.BackColor = corCampo;
+        _baudRateBuscaCheckedListBox.ForeColor = corTexto;
+
+        _buscarTodosBaudRatesCheckBox.ForeColor = corTexto;
+        _buscarTodosBaudRatesCheckBox.BackColor = corFundo;
+
         _slaveIdTextBox.BackColor = corCampo;
         _slaveIdTextBox.ForeColor = corTexto;
 
@@ -824,6 +920,9 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
+
+
 
 
 
