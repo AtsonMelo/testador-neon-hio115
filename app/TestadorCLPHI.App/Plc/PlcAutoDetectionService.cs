@@ -37,7 +37,7 @@ public sealed class PlcAutoDetectionService
 
         byte[] slaveIds = BuildSlaveIdList(preferredSlaveId, maxSlaveId);
 
-        
+
         int attemptCount = 0;
 foreach (string portName in portNames)
         {
@@ -133,5 +133,3 @@ foreach (string portName in portNames)
         }
     }
 }
-
-

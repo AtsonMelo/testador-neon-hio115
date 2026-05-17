@@ -309,4 +309,3 @@ public sealed class ModbusRtuPlcCommunicationService : IPlcCommunicationService,
         }
     }
 }
-

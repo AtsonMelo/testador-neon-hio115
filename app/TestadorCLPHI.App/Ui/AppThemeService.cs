@@ -139,4 +139,3 @@ public static class AppThemeService
         }
     }
 }
-
