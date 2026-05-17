@@ -15,7 +15,7 @@ public sealed class MainForm : Form
     }
 
     private readonly PlcConnectionSettings _connectionSettings = new();
-    private readonly PlcConnectionState _connectionState = new();
+    private readonly IPlcCommunicationService _plcService = new FakePlcCommunicationService();
 
     private ThemeSelection _themeSelection = ThemeSelection.Windows;
 
@@ -322,9 +322,11 @@ public sealed class MainForm : Form
 
     private void AtualizarEstadoConexao()
     {
-        _estadoStatusLabel.Text = $"Status: {_connectionState.Status}";
-        _estadoMensagemLabel.Text = $"Mensagem: {_connectionState.Message}";
-        _estadoAtualizacaoLabel.Text = $"Atualizado: {_connectionState.LastUpdatedAt:HH:mm:ss}";
+        PlcConnectionState state = _plcService.State;
+
+        _estadoStatusLabel.Text = $"Status: {state.Status}";
+        _estadoMensagemLabel.Text = $"Mensagem: {state.Message}";
+        _estadoAtualizacaoLabel.Text = $"Atualizado: {state.LastUpdatedAt:HH:mm:ss}";
     }
 
     private void TemaButton_Click(object? sender, EventArgs e)
@@ -406,24 +408,37 @@ public sealed class MainForm : Form
             MessageBoxIcon.Information);
     }
 
-    private void SimularConectarButton_Click(object? sender, EventArgs e)
+    private async void SimularConectarButton_Click(object? sender, EventArgs e)
     {
-        _connectionState.SetConnecting("Tentando conectar...");
-        AtualizarEstadoConexao();
+        try
+        {
+            await _plcService.ConnectAsync(_connectionSettings);
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+        }
 
-        _connectionState.SetConnected("Conectado - simulação");
         AtualizarEstadoConexao();
     }
 
     private void SimularErroButton_Click(object? sender, EventArgs e)
     {
-        _connectionState.SetError("Erro simulado de comunicação");
+        _plcService.State.SetError("Erro simulado de comunicação");
         AtualizarEstadoConexao();
     }
 
-    private void DesconectarButton_Click(object? sender, EventArgs e)
+    private async void DesconectarButton_Click(object? sender, EventArgs e)
     {
-        _connectionState.SetDisconnected();
+        try
+        {
+            await _plcService.DisconnectAsync();
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+        }
+
         AtualizarEstadoConexao();
     }
 
@@ -537,3 +552,4 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
