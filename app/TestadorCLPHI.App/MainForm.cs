@@ -459,15 +459,26 @@ public sealed class MainForm : Form
         try
         {
             await _plcService.ConnectAsync(_connectionSettings);
+
+            ushort value = await _plcService.ReadHoldingRegisterAsync(
+                Hio115MemoryMap.HabilitaTeste);
+
+            _plcService.State.SetConnected(
+                $"CLP respondeu Modbus: %MW{Hio115MemoryMap.HabilitaTeste} = {value}");
+
+            AtualizarEstadoConexao();
+
+            _statusLabel.Text =
+                $"CLP conectado e validado em {_connectionSettings.PortName}, Slave {_connectionSettings.SlaveId}.";
         }
         catch (Exception ex)
         {
             _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            _statusLabel.Text = "Falha ao validar comunicação com o CLP.";
         }
-
-        AtualizarEstadoConexao();
     }
-
     private void SimularErroButton_Click(object? sender, EventArgs e)
     {
         _plcService.State.SetError("Erro simulado de comunicação");
@@ -698,6 +709,7 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
 
 
 
