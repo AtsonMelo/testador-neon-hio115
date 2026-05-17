@@ -17,12 +17,12 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 4,
-            BackColor = Color.Transparent,
+            BackColor = Color.FromArgb(18, 24, 32),
             Padding = new Padding(0)
         };
 
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 112));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 152));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 108));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -83,46 +83,47 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
         {
             Text = "Saídas digitais - DO",
             AutoSize = true,
-            ForeColor = Color.FromArgb(226, 232, 240),
+            ForeColor = Color.White,
             Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-            Dock = DockStyle.Top,
-            Height = 24
+            Left = 18,
+            Top = 16
         };
 
         FlowLayoutPanel flow = new()
         {
-            Dock = DockStyle.Fill,
+            Left = 18,
+            Top = 44,
+            Width = 820,
+            Height = 96,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
-            AutoScroll = false,
-            Padding = new Padding(0, 8, 0, 0),
-            BackColor = Color.Transparent
+            BackColor = panel.BackColor
         };
 
-        string[] outputs =
-        [
-            "D000 -> DI00 + DI04",
-            "D001 -> DI01 + DI05",
-            "D002 -> DI02 + DI06",
-            "D003 -> DI03 + DI07"
-        ];
+        string assetDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Ui");
 
-        for (int i = 0; i < outputs.Length; i++)
+        (string Title, string Description, string ImageName)[] outputs =
+        [
+            ("D000", "D000 -> DI00 + DI04", "push_button_red.png"),
+            ("D001", "D001 -> DI01 + DI05", "push_button_green.png"),
+            ("D002", "D002 -> DI02 + DI06", "push_button_yellow.png"),
+            ("D003", "D003 -> DI03 + DI07", "push_button_blue.png"),
+            ("STOP", "Parar tudo", "stop_emergency.png")];
+
+        foreach ((string buttonTitle, string description, string imageName) in outputs)
         {
-            Button button = new()
+            IndustrialPushButtonControl button = new()
             {
-                Text = outputs[i],
-                Width = 154,
-                Height = 48,
+                Title = buttonTitle,
+                Description = description,
+                ButtonImagePath = Path.Combine(assetDir, imageName),
+                Width = 132,
+                Height = 92,
                 Margin = new Padding(0, 0, 12, 0),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(35, 45, 58),
+                BackColor = panel.BackColor,
                 ForeColor = Color.FromArgb(226, 232, 240),
                 Font = new Font("Segoe UI", 8.5F, FontStyle.Bold)
             };
-
-            button.FlatAppearance.BorderColor = Color.FromArgb(71, 85, 105);
-            button.FlatAppearance.MouseOverBackColor = Color.FromArgb(51, 65, 85);
 
             flow.Controls.Add(button);
         }
@@ -155,7 +156,7 @@ public sealed class IndustrialDigitalIoPanelControl : UserControl
             WrapContents = false,
             AutoScroll = false,
             Padding = new Padding(0, 6, 0, 0),
-            BackColor = Color.Transparent
+            BackColor = panel.BackColor
         };
 
         string onImagePath = Path.Combine(AppContext.BaseDirectory, "Assets", "Ui", "led_on_green.png");

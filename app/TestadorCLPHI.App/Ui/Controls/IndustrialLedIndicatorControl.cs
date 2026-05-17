@@ -1,53 +1,38 @@
-using System.IO;
+using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
 
-public sealed class IndustrialLedIndicatorControl : UserControl
+public sealed class IndustrialLedIndicatorControl : Control
 {
-    private readonly PictureBox _pictureBox;
-    private readonly Label _label;
     private Image? _onImage;
     private Image? _offImage;
     private bool _isOn;
+    private string _labelText = "DI";
 
     public IndustrialLedIndicatorControl()
     {
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw |
+            ControlStyles.UserPaint,
+            true);
+
         Width = 64;
         Height = 72;
-        BackColor = Color.Transparent;
+        BackColor = Color.FromArgb(24, 32, 42);
+        ForeColor = Color.FromArgb(203, 213, 225);
         Margin = new Padding(0, 0, 14, 0);
-
-        _pictureBox = new PictureBox
-        {
-            Width = 48,
-            Height = 48,
-            Left = 8,
-            Top = 0,
-            BackColor = Color.Transparent,
-            SizeMode = PictureBoxSizeMode.Zoom
-        };
-
-        _label = new Label
-        {
-            Width = 64,
-            Height = 18,
-            Left = 0,
-            Top = 50,
-            Text = "DI",
-            TextAlign = ContentAlignment.MiddleCenter,
-            ForeColor = Color.FromArgb(203, 213, 225),
-            Font = new Font("Segoe UI", 8F, FontStyle.Bold),
-            BackColor = Color.Transparent
-        };
-
-        Controls.Add(_pictureBox);
-        Controls.Add(_label);
     }
 
     public string LabelText
     {
-        get => _label.Text;
-        set => _label.Text = string.IsNullOrWhiteSpace(value) ? "DI" : value.Trim();
+        get => _labelText;
+        set
+        {
+            _labelText = string.IsNullOrWhiteSpace(value) ? "DI" : value.Trim();
+            Invalidate();
+        }
     }
 
     public bool IsOn
@@ -55,8 +40,13 @@ public sealed class IndustrialLedIndicatorControl : UserControl
         get => _isOn;
         set
         {
+            if (_isOn == value)
+            {
+                return;
+            }
+
             _isOn = value;
-            UpdateImage();
+            Invalidate();
         }
     }
 
@@ -68,23 +58,52 @@ public sealed class IndustrialLedIndicatorControl : UserControl
         _onImage = File.Exists(onImagePath) ? new Bitmap(onImagePath) : null;
         _offImage = File.Exists(offImagePath) ? new Bitmap(offImagePath) : null;
 
-        UpdateImage();
+        Invalidate();
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+
+        Graphics graphics = e.Graphics;
+        graphics.SmoothingMode = SmoothingMode.HighQuality;
+        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+        graphics.CompositingQuality = CompositingQuality.HighQuality;
+
+        graphics.Clear(BackColor);
+
+        Image? image = _isOn ? _onImage : _offImage;
+
+        int imageSize = Math.Min(52, Math.Max(40, Height - 20));
+        Rectangle imageRect = new((Width - imageSize) / 2, 0, imageSize, imageSize);
+
+        if (image is not null)
+        {
+            graphics.DrawImage(image, imageRect);
+        }
+
+        using Font labelFont = new(Font.FontFamily, 8.0f, FontStyle.Bold);
+        using Brush labelBrush = new SolidBrush(ForeColor);
+        using StringFormat center = new()
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
+
+        graphics.DrawString(_labelText, labelFont, labelBrush, new RectangleF(0, Height - 18, Width, 16), center);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _pictureBox.Image = null;
             _onImage?.Dispose();
             _offImage?.Dispose();
+            _onImage = null;
+            _offImage = null;
         }
 
         base.Dispose(disposing);
-    }
-
-    private void UpdateImage()
-    {
-        _pictureBox.Image = _isOn ? _onImage : _offImage;
     }
 }
