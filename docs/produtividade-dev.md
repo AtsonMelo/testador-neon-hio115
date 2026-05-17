@@ -7,13 +7,14 @@
 | 2026-05-17 | refactor/revisao-mainform | Extrair painel de estado da conexão | refactor | - | - | Sim | Sim | Não identificado | Commit ab1a3b1 criado e enviado |
 | 2026-05-17 | refactor/revisao-mainform | Centralizar aplicação de tema no AppThemeService | refactor | - | - | Sim | Sim | Não identificado | Commit 0cd18eb criado e enviado; MainForm.cs reduziu de 705 para 652 linhas |
 | 2026-05-17 | refactor/revisao-mainform | Extrair painel de comandos do testador | refactor | - | - | Sim | Sim | Não identificado | Commit bf3a69e criado e enviado; MainForm.cs reduziu de 652 para 626 linhas |
+| 2026-05-17 | refactor/revisao-mainform | Extrair seletor de tema do MainForm | refactor | - | - | Sim | Sim | Não identificado | Commit ce7dde8 criado e enviado; MainForm.cs reduziu de 626 para 576 linhas; meta abaixo de 600 atingida |
 
 ## Métricas atuais
 
 | Métrica | Valor |
 |---|---:|
-| Linhas MainForm.cs | 626 |
-| Último commit | bf3a69e |
+| Linhas MainForm.cs | 576 |
+| Último commit | ce7dde8 |
 | Build atual | OK |
 | Erros atuais | 0 |
 | Avisos atuais | 0 |
@@ -52,7 +53,7 @@ Uma etapa só é considerada concluída quando:
 
 | Meta | Estado |
 |---|---|
-| Reduzir MainForm.cs para menos de 600 linhas | Pendente |
+| Reduzir MainForm.cs para menos de 600 linhas | Concluído |
 | Reduzir MainForm.cs para menos de 500 linhas | Pendente |
 | Preservar comunicação Modbus RTU | Em acompanhamento |
 | Preservar tema claro/escuro | Em acompanhamento |
@@ -134,3 +135,4 @@ Critério:
 - registrar bloqueios, erros e decisões;
 - usar o último commit e o estado atual como referência;
 - commitar o documento quando fechar um bloco relevante de trabalho.
+
