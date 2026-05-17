@@ -16,7 +16,7 @@ public sealed class DigitalIoManualPanelControl : UserControl
     public DigitalIoManualPanelControl()
     {
         Width = 690;
-        Height = 190;
+        Height = 125;
 
         _groupBox = new GroupBox
         {
@@ -24,7 +24,7 @@ public sealed class DigitalIoManualPanelControl : UserControl
             Left = 0,
             Top = 0,
             Width = 690,
-            Height = 190
+            Height = 125
         };
 
         Label outputsTitleLabel = new()
@@ -32,18 +32,18 @@ public sealed class DigitalIoManualPanelControl : UserControl
             Text = "Saídas digitais",
             AutoSize = true,
             Left = 15,
-            Top = 25,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Top = 24,
+            Font = new Font("Segoe UI", 9, FontStyle.Bold)
         };
 
         _groupBox.Controls.Add(outputsTitleLabel);
 
         string[] expectedInputs =
         [
-            "DI00 + DI04",
-            "DI01 + DI05",
-            "DI02 + DI06",
-            "DI03 + DI07"
+            "DI00+DI04",
+            "DI01+DI05",
+            "DI02+DI06",
+            "DI03+DI07"
         ];
 
         for (int channel = 0; channel < _outputButtons.Length; channel++)
@@ -52,11 +52,11 @@ public sealed class DigitalIoManualPanelControl : UserControl
 
             Button button = new()
             {
-                Text = $"Acionar D{channel:000}`r`n{expectedInputs[channel]}",
+                Text = $"D{channel:000} -> {expectedInputs[channel]}",
                 Left = 15 + (channel * 165),
-                Top = 50,
-                Width = 145,
-                Height = 45
+                Top = 45,
+                Width = 155,
+                Height = 28
             };
 
             button.Click += (_, _) => OutputCommandClicked?.Invoke(capturedChannel);
@@ -70,8 +70,8 @@ public sealed class DigitalIoManualPanelControl : UserControl
             Text = "Entradas digitais",
             AutoSize = true,
             Left = 15,
-            Top = 108,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            Top = 83,
+            Font = new Font("Segoe UI", 9, FontStyle.Bold)
         };
 
         _groupBox.Controls.Add(inputsTitleLabel);
@@ -80,11 +80,11 @@ public sealed class DigitalIoManualPanelControl : UserControl
         {
             Label label = new()
             {
-                Text = $"● DI{channel:00}: --",
+                Text = $"DI{channel:00} ●",
                 AutoSize = true,
-                Left = 15 + ((channel % 4) * 120),
-                Top = 135 + ((channel / 4) * 25),
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Left = 135 + (channel * 48),
+                Top = 84,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 ForeColor = Color.Gray
             };
 
@@ -94,11 +94,11 @@ public sealed class DigitalIoManualPanelControl : UserControl
 
         _refreshInputsButton = new Button
         {
-            Text = "Atualizar entradas",
-            Left = 520,
-            Top = 135,
-            Width = 145,
-            Height = 32
+            Text = "Atualizar",
+            Left = 585,
+            Top = 80,
+            Width = 85,
+            Height = 28
         };
 
         _refreshInputsButton.Click += (_, e) => RefreshInputsClicked?.Invoke(this, e);
@@ -114,9 +114,7 @@ public sealed class DigitalIoManualPanelControl : UserControl
             return;
         }
 
-        _inputLedLabels[channel].Text = active
-            ? $"● DI{channel:00}: ON"
-            : $"● DI{channel:00}: OFF";
+        _inputLedLabels[channel].Text = $"DI{channel:00} ●";
 
         _inputLedLabels[channel].ForeColor = active
             ? Color.LimeGreen

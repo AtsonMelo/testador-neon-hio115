@@ -44,7 +44,7 @@ public sealed class MainForm : Form
     {
         Text = "Testador CLP HI";
         Width = 900;
-        Height = 800;
+        Height = 740;
         StartPosition = FormStartPosition.CenterScreen;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
@@ -92,13 +92,13 @@ public sealed class MainForm : Form
         _testerCommandPanel = new TesterCommandPanelControl
         {
             Left = 20,
-            Top = 490
+            Top = 480
         };
 
         _digitalIoManualPanel = new DigitalIoManualPanelControl
         {
             Left = 20,
-            Top = 580
+            Top = 565
         };
 
         _conexaoGroupBox = new GroupBox
@@ -665,8 +665,4 @@ public sealed class MainForm : Form
         AppThemeService.ApplyTheme(this, _themeSelector.ThemeMenu, temaEscuro);
     }
 }
-
-
-
-
 
