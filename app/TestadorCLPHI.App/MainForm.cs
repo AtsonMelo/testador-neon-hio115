@@ -461,7 +461,7 @@ public sealed class MainForm : Form
         AtualizarListaDePortas();
     }
 
-    private void AplicarConexaoButton_Click(object? sender, EventArgs e)
+    private bool TryUpdateConnectionSettingsFromUi()
     {
         if (_portaComboBox.SelectedItem is null)
         {
@@ -470,7 +470,8 @@ public sealed class MainForm : Form
                 "Configuração inválida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
-            return;
+
+            return false;
         }
 
         if (!int.TryParse(_baudRateComboBox.Text, out int baudRate) || baudRate <= 0)
@@ -480,27 +481,19 @@ public sealed class MainForm : Form
                 "Configuração inválida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
-            return;
+
+            return false;
         }
 
-        if (!byte.TryParse(_slaveIdTextBox.Text, out byte slaveId) || slaveId == 0)
+        if (!byte.TryParse(_slaveIdTextBox.Text, out byte slaveId) || slaveId is < 1 or > 247)
         {
             MessageBox.Show(
                 "Informe um Slave ID válido entre 1 e 247.",
                 "Configuração inválida",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
-            return;
-        }
 
-        if (slaveId > 247)
-        {
-            MessageBox.Show(
-                "No Modbus, o Slave ID normalmente deve ficar entre 1 e 247.",
-                "Configuração inválida",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
-            return;
+            return false;
         }
 
         _connectionSettings.PortName = _portaComboBox.SelectedItem.ToString()!;
@@ -509,10 +502,18 @@ public sealed class MainForm : Form
 
         AtualizarResumoConexao();
 
+        return true;
+    }
+    private void AplicarConexaoButton_Click(object? sender, EventArgs e)
+    {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
         _statusLabel.Text =
             $"Configuração aplicada: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
     }
-
     private int[] ObterBaudRatesSelecionadosParaBusca()
     {
         List<int> baudRates = [];
@@ -661,6 +662,11 @@ public sealed class MainForm : Form
     }
     private async void SimularConectarButton_Click(object? sender, EventArgs e)
     {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
         try
         {
             await _plcService.ConnectAsync(_connectionSettings);
@@ -674,14 +680,15 @@ public sealed class MainForm : Form
             AtualizarEstadoConexao();
 
             _statusLabel.Text =
-                $"CLP conectado e validado em {_connectionSettings.PortName}, Slave {_connectionSettings.SlaveId}.";
+                $"CLP conectado e validado em {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
         }
         catch (Exception ex)
         {
             _plcService.State.SetError(ex.Message);
             AtualizarEstadoConexao();
 
-            _statusLabel.Text = "Falha ao validar comunicação com o CLP.";
+            _statusLabel.Text =
+                $"Falha ao validar comunicação em {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
         }
     }
     private void SimularErroButton_Click(object? sender, EventArgs e)
@@ -706,6 +713,11 @@ public sealed class MainForm : Form
 
     private async void TestarMw70Button_Click(object? sender, EventArgs e)
     {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
         try
         {
             ushort value = await _registerCommandService.ReadAsync(
@@ -757,6 +769,11 @@ public sealed class MainForm : Form
         string dialogTitle,
         string errorTitle)
     {
+        if (!TryUpdateConnectionSettingsFromUi())
+        {
+            return;
+        }
+
         try
         {
             PlcRegisterCommandResult result =
@@ -892,5 +909,7 @@ public sealed class MainForm : Form
 
 
 }
+
+
 
 
