@@ -153,3 +153,32 @@ Critério:
   - Build final na main com 0 erros e 0 avisos.
 - Resultado:
   - Issue #9 integrada com sucesso na main.
+
+## 2026-05-17 — Issue #15: painel manual 4DO/8DI HIO115
+
+- PR concluído: #18
+- Merge na main: 607bb1f
+- Branch de trabalho: feat/issue-15-painel-4do-8di-hio115
+- Resultado principal:
+  - Base HIO115 expandida para 4 saídas digitais e 8 entradas digitais.
+  - RETORNO_DI00 a RETORNO_DI07 publicados em %MW20 a %MW27.
+  - Diagnóstico ajustado para retornos em pares:
+    - D000 -> DI00 + DI04
+    - D001 -> DI01 + DI05
+    - D002 -> DI02 + DI06
+    - D003 -> DI03 + DI07
+  - Painel manual 4DO/8DI criado no TestadorCLPHI.App.
+  - Painel compactado para liberar espaço futuro para terminal/log.
+  - Orientação inicial adicionada para clicar em Habilitar teste antes do acionamento.
+- Validação:
+  - dotnet build com 0 erros e 0 avisos.
+  - HIstudio atualizado com CSVs completos e ST gerado.
+  - DPK compilado e carregado no CLP real.
+  - Teste real pelo app funcionou em bancada.
+- Retrabalho identificado:
+  - Ajustes recorrentes de fim de arquivo e git diff --check.
+  - MainForm voltou a crescer e ainda precisa de nova refatoração.
+- Próximos focos:
+  - Issue #16: melhorar layout, visual e preparar área para terminal.
+  - Issue #17: tornar o estado Habilitar teste mais chamativo.
+  - Criar/atacar botão de teste automático.
