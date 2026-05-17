@@ -182,3 +182,55 @@ Critério:
   - Issue #16: melhorar layout, visual e preparar área para terminal.
   - Issue #17: tornar o estado Habilitar teste mais chamativo.
   - Criar/atacar botão de teste automático.
+
+## 2026-05-17 — Issue #16: protótipo industrial por assets
+
+### Resultado
+
+Foi criado um fluxo mais controlado para evolução visual do painel manual 4DO/8DI.
+
+Commits principais:
+
+- `89da715` — adiciona assets de LEDs industriais;
+- `fda5a13` — copia assets UI para output do app;
+- `5f4362b` — registra decisão de layout industrial;
+- `9208201` — adiciona preview isolado do painel industrial;
+- `3634aca` — prototipa painel industrial com LEDs normalizados.
+
+### Validações
+
+- `validate-ui-assets.ps1 -Strict` aprovado;
+- assets `led_on_green.png` e `led_off_gray.png` com `256x256` e transparência real;
+- `dotnet build` aprovado;
+- preview isolado executado com `--preview-industrial-panel`.
+
+### Retrabalho evitado
+
+A tentativa de aplicar os LEDs diretamente no `DigitalIoManualPanelControl` foi revertida porque gerou:
+
+- painel apertado;
+- texto sobreposto;
+- perda de espaço do terminal/log;
+- ajuste excessivo de coordenadas;
+- resultado visual inferior ao esperado.
+
+### Decisão técnica
+
+A causa principal foi identificada como arquitetura de layout, não como problema dos PNGs.
+
+A solução adotada foi criar um protótipo isolado com:
+
+- `IndustrialDigitalIoPanelControl`;
+- `IndustrialLedIndicatorControl`;
+- preview por argumento `--preview-industrial-panel`.
+
+### Próximo foco
+
+Refinar o protótipo isolado antes de integrar no `MainForm`.
+
+Próximas etapas:
+
+1. melhorar layout dos DO;
+2. gerar/adicionar assets de botoeiras industriais;
+3. validar DO e DI juntos no preview;
+4. só depois decidir substituição do painel principal.
