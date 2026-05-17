@@ -29,7 +29,7 @@ public sealed class DigitalIoManualPanelControl : UserControl
 
         Label outputsTitleLabel = new()
         {
-            Text = "Saídas digitais",
+            Text = "1) Clique em Habilitar teste  2) Acione a saída",
             AutoSize = true,
             Left = 15,
             Top = 24,
@@ -131,3 +131,4 @@ public sealed class DigitalIoManualPanelControl : UserControl
         _refreshInputsButton.Enabled = enabled;
     }
 }
+
