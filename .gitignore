@@ -22,3 +22,6 @@ obj/
 *.userosscache
 *.sln.docstates
 .vs/
+
+# Backups locais do projeto HIstudio
+backups-dpk/
