@@ -43,7 +43,6 @@ public sealed class MainForm : Form
     private readonly TextBox _slaveIdTextBox;
 
     private readonly Label _conexaoResumoLabel;
-    private readonly Button _aplicarConexaoButton;
     private readonly Button _detectarClpButton;
     private readonly CheckBox _buscarTodosBaudRatesCheckBox;
 
@@ -278,15 +277,6 @@ public sealed class MainForm : Form
             Text = _connectionSettings.SlaveId.ToString()
         };
 
-        _aplicarConexaoButton = new Button
-        {
-            Text = "Aplicar configuração",
-            Left = 15,
-            Top = 150,
-            Width = 165,
-            Height = 32
-        };
-
         _detectarClpButton = new Button
         {
             Text = "Detectar CLP",
@@ -314,7 +304,6 @@ public sealed class MainForm : Form
         _temaEscuroMenuItem.Click += (_, _) => SelecionarTema(ThemeSelection.Dark);
 
         _atualizarPortasButton.Click += AtualizarPortasButton_Click;
-        _aplicarConexaoButton.Click += AplicarConexaoButton_Click;
         _detectarClpButton.Click += DetectarClpButton_Click;
 
         _conectarClpButton.Click += ConectarClpButton_Click;
@@ -345,7 +334,6 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_buscarTodosBaudRatesCheckBox);
         _conexaoGroupBox.Controls.Add(_slaveIdTituloLabel);
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
-        _conexaoGroupBox.Controls.Add(_aplicarConexaoButton);
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
 
@@ -503,16 +491,6 @@ public sealed class MainForm : Form
         AtualizarResumoConexao();
 
         return true;
-    }
-    private void AplicarConexaoButton_Click(object? sender, EventArgs e)
-    {
-        if (!TryUpdateConnectionSettingsFromUi())
-        {
-            return;
-        }
-
-        _statusLabel.Text =
-            $"Configuração aplicada: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
     }
     private int[] ObterBaudRatesSelecionadosParaBusca()
     {
@@ -895,7 +873,6 @@ public sealed class MainForm : Form
         AppThemeService.ApplyButton(_pararTudoButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_temaButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_atualizarPortasButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_aplicarConexaoButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_detectarClpButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_conectarClpButton, corBotao, corTextoBotao);
         AppThemeService.ApplyButton(_simularErroButton, corBotao, corTextoBotao);
@@ -909,6 +886,7 @@ public sealed class MainForm : Form
 
 
 }
+
 
 
 
