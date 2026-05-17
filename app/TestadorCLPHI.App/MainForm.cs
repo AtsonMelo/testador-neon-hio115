@@ -736,67 +736,23 @@ public sealed class MainForm : Form
             corCampo = Color.White;
         }
 
-        BackColor = corFundo;
         AppThemeService.ApplyTitleBar(this, temaEscuro);
 
-        _tituloLabel.ForeColor = corTexto;
-        _statusLabel.ForeColor = corTexto;
+        AppThemeService.ApplyControlTree(
+            this,
+            corFundo,
+            corTexto,
+            corCampo,
+            corBotao,
+            corTextoBotao);
 
-        _estadoGroupBox.ForeColor = corTexto;
-        _estadoGroupBox.BackColor = corFundo;
-        _estadoStatusLabel.ForeColor = corTexto;
-        _estadoMensagemLabel.ForeColor = corTexto;
-        _estadoAtualizacaoLabel.ForeColor = corTexto;
-
-        _conexaoGroupBox.ForeColor = corTexto;
-        _conexaoGroupBox.BackColor = corFundo;
-
-        _portaTituloLabel.ForeColor = corTexto;
-        _baudRateTituloLabel.ForeColor = corTexto;
-        _slaveIdTituloLabel.ForeColor = corTexto;
-        _conexaoResumoLabel.ForeColor = corTexto;
-
-        _portaComboBox.BackColor = corCampo;
-        _portaComboBox.ForeColor = corTexto;
-
-        _baudRateComboBox.BackColor = corCampo;
-        _baudRateComboBox.ForeColor = corTexto;
-
-        _baudRateBuscaTituloLabel.ForeColor = corTexto;
-        _baudRateBuscaCheckedListBox.BackColor = corCampo;
-        _baudRateBuscaCheckedListBox.ForeColor = corTexto;
-
-        _buscarTodosBaudRatesCheckBox.ForeColor = corTexto;
-        _buscarTodosBaudRatesCheckBox.BackColor = corFundo;
-
-        _slaveIdTextBox.BackColor = corCampo;
-        _slaveIdTextBox.ForeColor = corTexto;
-
-        _temaMenu.BackColor = corCampo;
-        _temaMenu.ForeColor = corTexto;
-
-        foreach (ToolStripItem item in _temaMenu.Items)
-        {
-            item.BackColor = corCampo;
-            item.ForeColor = corTexto;
-        }
-
-        AppThemeService.ApplyButton(_pararTudoButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_temaButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_atualizarPortasButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_detectarClpButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_conectarClpButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_simularErroButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_desconectarButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_lerMw70Button, corBotao, corTextoBotao);
-        _comandosGroupBox.ForeColor = corTexto;
-        _comandosGroupBox.BackColor = corFundo;
-        AppThemeService.ApplyButton(_habilitarTesteButton, corBotao, corTextoBotao);
-        AppThemeService.ApplyButton(_resetarSaidasButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyMenuStrip(
+            _temaMenu,
+            corCampo,
+            corTexto);
     }
-
-
 }
+
 
 
 

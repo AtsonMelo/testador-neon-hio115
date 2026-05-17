@@ -25,4 +25,77 @@ public static class AppThemeService
         button.ForeColor = textColor;
         button.FlatStyle = FlatStyle.Flat;
     }
+
+    public static void ApplyControlTree(
+        Control root,
+        Color backgroundColor,
+        Color textColor,
+        Color fieldColor,
+        Color buttonColor,
+        Color buttonTextColor)
+    {
+        root.BackColor = backgroundColor;
+        root.ForeColor = textColor;
+
+        foreach (Control control in root.Controls)
+        {
+            ApplyControlRecursive(
+                control,
+                backgroundColor,
+                textColor,
+                fieldColor,
+                buttonColor,
+                buttonTextColor);
+        }
+    }
+
+    private static void ApplyControlRecursive(
+        Control control,
+        Color backgroundColor,
+        Color textColor,
+        Color fieldColor,
+        Color buttonColor,
+        Color buttonTextColor)
+    {
+        control.ForeColor = textColor;
+
+        if (control is TextBox or ComboBox or CheckedListBox)
+        {
+            control.BackColor = fieldColor;
+        }
+        else if (control is Button button)
+        {
+            ApplyButton(button, buttonColor, buttonTextColor);
+        }
+        else
+        {
+            control.BackColor = backgroundColor;
+        }
+
+        foreach (Control child in control.Controls)
+        {
+            ApplyControlRecursive(
+                child,
+                backgroundColor,
+                textColor,
+                fieldColor,
+                buttonColor,
+                buttonTextColor);
+        }
+    }
+
+    public static void ApplyMenuStrip(
+        ContextMenuStrip menu,
+        Color backgroundColor,
+        Color textColor)
+    {
+        menu.BackColor = backgroundColor;
+        menu.ForeColor = textColor;
+
+        foreach (ToolStripItem item in menu.Items)
+        {
+            item.BackColor = backgroundColor;
+            item.ForeColor = textColor;
+        }
+    }
 }
