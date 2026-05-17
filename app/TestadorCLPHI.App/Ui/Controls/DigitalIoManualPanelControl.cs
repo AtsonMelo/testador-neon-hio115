@@ -131,4 +131,3 @@ public sealed class DigitalIoManualPanelControl : UserControl
         _refreshInputsButton.Enabled = enabled;
     }
 }
-
