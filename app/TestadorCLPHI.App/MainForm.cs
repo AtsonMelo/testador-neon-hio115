@@ -375,7 +375,7 @@ public sealed class MainForm : Form
             if (result is null)
             {
                 AtualizarEstadoConexao();
-                _statusLabel.Text = "Nenhum CLP encontrado entre Slave ID 1 e 30.";
+                _statusLabel.Text = _plcService.State.Message;
                 return;
             }
 
@@ -395,7 +395,7 @@ public sealed class MainForm : Form
             AtualizarEstadoConexao();
 
             _statusLabel.Text =
-                $"CLP detectado em {result.Settings.PortName}, {result.Settings.BaudRate} bps, Slave {result.Settings.SlaveId}.";
+                $"CLP detectado em {result.Settings.PortName}, {result.Settings.BaudRate} bps, Slave {result.Settings.SlaveId} após {result.AttemptCount} tentativa(s).";
         }
         catch (Exception ex)
         {
@@ -572,5 +572,8 @@ public sealed class MainForm : Form
         AppThemeService.ApplyTheme(this, _themeSelector.ThemeMenu, temaEscuro);
     }
 }
+
+
+
 
 

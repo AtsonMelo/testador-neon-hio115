@@ -37,7 +37,9 @@ public sealed class PlcAutoDetectionService
 
         byte[] slaveIds = BuildSlaveIdList(preferredSlaveId, maxSlaveId);
 
-        foreach (string portName in portNames)
+        
+        int attemptCount = 0;
+foreach (string portName in portNames)
         {
             foreach (int baudRate in baudRates)
             {
@@ -45,7 +47,9 @@ public sealed class PlcAutoDetectionService
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    progress?.Report($"Tentando {portName} / {baudRate} bps / Slave {slaveId}...");
+                    attemptCount++;
+
+                    progress?.Report($"Tentativa {attemptCount}: {portName} / {baudRate} bps / Slave {slaveId}...");
 
                     PlcConnectionSettings attemptSettings = new()
                     {
@@ -81,7 +85,8 @@ public sealed class PlcAutoDetectionService
 
                         return new PlcAutoDetectionResult(
                             detectedSettings,
-                            value);
+                            value,
+                            attemptCount);
                     }
                     catch
                     {
@@ -91,7 +96,7 @@ public sealed class PlcAutoDetectionService
             }
         }
 
-        _plcService.State.SetError($"Nenhum CLP encontrado entre Slave ID 1 e {maxSlaveId}.");
+        _plcService.State.SetError($"Nenhum CLP encontrado após {attemptCount} tentativa(s), entre Slave ID 1 e {maxSlaveId}.");
         return null;
     }
 
@@ -128,3 +133,5 @@ public sealed class PlcAutoDetectionService
         }
     }
 }
+
+

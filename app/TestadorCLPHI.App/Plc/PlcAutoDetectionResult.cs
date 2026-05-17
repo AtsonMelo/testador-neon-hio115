@@ -2,4 +2,7 @@ namespace TestadorCLPHI.App.Plc;
 
 public sealed record PlcAutoDetectionResult(
     PlcConnectionSettings Settings,
-    ushort ProbeRegisterValue);
+    ushort ProbeRegisterValue,
+    int AttemptCount);
+
+
