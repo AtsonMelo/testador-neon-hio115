@@ -1,6 +1,7 @@
 using System.IO.Ports;
 using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
+using TestadorCLPHI.App.Ui.Controls;
 
 namespace TestadorCLPHI.App;
 
@@ -47,15 +48,7 @@ public sealed class MainForm : Form
     private readonly Button _detectarClpButton;
     private readonly CheckBox _buscarTodosBaudRatesCheckBox;
 
-    private readonly GroupBox _estadoGroupBox;
-    private readonly Label _estadoStatusLabel;
-    private readonly Label _estadoMensagemLabel;
-    private readonly Label _estadoAtualizacaoLabel;
-    private readonly Button _conectarClpButton;
-    private readonly Button _simularErroButton;
-    private readonly Button _desconectarButton;
-    private readonly Button _lerMw70Button;
-
+    private readonly ConnectionStatePanelControl _connectionStatePanel;
     private readonly GroupBox _comandosGroupBox;
     private readonly Button _habilitarTesteButton;
     private readonly Button _resetarSaidasButton;
@@ -116,55 +109,11 @@ public sealed class MainForm : Form
         _temaMenu.Items.Add(_temaClaroMenuItem);
         _temaMenu.Items.Add(_temaEscuroMenuItem);
 
-        _estadoGroupBox = new GroupBox
+        _connectionStatePanel = new ConnectionStatePanelControl
         {
-            Text = "Estado da conexão",
             Left = 20,
-            Top = 220,
-            Width = 270,
-            Height = 250
+            Top = 220
         };
-
-        _estadoStatusLabel = CriarLabel(string.Empty, 15, 30);
-        _estadoMensagemLabel = CriarLabelEstadoMensagem(15, 55);
-        _estadoAtualizacaoLabel = CriarLabel(string.Empty, 15, 120);
-
-        _conectarClpButton = new Button
-        {
-            Text = "Conectar CLP",
-            Left = 15,
-            Top = 155,
-            Width = 115,
-            Height = 28
-        };
-
-        _simularErroButton = new Button
-        {
-            Text = "Simular erro",
-            Left = 140,
-            Top = 155,
-            Width = 105,
-            Height = 28
-        };
-
-        _desconectarButton = new Button
-        {
-            Text = "Desconectar",
-            Left = 15,
-            Top = 195,
-            Width = 115,
-            Height = 28
-        };
-
-        _lerMw70Button = new Button
-        {
-            Text = "Ler %MW70",
-            Left = 140,
-            Top = 195,
-            Width = 105,
-            Height = 28
-        };
-
         _comandosGroupBox = new GroupBox
         {
             Text = "Comandos do testador",
@@ -308,21 +257,14 @@ public sealed class MainForm : Form
         _atualizarPortasButton.Click += AtualizarPortasButton_Click;
         _detectarClpButton.Click += DetectarClpButton_Click;
 
-        _conectarClpButton.Click += ConectarClpButton_Click;
-        _simularErroButton.Click += SimularErroButton_Click;
-        _desconectarButton.Click += DesconectarButton_Click;
-        _lerMw70Button.Click += LerMw70Button_Click;
+        _connectionStatePanel.ConnectClicked += ConectarClpButton_Click;
+        _connectionStatePanel.SimulateErrorClicked += SimularErroButton_Click;
+        _connectionStatePanel.DisconnectClicked += DesconectarButton_Click;
+        _connectionStatePanel.ReadMw70Clicked += LerMw70Button_Click;
         _habilitarTesteButton.Click += HabilitarTesteButton_Click;
         _resetarSaidasButton.Click += ResetarSaidasButton_Click;
 
-        _estadoGroupBox.Controls.Add(_estadoStatusLabel);
-        _estadoGroupBox.Controls.Add(_estadoMensagemLabel);
-        _estadoGroupBox.Controls.Add(_estadoAtualizacaoLabel);
-        _estadoGroupBox.Controls.Add(_conectarClpButton);
-        _estadoGroupBox.Controls.Add(_simularErroButton);
-        _estadoGroupBox.Controls.Add(_desconectarButton);
-        _estadoGroupBox.Controls.Add(_lerMw70Button);
-
+        _comandosGroupBox.Controls.Add(_habilitarTesteButton);
         _comandosGroupBox.Controls.Add(_habilitarTesteButton);
         _comandosGroupBox.Controls.Add(_resetarSaidasButton);
 
@@ -343,7 +285,7 @@ public sealed class MainForm : Form
         Controls.Add(_statusLabel);
         Controls.Add(_pararTudoButton);
         Controls.Add(_temaButton);
-        Controls.Add(_estadoGroupBox);
+        Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_comandosGroupBox);
 
@@ -397,11 +339,8 @@ public sealed class MainForm : Form
     {
         PlcConnectionState state = _plcService.State;
 
-        _estadoStatusLabel.Text = $"Status: {state.Status}";
-        _estadoMensagemLabel.Text = $"Mensagem: {state.Message}";
-        _estadoAtualizacaoLabel.Text = $"Atualizado: {state.LastUpdatedAt:HH:mm:ss}";
+        _connectionStatePanel.UpdateState(state);
     }
-
     private void TemaButton_Click(object? sender, EventArgs e)
     {
         _temaMenu.Show(_temaButton, new Point(0, _temaButton.Height));
@@ -458,7 +397,7 @@ public sealed class MainForm : Form
     private async void DetectarClpButton_Click(object? sender, EventArgs e)
     {
         _detectarClpButton.Enabled = false;
-        _conectarClpButton.Enabled = false;
+        _connectionStatePanel.SetConnectionButtonsEnabled(false);
 
         try
         {
@@ -546,7 +485,7 @@ public sealed class MainForm : Form
         finally
         {
             _detectarClpButton.Enabled = true;
-            _conectarClpButton.Enabled = true;
+            _connectionStatePanel.SetConnectionButtonsEnabled(true);
         }
     }
     private async void ConectarClpButton_Click(object? sender, EventArgs e)
@@ -752,6 +691,8 @@ public sealed class MainForm : Form
             corTexto);
     }
 }
+
+
 
 
 
