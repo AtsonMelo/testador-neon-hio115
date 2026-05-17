@@ -16,6 +16,7 @@ public sealed class MainForm : Form
     private readonly PlcConnectionSettings _connectionSettings = new();
     private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
     private readonly PlcRegisterCommandService _registerCommandService;
+    private readonly PlcAutoDetectionService _autoDetectionService;
 
     private ThemeSelection _themeSelection = ThemeSelection.Windows;
 
@@ -67,6 +68,7 @@ public sealed class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
+        _autoDetectionService = new PlcAutoDetectionService(_plcService);
 
         _tituloLabel = new Label
         {
@@ -525,6 +527,11 @@ public sealed class MainForm : Form
 
         try
         {
+            if (!TryUpdateConnectionSettingsFromUi())
+            {
+                return;
+            }
+
             string[] portasDisponiveis = SerialPort.GetPortNames()
                 .OrderBy(porta => porta)
                 .ToArray();
@@ -532,7 +539,8 @@ public sealed class MainForm : Form
             List<string> portasOrdenadas = [];
             string? portaSelecionada = _portaComboBox.SelectedItem?.ToString();
 
-            if (!string.IsNullOrWhiteSpace(portaSelecionada) && portasDisponiveis.Contains(portaSelecionada))
+            if (!string.IsNullOrWhiteSpace(portaSelecionada) &&
+                portasDisponiveis.Contains(portaSelecionada))
             {
                 portasOrdenadas.Add(portaSelecionada);
             }
@@ -545,92 +553,60 @@ public sealed class MainForm : Form
                 }
             }
 
-            string[] portas = portasOrdenadas.ToArray();
+            int[] baudRates = ObterBaudRatesSelecionadosParaBusca();
 
-            if (portas.Length == 0)
+            byte? preferredSlaveId = null;
+
+            if (byte.TryParse(_slaveIdTextBox.Text, out byte slaveIdSelecionado))
             {
-                _statusLabel.Text = "Nenhuma porta COM encontrada.";
+                preferredSlaveId = slaveIdSelecionado;
+            }
+
+            Progress<string> progress = new(message =>
+            {
+                _statusLabel.Text = message;
+            });
+
+            PlcAutoDetectionResult? result =
+                await _autoDetectionService.DetectAsync(
+                    portasOrdenadas,
+                    baudRates,
+                    preferredSlaveId,
+                    _connectionSettings,
+                    Hio115MemoryMap.HabilitaTeste,
+                    progress);
+
+            if (result is null)
+            {
+                AtualizarEstadoConexao();
+                _statusLabel.Text = "Nenhum CLP encontrado entre Slave ID 1 e 30.";
                 return;
             }
 
-            if (!int.TryParse(_baudRateComboBox.Text, out int baudRateSelecionado))
-            {
-                _statusLabel.Text = "Selecione um baud rate válido antes da busca.";
-                return;
-            }
+            _connectionSettings.PortName = result.Settings.PortName;
+            _connectionSettings.BaudRate = result.Settings.BaudRate;
+            _connectionSettings.Parity = result.Settings.Parity;
+            _connectionSettings.DataBits = result.Settings.DataBits;
+            _connectionSettings.StopBits = result.Settings.StopBits;
+            _connectionSettings.SlaveId = result.Settings.SlaveId;
+            _connectionSettings.TimeoutMilliseconds = result.Settings.TimeoutMilliseconds;
 
-            int[] baudRates = _buscarTodosBaudRatesCheckBox.Checked
-                ?
-                [
-                    9600,
-                    19200,
-                    38400,
-                    57600,
-                    115200
-                ]
-                :
-                [
-                    baudRateSelecionado
-                ];
+            _portaComboBox.SelectedItem = result.Settings.PortName;
+            _baudRateComboBox.SelectedItem = result.Settings.BaudRate.ToString();
+            _slaveIdTextBox.Text = result.Settings.SlaveId.ToString();
 
-            foreach (string porta in portas)
-            {
-                foreach (int baudRate in baudRates)
-                {
-                    for (byte slaveId = 1; slaveId <= 30; slaveId++)
-                    {
-                        _statusLabel.Text = $"Detectando: {porta}, {baudRate} bps, Slave {slaveId}...";
-                        Application.DoEvents();
-
-                        PlcConnectionSettings tentativa = new()
-                        {
-                            PortName = porta,
-                            BaudRate = baudRate,
-                            Parity = _connectionSettings.Parity,
-                            DataBits = _connectionSettings.DataBits,
-                            StopBits = _connectionSettings.StopBits,
-                            SlaveId = slaveId,
-                            TimeoutMilliseconds = 200
-                        };
-
-                        try
-                        {
-                            await _plcService.ConnectAsync(tentativa);
-
-                            ushort value = await _plcService.ReadHoldingRegisterAsync(
-                                Hio115MemoryMap.HabilitaTeste);
-
-                            _connectionSettings.PortName = porta;
-                            _connectionSettings.BaudRate = baudRate;
-                            _connectionSettings.SlaveId = slaveId;
-
-                            _portaComboBox.SelectedItem = porta;
-                            _baudRateComboBox.SelectedItem = baudRate.ToString();
-                            _slaveIdTextBox.Text = slaveId.ToString();
-
-                            AtualizarResumoConexao();
-
-                            _plcService.State.SetConnected(
-                                $"CLP detectado: {porta}, {baudRate} bps, Slave {slaveId}, %MW{Hio115MemoryMap.HabilitaTeste} = {value}");
-
-                            AtualizarEstadoConexao();
-
-                            _statusLabel.Text =
-                                $"CLP detectado em {porta}, {baudRate} bps, Slave {slaveId}.";
-
-                            return;
-                        }
-                        catch
-                        {
-                            await _plcService.DisconnectAsync();
-                        }
-                    }
-                }
-            }
-
-            _plcService.State.SetError("Nenhum CLP encontrado na varredura de Slave ID 1 a 30.");
+            AtualizarResumoConexao();
             AtualizarEstadoConexao();
-            _statusLabel.Text = "Nenhum CLP encontrado entre Slave ID 1 e 30.";
+
+            _statusLabel.Text =
+                $"CLP detectado em {result.Settings.PortName}, {result.Settings.BaudRate} bps, Slave {result.Settings.SlaveId}.";
+        }
+        catch (Exception ex)
+        {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
+            _statusLabel.Text = $"Erro na detecção automática: {ex.Message}";
         }
         finally
         {
@@ -886,6 +862,7 @@ public sealed class MainForm : Form
 
 
 }
+
 
 
 
