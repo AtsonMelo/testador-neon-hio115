@@ -39,12 +39,14 @@ public sealed class MainForm : Form
     private readonly ConnectionStatePanelControl _connectionStatePanel;
     private readonly TesterCommandPanelControl _testerCommandPanel;
     private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
+    private readonly TerminalLogPanelControl _terminalLogPanel;
+    private readonly AppHeaderControl _appHeaderControl;
 
     public MainForm()
     {
         Text = "Testador CLP HI";
         Width = 900;
-        Height = 740;
+        Height = 760;
         StartPosition = FormStartPosition.CenterScreen;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
@@ -87,25 +89,37 @@ public sealed class MainForm : Form
         _connectionStatePanel = new ConnectionStatePanelControl
         {
             Left = 20,
-            Top = 220
+            Top = 125
         };
         _testerCommandPanel = new TesterCommandPanelControl
         {
             Left = 20,
-            Top = 480
+            Top = 385
+        };
+
+        _appHeaderControl = new AppHeaderControl
+        {
+            Left = 18,
+            Top = 10
         };
 
         _digitalIoManualPanel = new DigitalIoManualPanelControl
         {
             Left = 20,
-            Top = 565
+            Top = 465
+        };
+
+        _terminalLogPanel = new TerminalLogPanelControl
+        {
+            Left = 20,
+            Top = 600
         };
 
         _conexaoGroupBox = new GroupBox
         {
             Text = "Conexão com CLP",
-            Left = 320,
-            Top = 220,
+            Left = 315,
+            Top = 125,
             Width = 390,
             Height = 250
         };
@@ -221,6 +235,7 @@ public sealed class MainForm : Form
         _testerCommandPanel.ResetOutputsClicked += ResetarSaidasButton_Click;
         _digitalIoManualPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
         _digitalIoManualPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
+        _appHeaderControl.StopClicked += PararTudoButton_Click;
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -235,14 +250,12 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
 
-        Controls.Add(_tituloLabel);
-        Controls.Add(_statusLabel);
-        Controls.Add(_pararTudoButton);
-        Controls.Add(_themeSelector);
+        Controls.Add(_appHeaderControl);
         Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_testerCommandPanel);
         Controls.Add(_digitalIoManualPanel);
+        Controls.Add(_terminalLogPanel);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
