@@ -21,10 +21,7 @@ public sealed class DigitalIoManualPanelControl : UserControl
         _groupBox = new GroupBox
         {
             Text = "Painel manual 4DO/8DI",
-            Left = 0,
-            Top = 0,
-            Width = 690,
-            Height = 125
+            Dock = DockStyle.Fill
         };
 
         Label outputsTitleLabel = new()
@@ -98,7 +95,8 @@ public sealed class DigitalIoManualPanelControl : UserControl
             Left = 585,
             Top = 80,
             Width = 85,
-            Height = 28
+            Height = 28,
+            Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
 
         _refreshInputsButton.Click += (_, e) => RefreshInputsClicked?.Invoke(this, e);

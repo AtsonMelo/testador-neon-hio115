@@ -17,10 +17,7 @@ public sealed class TesterCommandPanelControl : UserControl
         _groupBox = new GroupBox
         {
             Text = "Comandos do testador",
-            Left = 0,
-            Top = 0,
-            Width = 690,
-            Height = 75
+            Dock = DockStyle.Fill
         };
 
         _enableTestButton = new Button

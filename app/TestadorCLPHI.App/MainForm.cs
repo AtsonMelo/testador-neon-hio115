@@ -46,6 +46,8 @@ public sealed class MainForm : Form
         Width = 900;
         Height = 740;
         StartPosition = FormStartPosition.CenterScreen;
+        MinimumSize = new Size(900, 740);
+        AutoScroll = true;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
         _autoDetectionService = new PlcAutoDetectionService(_plcService);
@@ -81,7 +83,8 @@ public sealed class MainForm : Form
         _themeSelector = new ThemeSelectorControl
         {
             Left = 760,
-            Top = 25
+            Top = 25,
+            Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
 
         _connectionStatePanel = new ConnectionStatePanelControl
@@ -92,13 +95,15 @@ public sealed class MainForm : Form
         _testerCommandPanel = new TesterCommandPanelControl
         {
             Left = 20,
-            Top = 480
+            Top = 480,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
         _digitalIoManualPanel = new DigitalIoManualPanelControl
         {
             Left = 20,
-            Top = 565
+            Top = 565,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
         _conexaoGroupBox = new GroupBox
@@ -107,7 +112,8 @@ public sealed class MainForm : Form
             Left = 320,
             Top = 220,
             Width = 390,
-            Height = 250
+            Height = 250,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
         _portaTituloLabel = CriarLabel("Porta COM:", 15, 30);
