@@ -49,9 +49,7 @@ public sealed class MainForm : Form
     private readonly CheckBox _buscarTodosBaudRatesCheckBox;
 
     private readonly ConnectionStatePanelControl _connectionStatePanel;
-    private readonly GroupBox _comandosGroupBox;
-    private readonly Button _habilitarTesteButton;
-    private readonly Button _resetarSaidasButton;
+    private readonly TesterCommandPanelControl _testerCommandPanel;
 
     public MainForm()
     {
@@ -114,31 +112,10 @@ public sealed class MainForm : Form
             Left = 20,
             Top = 220
         };
-        _comandosGroupBox = new GroupBox
+        _testerCommandPanel = new TesterCommandPanelControl
         {
-            Text = "Comandos do testador",
             Left = 20,
-            Top = 490,
-            Width = 690,
-            Height = 75
-        };
-
-        _habilitarTesteButton = new Button
-        {
-            Text = "Habilitar teste",
-            Left = 15,
-            Top = 28,
-            Width = 140,
-            Height = 30
-        };
-
-        _resetarSaidasButton = new Button
-        {
-            Text = "Resetar saídas",
-            Left = 170,
-            Top = 28,
-            Width = 140,
-            Height = 30
+            Top = 490
         };
 
         _conexaoGroupBox = new GroupBox
@@ -261,12 +238,8 @@ public sealed class MainForm : Form
         _connectionStatePanel.SimulateErrorClicked += SimularErroButton_Click;
         _connectionStatePanel.DisconnectClicked += DesconectarButton_Click;
         _connectionStatePanel.ReadMw70Clicked += LerMw70Button_Click;
-        _habilitarTesteButton.Click += HabilitarTesteButton_Click;
-        _resetarSaidasButton.Click += ResetarSaidasButton_Click;
-
-        _comandosGroupBox.Controls.Add(_habilitarTesteButton);
-        _comandosGroupBox.Controls.Add(_habilitarTesteButton);
-        _comandosGroupBox.Controls.Add(_resetarSaidasButton);
+        _testerCommandPanel.EnableTestClicked += HabilitarTesteButton_Click;
+        _testerCommandPanel.ResetOutputsClicked += ResetarSaidasButton_Click;
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -287,7 +260,7 @@ public sealed class MainForm : Form
         Controls.Add(_temaButton);
         Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
-        Controls.Add(_comandosGroupBox);
+        Controls.Add(_testerCommandPanel);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
@@ -650,3 +623,4 @@ public sealed class MainForm : Form
         AppThemeService.ApplyTheme(this, _temaMenu, temaEscuro);
     }
 }
+
