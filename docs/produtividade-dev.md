@@ -234,3 +234,42 @@ Próximas etapas:
 2. gerar/adicionar assets de botoeiras industriais;
 3. validar DO e DI juntos no preview;
 4. só depois decidir substituição do painel principal.
+
+## 2026-05-17 - Issue #16 - Preview industrial 4DO/8DI
+
+### Resultado
+- Preview isolado `--preview-industrial-panel` validado visualmente.
+- Saídas digitais DO renderizadas com botoeiras industriais:
+  - D000 vermelho.
+  - D001 verde.
+  - D002 amarelo.
+  - D003 azul.
+  - STOP com botoeira de emergência.
+- Entradas digitais DI renderizadas com LEDs industriais melhorados.
+- Header do preview ajustado para não cortar título/subtítulo.
+- Área inferior reservada para terminal/log preservada.
+- Nenhuma alteração feita no MainForm.
+- Nenhuma alteração feita no HIstudio ou `.dpk`.
+
+### Decisões técnicas
+- Interrompida a tentativa cega diretamente no MainForm.
+- Mantida abordagem por preview isolado antes da integração real.
+- Assets industriais finais mantidos em `app/TestadorCLPHI.App/Assets/Ui`.
+- Corrigido crash runtime causado por `BackColor` com alpha/transparência em controle WinForms.
+- Criado `IndustrialPushButtonControl` para desenhar botoeiras industriais por PNG.
+- Refeito `IndustrialLedIndicatorControl` para desenhar LEDs com `Graphics` em vez de `PictureBox`.
+
+### Validações
+- `git diff --check`: OK.
+- `dotnet build .\testador-neon-hio115.sln`: OK.
+- Preview abriu e permaneceu ativo.
+- Validação visual aprovada.
+
+### Commits
+- `81b8874 ui: aplica controles industriais no preview`
+- `f38bd68 ui: ajusta header do preview industrial`
+
+### Próximo foco
+- Abrir PR da branch `ui/issue-16-layout-terminal`.
+- Revisar diff no GitHub.
+- Depois do merge, planejar Issue separada para integração gradual no app principal.
