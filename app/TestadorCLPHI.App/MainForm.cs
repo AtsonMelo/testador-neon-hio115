@@ -1,4 +1,3 @@
-using Microsoft.Win32;
 using System.IO.Ports;
 using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
@@ -810,7 +809,7 @@ public sealed class MainForm : Form
     {
         bool temaEscuro = _themeSelection switch
         {
-            ThemeSelection.Windows => WindowsEstaEmTemaEscuro(),
+            ThemeSelection.Windows => AppThemeService.WindowsIsInDarkTheme(),
             ThemeSelection.Dark => true,
             _ => false
         };
@@ -844,7 +843,7 @@ public sealed class MainForm : Form
         }
 
         BackColor = corFundo;
-        WindowsTitleBarTheme.Apply(this, temaEscuro);
+        AppThemeService.ApplyTitleBar(this, temaEscuro);
 
         _tituloLabel.ForeColor = corTexto;
         _statusLabel.ForeColor = corTexto;
@@ -888,50 +887,21 @@ public sealed class MainForm : Form
             item.ForeColor = corTexto;
         }
 
-        AplicarTemaBotao(_pararTudoButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_temaButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_atualizarPortasButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_aplicarConexaoButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_detectarClpButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_simularConectarButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_simularErroButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_desconectarButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_testarMw70Button, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_pararTudoButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_temaButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_atualizarPortasButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_aplicarConexaoButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_detectarClpButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_simularConectarButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_simularErroButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_desconectarButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_testarMw70Button, corBotao, corTextoBotao);
         _comandosGroupBox.ForeColor = corTexto;
         _comandosGroupBox.BackColor = corFundo;
-        AplicarTemaBotao(_habilitarTesteButton, corBotao, corTextoBotao);
-        AplicarTemaBotao(_resetarSaidasButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_habilitarTesteButton, corBotao, corTextoBotao);
+        AppThemeService.ApplyButton(_resetarSaidasButton, corBotao, corTextoBotao);
     }
 
-    private static void AplicarTemaBotao(Button button, Color corFundo, Color corTexto)
-    {
-        button.BackColor = corFundo;
-        button.ForeColor = corTexto;
-        button.FlatStyle = FlatStyle.Flat;
-    }
 
-    private static bool WindowsEstaEmTemaEscuro()
-    {
-        using RegistryKey? key = Registry.CurrentUser.OpenSubKey(
-            @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-
-        object? value = key?.GetValue("AppsUseLightTheme");
-
-        return value is int appsUseLightTheme && appsUseLightTheme == 0;
-    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
