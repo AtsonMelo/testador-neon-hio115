@@ -39,6 +39,7 @@ public sealed class MainForm : Form
     private readonly ConnectionStatePanelControl _connectionStatePanel;
     private readonly TesterCommandPanelControl _testerCommandPanel;
     private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
+    private readonly TerminalLogPanelControl _terminalLogPanel;
 
     public MainForm()
     {
@@ -103,6 +104,15 @@ public sealed class MainForm : Form
         {
             Left = 20,
             Top = 565,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+        };
+
+        _terminalLogPanel = new TerminalLogPanelControl
+        {
+            Left = 20,
+            Top = 705,
+            Width = 690,
+            Height = 150,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
@@ -249,6 +259,7 @@ public sealed class MainForm : Form
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_testerCommandPanel);
         Controls.Add(_digitalIoManualPanel);
+        Controls.Add(_terminalLogPanel);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();
