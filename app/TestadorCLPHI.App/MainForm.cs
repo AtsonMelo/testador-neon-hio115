@@ -15,6 +15,7 @@ public sealed class MainForm : Form
 
     private readonly PlcConnectionSettings _connectionSettings = new();
     private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
+    private readonly PlcRegisterCommandService _registerCommandService;
 
     private ThemeSelection _themeSelection = ThemeSelection.Windows;
 
@@ -65,6 +66,8 @@ public sealed class MainForm : Form
         Width = 900;
         Height = 620;
         StartPosition = FormStartPosition.CenterScreen;
+
+        _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
 
         _tituloLabel = new Label
         {
@@ -705,9 +708,7 @@ public sealed class MainForm : Form
     {
         try
         {
-            await GarantirServicoConectadoAsync();
-
-            ushort value = await _plcService.ReadHoldingRegisterAsync(
+            ushort value = await _registerCommandService.ReadAsync(
                 Hio115MemoryMap.HabilitaTeste);
 
             AtualizarEstadoConexao();
@@ -758,19 +759,15 @@ public sealed class MainForm : Form
     {
         try
         {
-            await GarantirServicoConectadoAsync();
-
-            await _plcService.WriteHoldingRegisterAsync(
-                registerAddress,
-                valueToWrite);
-
-            ushort value = await _plcService.ReadHoldingRegisterAsync(
-                registerAddress);
+            PlcRegisterCommandResult result =
+                await _registerCommandService.WriteAndReadBackAsync(
+                    registerAddress,
+                    valueToWrite);
 
             AtualizarEstadoConexao();
 
             MessageBox.Show(
-                $"{commandName} aplicado: %MW{registerAddress} = {value}",
+                $"{commandName} aplicado: %MW{result.RegisterAddress} = {result.ReadBackValue}",
                 dialogTitle,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -787,15 +784,6 @@ public sealed class MainForm : Form
                 MessageBoxIcon.Error);
         }
     }
-    private async System.Threading.Tasks.Task GarantirServicoConectadoAsync()
-    {
-        if (!_plcService.State.IsConnected)
-        {
-            await _plcService.ConnectAsync(_connectionSettings);
-            AtualizarEstadoConexao();
-        }
-    }
-
     private async void PararTudoButton_Click(object? sender, EventArgs e)
     {
         await ExecutarComandoRegistradorAsync(
@@ -904,4 +892,5 @@ public sealed class MainForm : Form
 
 
 }
+
 
