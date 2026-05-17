@@ -6,13 +6,14 @@
 |---|---|---|---|---:|---:|---|---|---|---|
 | 2026-05-17 | refactor/revisao-mainform | Extrair painel de estado da conexão | refactor | - | - | Sim | Sim | Não identificado | Commit ab1a3b1 criado e enviado |
 | 2026-05-17 | refactor/revisao-mainform | Centralizar aplicação de tema no AppThemeService | refactor | - | - | Sim | Sim | Não identificado | Commit 0cd18eb criado e enviado; MainForm.cs reduziu de 705 para 652 linhas |
+| 2026-05-17 | refactor/revisao-mainform | Extrair painel de comandos do testador | refactor | - | - | Sim | Sim | Não identificado | Commit bf3a69e criado e enviado; MainForm.cs reduziu de 652 para 626 linhas |
 
 ## Métricas atuais
 
 | Métrica | Valor |
 |---|---:|
-| Linhas MainForm.cs | 652 |
-| Último commit | 0cd18eb |
+| Linhas MainForm.cs | 626 |
+| Último commit | bf3a69e |
 | Build atual | OK |
 | Erros atuais | 0 |
 | Avisos atuais | 0 |
@@ -106,4 +107,5 @@ Se o git status já foi mostrado limpo, não pedir novamente antes de uma nova a
 Se uma etapa já foi commitada e enviada, considerar concluída.
 Sempre usar o último commit, branch e resultado informado como estado atual.
 Antes de novo commit, validar build, teste manual mínimo, git status --short e git diff --stat.
+
 
