@@ -15,7 +15,7 @@ public sealed class MainForm : Form
     }
 
     private readonly PlcConnectionSettings _connectionSettings = new();
-    private readonly IPlcCommunicationService _plcService = new FakePlcCommunicationService();
+    private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
 
     private ThemeSelection _themeSelection = ThemeSelection.Windows;
 
@@ -74,7 +74,7 @@ public sealed class MainForm : Form
 
         _statusLabel = new Label
         {
-            Text = "App em desenvolvimento. Comunicação com CLP ainda não implementada.",
+            Text = "Comunicação Modbus RTU real em fase inicial.",
             AutoSize = true,
             Left = 20,
             Top = 80,
@@ -124,7 +124,7 @@ public sealed class MainForm : Form
 
         _simularConectarButton = new Button
         {
-            Text = "Simular conectar",
+            Text = "Conectar CLP",
             Left = 15,
             Top = 155,
             Width = 115,
@@ -151,7 +151,7 @@ public sealed class MainForm : Form
 
         _testarMw70Button = new Button
         {
-            Text = "Testar %MW70",
+            Text = "Ler %MW70",
             Left = 140,
             Top = 195,
             Width = 105,
@@ -450,11 +450,8 @@ public sealed class MainForm : Form
 
         AtualizarResumoConexao();
 
-        MessageBox.Show(
-            "Configuração aplicada apenas no app. Ainda não houve comunicação com o CLP.",
-            "Configuração aplicada",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
+        _statusLabel.Text =
+            $"Configuração aplicada: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}.";
     }
 
     private async void SimularConectarButton_Click(object? sender, EventArgs e)
@@ -495,32 +492,39 @@ public sealed class MainForm : Form
     {
         try
         {
-            string resultado = await PlcFakeSmokeTest.RunAsync();
+            await GarantirServicoConectadoAsync();
+
+            ushort value = await _plcService.ReadHoldingRegisterAsync(
+                Hio115MemoryMap.HabilitaTeste);
+
+            AtualizarEstadoConexao();
 
             MessageBox.Show(
-                resultado,
-                "Teste fake %MW70",
+                $"Leitura Modbus RTU: %MW{Hio115MemoryMap.HabilitaTeste} = {value}",
+                "Leitura %MW70",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
         catch (Exception ex)
         {
+            _plcService.State.SetError(ex.Message);
+            AtualizarEstadoConexao();
+
             MessageBox.Show(
                 ex.Message,
-                "Erro no teste fake %MW70",
+                "Erro na leitura %MW70",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
     }
-
     private async void HabilitarTesteButton_Click(object? sender, EventArgs e)
     {
         await ExecutarComandoRegistradorAsync(
             Hio115MemoryMap.HabilitaTeste,
             1,
             "HABILITA_TESTE",
-            "Comando fake",
-            "Erro no comando fake");
+            "Comando CLP",
+            "Erro no comando CLP");
     }
     private async void ResetarSaidasButton_Click(object? sender, EventArgs e)
     {
@@ -528,8 +532,8 @@ public sealed class MainForm : Form
             Hio115MemoryMap.ResetSaidas,
             1,
             "RESET_SAIDAS",
-            "Comando fake",
-            "Erro no comando fake");
+            "Comando CLP",
+            "Erro no comando CLP");
     }
 
     private async System.Threading.Tasks.Task ExecutarComandoRegistradorAsync(
@@ -553,7 +557,7 @@ public sealed class MainForm : Form
             AtualizarEstadoConexao();
 
             MessageBox.Show(
-                $"{commandName} aplicado no fake: %MW{registerAddress} = {value}",
+                $"{commandName} aplicado: %MW{registerAddress} = {value}",
                 dialogTitle,
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -694,6 +698,9 @@ public sealed class MainForm : Form
         return value is int appsUseLightTheme && appsUseLightTheme == 0;
     }
 }
+
+
+
 
 
 
