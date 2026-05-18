@@ -1,26 +1,24 @@
-using System.Drawing;
-using System.Windows.Forms;
-
 namespace TestadorCLPHI.App.Ui.Controls;
 
 public sealed class DigitalIoManualPanelControl : UserControl
 {
     private readonly GroupBox _groupBox;
-    private readonly Button[] _outputButtons = new Button[4];
-    private readonly Label[] _inputLedLabels = new Label[8];
+    private readonly IndustrialPushButtonControl[] _outputButtons = new IndustrialPushButtonControl[4];
+    private readonly IndustrialLedIndicatorControl[] _inputIndicators = new IndustrialLedIndicatorControl[8];
     private readonly Button _refreshInputsButton;
 
     public event Action<int>? OutputCommandClicked;
+
     public event EventHandler? RefreshInputsClicked;
 
     public DigitalIoManualPanelControl()
     {
         Width = 690;
-        Height = 125;
+        Height = 220;
 
         _groupBox = new GroupBox
         {
-            Text = "Painel manual 4DO/8DI",
+            Text = "Painel manual industrial 4DO/8DI",
             Dock = DockStyle.Fill
         };
 
@@ -35,25 +33,34 @@ public sealed class DigitalIoManualPanelControl : UserControl
 
         _groupBox.Controls.Add(outputsTitleLabel);
 
-        string[] expectedInputs =
+        string assetDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Ui");
+
+        (string Title, string Description, string ImageName)[] outputs =
         [
-            "DI00+DI04",
-            "DI01+DI05",
-            "DI02+DI06",
-            "DI03+DI07"
+            ("D000", "D000 -> DI00 + DI04", "push_button_red.png"),
+            ("D001", "D001 -> DI01 + DI05", "push_button_green.png"),
+            ("D002", "D002 -> DI02 + DI06", "push_button_yellow.png"),
+            ("D003", "D003 -> DI03 + DI07", "push_button_blue.png")
         ];
 
         for (int channel = 0; channel < _outputButtons.Length; channel++)
         {
             int capturedChannel = channel;
+            (string title, string description, string imageName) = outputs[channel];
 
-            Button button = new()
+            IndustrialPushButtonControl button = new()
             {
-                Text = $"D{channel:000} -> {expectedInputs[channel]}",
-                Left = 15 + (channel * 165),
-                Top = 45,
-                Width = 155,
-                Height = 28
+                Title = title,
+                Description = description,
+                ButtonImagePath = Path.Combine(assetDir, imageName),
+                Left = 15 + (channel * 145),
+                Top = 46,
+                Width = 132,
+                Height = 92,
+                BackColor = Color.FromArgb(31, 31, 31),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
             };
 
             button.Click += (_, _) => OutputCommandClicked?.Invoke(capturedChannel);
@@ -67,33 +74,40 @@ public sealed class DigitalIoManualPanelControl : UserControl
             Text = "Entradas digitais",
             AutoSize = true,
             Left = 15,
-            Top = 83,
+            Top = 150,
             Font = new Font("Segoe UI", 9, FontStyle.Bold)
         };
 
         _groupBox.Controls.Add(inputsTitleLabel);
 
-        for (int channel = 0; channel < _inputLedLabels.Length; channel++)
+        string onImagePath = Path.Combine(assetDir, "led_on_green.png");
+        string offImagePath = Path.Combine(assetDir, "led_off_gray.png");
+
+        for (int channel = 0; channel < _inputIndicators.Length; channel++)
         {
-            Label label = new()
+            IndustrialLedIndicatorControl indicator = new()
             {
-                Text = $"DI{channel:00} ●",
-                AutoSize = true,
-                Left = 135 + (channel * 48),
-                Top = 84,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                ForeColor = Color.Gray
+                LabelText = $"DI{channel:00}",
+                Left = 135 + (channel * 58),
+                Top = 142,
+                Width = 54,
+                Height = 68,
+                BackColor = Color.FromArgb(31, 31, 31),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold)
             };
 
-            _inputLedLabels[channel] = label;
-            _groupBox.Controls.Add(label);
+            indicator.LoadImages(onImagePath, offImagePath);
+
+            _inputIndicators[channel] = indicator;
+            _groupBox.Controls.Add(indicator);
         }
 
         _refreshInputsButton = new Button
         {
             Text = "Atualizar",
             Left = 585,
-            Top = 80,
+            Top = 170,
             Width = 85,
             Height = 28,
             Anchor = AnchorStyles.Top | AnchorStyles.Right
@@ -107,21 +121,17 @@ public sealed class DigitalIoManualPanelControl : UserControl
 
     public void SetInputState(int channel, bool active)
     {
-        if (channel < 0 || channel >= _inputLedLabels.Length)
+        if (channel < 0 || channel >= _inputIndicators.Length)
         {
             return;
         }
 
-        _inputLedLabels[channel].Text = $"DI{channel:00} ●";
-
-        _inputLedLabels[channel].ForeColor = active
-            ? Color.LimeGreen
-            : Color.Gray;
+        _inputIndicators[channel].IsOn = active;
     }
 
     public void SetPanelEnabled(bool enabled)
     {
-        foreach (Button button in _outputButtons)
+        foreach (IndustrialPushButtonControl button in _outputButtons)
         {
             button.Enabled = enabled;
         }

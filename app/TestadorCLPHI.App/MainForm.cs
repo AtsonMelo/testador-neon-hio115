@@ -15,7 +15,7 @@ public sealed class MainForm : Form
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
-    private readonly Button _pararTudoButton;
+    private readonly EmergencyStopButtonControl _pararTudoButton;
 
     private readonly ThemeSelectorControl _themeSelector;
 
@@ -47,7 +47,7 @@ public sealed class MainForm : Form
         Width = 900;
         Height = 740;
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(900, 740);
+        MinimumSize = new Size(900, 700);
         AutoScroll = true;
 
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
@@ -59,8 +59,8 @@ public sealed class MainForm : Form
             Text = "Testador CLP HI",
             AutoSize = true,
             Left = 20,
-            Top = 25,
-            Font = new Font("Segoe UI", 18, FontStyle.Bold)
+            Top = 20,
+            Font = new Font("Segoe UI", 17, FontStyle.Bold)
         };
 
         _statusLabel = new Label
@@ -68,49 +68,54 @@ public sealed class MainForm : Form
             Text = "Comunicação Modbus RTU real em fase inicial.",
             AutoSize = true,
             Left = 20,
-            Top = 80,
+            Top = 92,
             Font = new Font("Segoe UI", 10)
         };
 
-        _pararTudoButton = new Button
+        _pararTudoButton = new EmergencyStopButtonControl
         {
-            Text = "Parar tudo",
-            Left = 20,
-            Top = 130,
-            Width = 160,
-            Height = 40
+            Title = "STOP",
+            ButtonImagePath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Ui", "stop_emergency.png"),
+            Left = 755,
+            Top = 88,
+            Width = 86,
+            Height = 78,
+            Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            BackColor = Color.FromArgb(31, 31, 31),
+            ForeColor = Color.White,
+            Cursor = Cursors.Hand
         };
 
         _themeSelector = new ThemeSelectorControl
         {
             Left = 760,
-            Top = 25,
+            Top = 20,
             Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
 
         _connectionStatePanel = new ConnectionStatePanelControl
         {
             Left = 20,
-            Top = 220
+            Top = 45
         };
         _testerCommandPanel = new TesterCommandPanelControl
         {
             Left = 20,
-            Top = 480,
+            Top = 305,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
         _digitalIoManualPanel = new DigitalIoManualPanelControl
         {
             Left = 20,
-            Top = 565,
+            Top = 390,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
         _terminalLogPanel = new TerminalLogPanelControl
         {
             Left = 20,
-            Top = 705,
+            Top = 620,
             Width = 690,
             Height = 150,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -120,7 +125,7 @@ public sealed class MainForm : Form
         {
             Text = "Conexão com CLP",
             Left = 320,
-            Top = 220,
+            Top = 45,
             Width = 390,
             Height = 250,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -140,7 +145,7 @@ public sealed class MainForm : Form
         {
             Text = "Atualizar portas",
             Left = 240,
-            Top = 25,
+            Top = 20,
             Width = 125,
             Height = 28
         };
@@ -186,10 +191,10 @@ public sealed class MainForm : Form
 
         _buscarTodosBaudRatesCheckBox = new CheckBox
         {
-            Text = "Buscar todos",
-            Left = 240,
-            Top = 68,
-            Width = 125,
+            Text = "Todos",
+            Left = 295,
+            Top = 66,
+            Width = 70,
             Height = 24,
             Checked = false
         };
@@ -250,11 +255,11 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
-
-        Controls.Add(_tituloLabel);
-        Controls.Add(_statusLabel);
         Controls.Add(_pararTudoButton);
-        Controls.Add(_themeSelector);
+
+        _pararTudoButton.Left = _themeSelector.Left + ((_themeSelector.Width - _pararTudoButton.Width) / 2);
+        _pararTudoButton.Top = _themeSelector.Bottom + 18;
+Controls.Add(_themeSelector);
         Controls.Add(_connectionStatePanel);
         Controls.Add(_conexaoGroupBox);
         Controls.Add(_testerCommandPanel);
