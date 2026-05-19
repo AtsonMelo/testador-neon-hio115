@@ -9,7 +9,12 @@ internal static class Program
     {
         ApplicationConfiguration.Initialize();
 
-        if (args.Contains("--preview-industrial-panel", StringComparer.OrdinalIgnoreCase))
+        if (args.Contains("--preview-layout-alvo", StringComparer.OrdinalIgnoreCase))
+{
+    Application.Run(new IndustrialMainLayoutPreviewForm());
+    return;
+}
+if (args.Contains("--preview-industrial-panel", StringComparer.OrdinalIgnoreCase))
         {
             Application.Run(new IndustrialDigitalIoPanelPreviewForm());
             return;
