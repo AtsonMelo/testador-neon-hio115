@@ -250,100 +250,16 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
         panel.Controls.Add(layout);
         return panel;
     }
-
     private Control CreateClpConnectionPanel()
     {
-        Panel panel = CreateCardPanel();
-        panel.Margin = new Padding(8, 0, 0, 0);
-        panel.Padding = new Padding(14);
-
-        TableLayoutPanel layout = new()
+        return new IndustrialConnectionPreviewControl
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
-            RowCount = 5
+            Margin = new Padding(8, 0, 0, 0)
         };
-
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 230F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
-
-        layout.Controls.Add(CreateSectionTitle("Conexão com CLP"), 0, 0);
-        layout.SetColumnSpan(layout.Controls[0], 3);
-
-        AddFormRow(layout, 0, "Porta COM:", "COM1");
-        AddFormRow(layout, 1, "Baud rate:", "9600");
-        AddFormRow(layout, 2, "Slave ID:", "1");
-
-        TableLayoutPanel searchPanel = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 2,
-            Margin = new Padding(20, 0, 0, 0)
-        };
-
-        searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70F));
-        searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
-        searchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        searchPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-        searchPanel.Controls.Add(CreateActionButton("Atualizar portas", AccentBlueColor), 0, 0);
-        searchPanel.SetColumnSpan(searchPanel.Controls[0], 2);
-
-        CheckedListBox baudList = new()
-        {
-            Dock = DockStyle.Fill,
-            BackColor = PanelDarkColor,
-            ForeColor = Color.White,
-            BorderStyle = BorderStyle.FixedSingle,
-            CheckOnClick = true,
-            IntegralHeight = false
-        };
-
-        baudList.Items.Add("9600", true);
-        baudList.Items.Add("19200", true);
-        baudList.Items.Add("38400", true);
-
-        CheckBox all = new()
-        {
-            Text = "Todos",
-            Dock = DockStyle.Fill,
-            ForeColor = Color.White
-        };
-
-        searchPanel.Controls.Add(baudList, 0, 1);
-        searchPanel.Controls.Add(all, 1, 1);
-
-        layout.Controls.Add(searchPanel, 2, 1);
-        layout.SetRowSpan(searchPanel, 3);
-
-        Label summary = new()
-        {
-            Text = "Atual: COM1, 9600 bps, Slave 1\r\nParidade: None, Stop bits: One, Timeout: 1000 ms",
-            Dock = DockStyle.Fill,
-            BackColor = PanelDarkColor,
-            BorderStyle = BorderStyle.FixedSingle,
-            Padding = new Padding(10, 8, 10, 8),
-            ForeColor = TextMutedColor
-        };
-
-        Button detect = CreateActionButton("Detectar CLP", AccentBlueColor);
-        detect.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-
-        layout.Controls.Add(summary, 0, 4);
-        layout.SetColumnSpan(summary, 2);
-        layout.Controls.Add(detect, 2, 4);
-
-        panel.Controls.Add(layout);
-        return panel;
     }
+
+
 
     private Control CreateCommandsPanel()
     {
