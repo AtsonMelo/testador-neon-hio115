@@ -131,32 +131,32 @@ public sealed class MainForm : Form
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        _portaTituloLabel = CriarLabel("Porta COM:", 15, 30);
+        _portaTituloLabel = CriarLabel("Porta COM:", 20, 32);
 
         _portaComboBox = new ComboBox
         {
-            Left = 110,
-            Top = 27,
-            Width = 120,
+            Left = 145,
+            Top = 28,
+            Width = 170,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
 
         _atualizarPortasButton = new Button
         {
             Text = "Atualizar portas",
-            Left = 240,
-            Top = 20,
-            Width = 125,
-            Height = 28
+            Left = 335,
+            Top = 27,
+            Width = 170,
+            Height = 30
         };
 
-        _baudRateTituloLabel = CriarLabel("Baud rate:", 15, 70);
+        _baudRateTituloLabel = CriarLabel("Baud rate:", 20, 72);
 
         _baudRateComboBox = new ComboBox
         {
-            Left = 110,
-            Top = 67,
-            Width = 120,
+            Left = 145,
+            Top = 68,
+            Width = 170,
             DropDownStyle = ComboBoxStyle.DropDownList
         };
 
@@ -175,10 +175,10 @@ public sealed class MainForm : Form
 
         _baudRateBuscaCheckedListBox = new CheckedListBox
         {
-            Left = 240,
-            Top = 88,
-            Width = 125,
-            Height = 55,
+            Left = 335,
+            Top = 98,
+            Width = 170,
+            Height = 72,
             CheckOnClick = true,
             IntegralHeight = false
         };
@@ -192,39 +192,39 @@ public sealed class MainForm : Form
         _buscarTodosBaudRatesCheckBox = new CheckBox
         {
             Text = "Todos",
-            Left = 295,
-            Top = 66,
-            Width = 70,
+            Left = 395,
+            Top = 68,
+            Width = 90,
             Height = 24,
             Checked = false
         };
 
-        _slaveIdTituloLabel = CriarLabel("Slave ID:", 15, 110);
+        _slaveIdTituloLabel = CriarLabel("Slave ID:", 20, 112);
 
         _slaveIdTextBox = new TextBox
         {
-            Left = 110,
-            Top = 107,
-            Width = 120,
+            Left = 145,
+            Top = 108,
+            Width = 170,
             Text = _connectionSettings.SlaveId.ToString()
         };
 
         _detectarClpButton = new Button
         {
             Text = "Detectar CLP",
-            Left = 195,
-            Top = 150,
-            Width = 160,
-            Height = 32
+            Left = 335,
+            Top = 182,
+            Width = 170,
+            Height = 34
         };
 
         _conexaoResumoLabel = new Label
         {
             AutoSize = false,
-            Left = 15,
-            Top = 195,
-            Width = 350,
-            Height = 45,
+            Left = 20,
+            Top = 178,
+            Width = 300,
+            Height = 55,
             Font = new Font("Segoe UI", 9)
         };
 
@@ -255,16 +255,82 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
-        Controls.Add(_pararTudoButton);
+        TableLayoutPanel rootLayout = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 5,
+            Padding = new Padding(18),
+            AutoScroll = true
+        };
 
-        _pararTudoButton.Left = _themeSelector.Left + ((_themeSelector.Width - _pararTudoButton.Width) / 2);
-        _pararTudoButton.Top = _themeSelector.Bottom + 18;
-Controls.Add(_themeSelector);
-        Controls.Add(_connectionStatePanel);
-        Controls.Add(_conexaoGroupBox);
-        Controls.Add(_testerCommandPanel);
-        Controls.Add(_digitalIoManualPanel);
-        Controls.Add(_terminalLogPanel);
+        rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 292F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 235F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+        FlowLayoutPanel actionsPanel = new()
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.RightToLeft,
+            WrapContents = false,
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = new Padding(0, 0, 8, 0)
+        };
+
+        _themeSelector.Width = 108;
+        _themeSelector.Height = 34;
+        _themeSelector.Margin = new Padding(12, 12, 0, 0);
+        _themeSelector.Anchor = AnchorStyles.None;
+
+        _pararTudoButton.Width = 86;
+        _pararTudoButton.Height = 78;
+        _pararTudoButton.Margin = new Padding(12, 4, 0, 0);
+        _pararTudoButton.Anchor = AnchorStyles.None;
+
+        actionsPanel.Controls.Add(_themeSelector);
+        actionsPanel.Controls.Add(_pararTudoButton);
+
+        TableLayoutPanel connectionLayout = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0, 0, 0, 10)
+        };
+
+        connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 310F));
+        connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        connectionLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+        _connectionStatePanel.Dock = DockStyle.Fill;
+        _connectionStatePanel.Margin = new Padding(0, 0, 14, 0);
+
+        _conexaoGroupBox.Dock = DockStyle.Fill;
+        _conexaoGroupBox.Margin = new Padding(0);
+        _conexaoGroupBox.MinimumSize = new Size(560, 250);
+
+        connectionLayout.Controls.Add(_connectionStatePanel, 0, 0);
+        connectionLayout.Controls.Add(_conexaoGroupBox, 1, 0);
+
+        _testerCommandPanel.Dock = DockStyle.Fill;
+        _testerCommandPanel.Margin = new Padding(0, 0, 0, 10);
+
+        _digitalIoManualPanel.Dock = DockStyle.Fill;
+        _digitalIoManualPanel.Margin = new Padding(0, 0, 0, 10);
+
+        _terminalLogPanel.Dock = DockStyle.Fill;
+        _terminalLogPanel.Margin = new Padding(0);
+
+        rootLayout.Controls.Add(actionsPanel, 0, 0);
+        rootLayout.Controls.Add(connectionLayout, 0, 1);
+        rootLayout.Controls.Add(_testerCommandPanel, 0, 2);
+        rootLayout.Controls.Add(_digitalIoManualPanel, 0, 3);
+        rootLayout.Controls.Add(_terminalLogPanel, 0, 4);
+
+        Controls.Add(rootLayout);
 
         AtualizarListaDePortas();
         AtualizarResumoConexao();

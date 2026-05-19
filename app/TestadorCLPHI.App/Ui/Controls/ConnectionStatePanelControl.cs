@@ -20,16 +20,16 @@ public sealed class ConnectionStatePanelControl : UserControl
 
     public ConnectionStatePanelControl()
     {
-        Width = 270;
-        Height = 250;
+        Width = 300;
+        Height = 280;
 
         _estadoGroupBox = new GroupBox
         {
             Text = "Estado da conexão",
             Left = 0,
             Top = 0,
-            Width = 270,
-            Height = 250
+            Width = 300,
+            Height = 280
         };
 
         _estadoStatusLabel = CreateLabel(string.Empty, 15, 30);
@@ -40,36 +40,36 @@ public sealed class ConnectionStatePanelControl : UserControl
         {
             Text = "Conectar CLP",
             Left = 15,
-            Top = 155,
-            Width = 115,
-            Height = 28
+            Top = 162,
+            Width = 130,
+            Height = 34
         };
 
         _simularErroButton = new Button
         {
             Text = "Simular erro",
-            Left = 140,
-            Top = 155,
-            Width = 105,
-            Height = 28
+            Left = 155,
+            Top = 162,
+            Width = 120,
+            Height = 34
         };
 
         _desconectarButton = new Button
         {
             Text = "Desconectar",
             Left = 15,
-            Top = 195,
-            Width = 115,
-            Height = 28
+            Top = 205,
+            Width = 130,
+            Height = 34
         };
 
         _lerMw70Button = new Button
         {
             Text = "Ler %MW70",
-            Left = 140,
-            Top = 195,
-            Width = 105,
-            Height = 28
+            Left = 155,
+            Top = 205,
+            Width = 120,
+            Height = 34
         };
 
         _conectarClpButton.Click += (_, e) => ConnectClicked?.Invoke(this, e);
