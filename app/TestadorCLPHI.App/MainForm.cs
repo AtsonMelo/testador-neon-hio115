@@ -47,6 +47,7 @@ public sealed class MainForm : Form
         Width = 900;
         Height = 740;
         StartPosition = FormStartPosition.CenterScreen;
+        AutoScaleMode = AutoScaleMode.Font;
         MinimumSize = new Size(900, 700);
         AutoScroll = true;
 
@@ -259,16 +260,15 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 5,
-            Padding = new Padding(18),
+            RowCount = 4,
+            Padding = new Padding(14),
             AutoScroll = true
         };
 
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92F));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 292F));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 82F));
-        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 235F));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70F));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         FlowLayoutPanel actionsPanel = new()
@@ -318,7 +318,7 @@ public sealed class MainForm : Form
         _testerCommandPanel.Dock = DockStyle.Fill;
         _testerCommandPanel.Margin = new Padding(0, 0, 0, 10);
 
-        _digitalIoManualPanel.Dock = DockStyle.Fill;
+        _digitalIoManualPanel.Dock = DockStyle.Top;
         _digitalIoManualPanel.Margin = new Padding(0, 0, 0, 10);
 
         _terminalLogPanel.Dock = DockStyle.Fill;
@@ -326,9 +326,38 @@ public sealed class MainForm : Form
 
         rootLayout.Controls.Add(actionsPanel, 0, 0);
         rootLayout.Controls.Add(connectionLayout, 0, 1);
+        TabControl workTabs = new()
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0)
+        };
+
+        TabPage ioTabPage = new("I/O Manual")
+        {
+            Padding = new Padding(6),
+            AutoScroll = true
+        };
+
+        TabPage terminalTabPage = new("Terminal / Log")
+        {
+            Padding = new Padding(6),
+            AutoScroll = true
+        };
+
+        _digitalIoManualPanel.Dock = DockStyle.Top;
+        _digitalIoManualPanel.Margin = new Padding(0);
+
+        _terminalLogPanel.Dock = DockStyle.Fill;
+        _terminalLogPanel.Margin = new Padding(0);
+
+        ioTabPage.Controls.Add(_digitalIoManualPanel);
+        terminalTabPage.Controls.Add(_terminalLogPanel);
+
+        workTabs.TabPages.Add(ioTabPage);
+        workTabs.TabPages.Add(terminalTabPage);
+
         rootLayout.Controls.Add(_testerCommandPanel, 0, 2);
-        rootLayout.Controls.Add(_digitalIoManualPanel, 0, 3);
-        rootLayout.Controls.Add(_terminalLogPanel, 0, 4);
+        rootLayout.Controls.Add(workTabs, 0, 3);
 
         Controls.Add(rootLayout);
 

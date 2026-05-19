@@ -14,24 +14,69 @@ public sealed class DigitalIoManualPanelControl : UserControl
     public DigitalIoManualPanelControl()
     {
         Width = 690;
-        Height = 220;
+        Height = 285;
+        MinimumSize = new Size(720, 285);
 
         _groupBox = new GroupBox
         {
             Text = "Painel manual industrial 4DO/8DI",
-            Dock = DockStyle.Fill
+            Dock = DockStyle.Fill,
+            Padding = new Padding(10, 16, 10, 8)
         };
 
-        Label outputsTitleLabel = new()
+        TableLayoutPanel layout = new()
         {
-            Text = "1) Clique em Habilitar teste  2) Acione a saída",
-            AutoSize = true,
-            Left = 15,
-            Top = 24,
-            Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Padding = new Padding(4)
         };
 
-        _groupBox.Controls.Add(outputsTitleLabel);
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+        TableLayoutPanel headerLayout = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Margin = new Padding(0)
+        };
+
+        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+
+        Label instructionLabel = new()
+        {
+            Text = "1) Clique em Habilitar teste   2) Acione a saída",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+        };
+
+        _refreshInputsButton = new Button
+        {
+            Text = "Atualizar DI",
+            Dock = DockStyle.Fill,
+            Margin = new Padding(8, 0, 0, 4)
+        };
+
+        _refreshInputsButton.Click += (_, e) => RefreshInputsClicked?.Invoke(this, e);
+
+        headerLayout.Controls.Add(instructionLabel, 0, 0);
+        headerLayout.Controls.Add(_refreshInputsButton, 1, 0);
+
+        FlowLayoutPanel outputsPanel = new()
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoScroll = true,
+            Margin = new Padding(0),
+            Padding = new Padding(0)
+        };
 
         string assetDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Ui");
 
@@ -53,32 +98,38 @@ public sealed class DigitalIoManualPanelControl : UserControl
                 Title = title,
                 Description = description,
                 ButtonImagePath = Path.Combine(assetDir, imageName),
-                Left = 15 + (channel * 145),
-                Top = 46,
-                Width = 132,
-                Height = 92,
+                Width = 136,
+                Height = 82,
+                Margin = new Padding(0, 0, 10, 0),
                 BackColor = Color.FromArgb(31, 31, 31),
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
                 Cursor = Cursors.Hand
             };
 
             button.Click += (_, _) => OutputCommandClicked?.Invoke(capturedChannel);
 
             _outputButtons[channel] = button;
-            _groupBox.Controls.Add(button);
+            outputsPanel.Controls.Add(button);
         }
 
         Label inputsTitleLabel = new()
         {
             Text = "Entradas digitais",
-            AutoSize = true,
-            Left = 15,
-            Top = 150,
-            Font = new Font("Segoe UI", 9, FontStyle.Bold)
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold)
         };
 
-        _groupBox.Controls.Add(inputsTitleLabel);
+        FlowLayoutPanel inputsPanel = new()
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoScroll = true,
+            Margin = new Padding(0),
+            Padding = new Padding(118, 0, 0, 0)
+        };
 
         string onImagePath = Path.Combine(assetDir, "led_on_green.png");
         string offImagePath = Path.Combine(assetDir, "led_off_gray.png");
@@ -88,34 +139,26 @@ public sealed class DigitalIoManualPanelControl : UserControl
             IndustrialLedIndicatorControl indicator = new()
             {
                 LabelText = $"DI{channel:00}",
-                Left = 135 + (channel * 58),
-                Top = 142,
-                Width = 54,
-                Height = 68,
+                Width = 50,
+                Height = 70,
+                Margin = new Padding(0, 0, 10, 0),
                 BackColor = Color.FromArgb(31, 31, 31),
                 ForeColor = Color.White,
-                Font = new Font("Segoe UI", 8F, FontStyle.Bold)
+                Font = new Font("Segoe UI", 7.8F, FontStyle.Bold)
             };
 
             indicator.LoadImages(onImagePath, offImagePath);
 
             _inputIndicators[channel] = indicator;
-            _groupBox.Controls.Add(indicator);
+            inputsPanel.Controls.Add(indicator);
         }
 
-        _refreshInputsButton = new Button
-        {
-            Text = "Atualizar",
-            Left = 585,
-            Top = 170,
-            Width = 85,
-            Height = 28,
-            Anchor = AnchorStyles.Top | AnchorStyles.Right
-        };
+        layout.Controls.Add(headerLayout, 0, 0);
+        layout.Controls.Add(outputsPanel, 0, 1);
+        layout.Controls.Add(inputsTitleLabel, 0, 2);
+        layout.Controls.Add(inputsPanel, 0, 3);
 
-        _refreshInputsButton.Click += (_, e) => RefreshInputsClicked?.Invoke(this, e);
-
-        _groupBox.Controls.Add(_refreshInputsButton);
+        _groupBox.Controls.Add(layout);
         Controls.Add(_groupBox);
     }
 

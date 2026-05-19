@@ -8,7 +8,7 @@ public sealed class TerminalLogPanelControl : UserControl
     public TerminalLogPanelControl()
     {
         Width = 690;
-        Height = 150;
+        Height = 130;
 
         _groupBox = new GroupBox
         {
@@ -25,7 +25,7 @@ public sealed class TerminalLogPanelControl : UserControl
             BorderStyle = BorderStyle.FixedSingle,
             BackColor = Color.FromArgb(18, 24, 32),
             ForeColor = Color.FromArgb(203, 213, 225),
-            Font = new Font("Consolas", 9F),
+            Font = new Font("Consolas", 8.5F),
             Text = "[INFO] Terminal visual preparado." + Environment.NewLine +
                    "[INFO] Logs de comunicação e diagnóstico serão integrados em etapa futura."
         };
