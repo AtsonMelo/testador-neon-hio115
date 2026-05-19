@@ -14,7 +14,7 @@ public sealed class IndustrialCommandPreviewControl : UserControl
         BackColor = PanelColor;
         ForeColor = Color.White;
         BorderStyle = BorderStyle.FixedSingle;
-        Padding = new Padding(18, 10, 18, 10);
+        Padding = new Padding(10, 8, 10, 8);
         Font = new Font("Segoe UI", 10F);
 
         BuildLayout();
@@ -43,15 +43,15 @@ public sealed class IndustrialCommandPreviewControl : UserControl
         Button button = new()
         {
             Text = text,
-            Width = 250,
-            Height = 42,
+            Width = 210,
+            Height = 34,
             Dock = DockStyle.None,
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
             BackColor = Color.FromArgb(34, 42, 52),
-            Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleCenter,
-            Margin = new Padding(0, 0, 14, 0)
+            Margin = new Padding(0, 0, 10, 0)
         };
 
         button.FlatAppearance.BorderColor = BorderColor;

@@ -26,37 +26,33 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
 
         BuildLayout();
     }
-
     private void BuildLayout()
     {
         TableLayoutPanel root = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 5,
+            RowCount = 4,
             Padding = new Padding(14),
             BackColor = BackgroundColor
         };
 
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 128F));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 300F));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 104F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 300F));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 190F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         root.Controls.Add(CreateHeader(), 0, 0);
         root.Controls.Add(CreateConnectionArea(), 0, 1);
-        root.Controls.Add(CreateCommandsPanel(), 0, 2);
-        root.Controls.Add(CreateIoPanel(), 0, 3);
-        root.Controls.Add(CreateTerminalPanel(), 0, 4);
+        root.Controls.Add(CreateIoPanel(), 0, 2);
+        root.Controls.Add(CreateTerminalPanel(), 0, 3);
 
         Controls.Add(root);
     }
-
     private Control CreateHeader()
     {
         Panel panel = CreateCardPanel();
-        panel.Padding = new Padding(22, 16, 22, 16);
+        panel.Padding = new Padding(12);
 
         TableLayoutPanel layout = new()
         {
@@ -65,43 +61,23 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
             RowCount = 1
         };
 
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 28F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 18F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260F));
 
-        FlowLayoutPanel titlePanel = new()
+        IndustrialCommandPreviewControl commands = new()
         {
             Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false
+            Margin = new Padding(0, 0, 12, 0)
         };
-
-        Label title = new()
-        {
-            Text = "Testador CLP HI",
-            AutoSize = true,
-            Font = new Font("Segoe UI", 24F, FontStyle.Bold),
-            ForeColor = Color.White
-        };
-
-        Label subtitle = new()
-        {
-            Text = "Comunicação Modbus RTU real em fase inicial.",
-            AutoSize = true,
-            Font = new Font("Segoe UI", 11F),
-            ForeColor = TextMutedColor
-        };
-
-        titlePanel.Controls.Add(title);
-        titlePanel.Controls.Add(subtitle);
 
         TableLayoutPanel statusPanel = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
-            Padding = new Padding(10)
+            Padding = new Padding(4)
         };
 
         statusPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -110,15 +86,22 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
 
         statusPanel.Controls.Add(CreateStatusBlock("CLP", "Desconectado", AccentRedColor), 0, 0);
 
+        Panel statusDivider = new()
+        {
+            Dock = DockStyle.Fill,
+            BackColor = BorderColor,
+            Margin = new Padding(4, 10, 4, 10)
+        };
+
+        statusPanel.Controls.Add(statusDivider, 1, 0);
+        statusPanel.Controls.Add(CreateStatusBlock("Teste", "Desabilitado", Color.Gray), 2, 0);
+
         Panel divider = new()
         {
             Dock = DockStyle.Fill,
             BackColor = BorderColor,
-            Margin = new Padding(6, 16, 6, 16)
+            Margin = new Padding(4, 8, 4, 8)
         };
-
-        statusPanel.Controls.Add(divider, 1, 0);
-        statusPanel.Controls.Add(CreateStatusBlock("Teste", "Desabilitado", Color.Gray), 2, 0);
 
         TableLayoutPanel stopPanel = new()
         {
@@ -127,7 +110,7 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
             RowCount = 1
         };
 
-        stopPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+        stopPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 86F));
         stopPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
         string stopPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Ui", "stop_emergency.png");
@@ -145,14 +128,14 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            Padding = new Padding(14, 24, 0, 0)
+            Padding = new Padding(12, 14, 0, 0)
         };
 
         stopTextPanel.Controls.Add(new Label
         {
             Text = "STOP",
             AutoSize = true,
-            Font = new Font("Segoe UI", 22F, FontStyle.Bold),
+            Font = new Font("Segoe UI", 20F, FontStyle.Bold),
             ForeColor = AccentYellowColor
         });
 
@@ -160,22 +143,24 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
         {
             Text = "Emergência",
             AutoSize = true,
-            Font = new Font("Segoe UI", 11F),
+            Font = new Font("Segoe UI", 10F),
             ForeColor = Color.White
         });
 
         stopPanel.Controls.Add(stopImage, 0, 0);
         stopPanel.Controls.Add(stopTextPanel, 1, 0);
 
-        layout.Controls.Add(titlePanel, 0, 0);
+        layout.Controls.Add(commands, 0, 0);
         layout.Controls.Add(statusPanel, 1, 0);
-        layout.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = BorderColor, Margin = new Padding(6, 8, 6, 8) }, 2, 0);
+        layout.Controls.Add(divider, 2, 0);
         layout.Controls.Add(stopPanel, 3, 0);
 
         panel.Controls.Add(layout);
 
         return panel;
     }
+
+
 
     private Control CreateConnectionArea()
     {
