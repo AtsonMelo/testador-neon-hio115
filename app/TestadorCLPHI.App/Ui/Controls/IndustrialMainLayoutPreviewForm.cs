@@ -258,40 +258,16 @@ public sealed class IndustrialMainLayoutPreviewForm : Form
             Margin = new Padding(8, 0, 0, 0)
         };
     }
-
-
-
     private Control CreateCommandsPanel()
     {
-        Panel panel = CreateCardPanel();
-        panel.Margin = new Padding(0, 10, 0, 0);
-        panel.Padding = new Padding(14);
-
-        TableLayoutPanel layout = new()
+        return new IndustrialCommandPreviewControl
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
-            RowCount = 2
+            Margin = new Padding(0, 10, 0, 0)
         };
-
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-        layout.Controls.Add(CreateSectionTitle("Comandos do testador"), 0, 0);
-        layout.SetColumnSpan(layout.Controls[0], 4);
-
-        layout.Controls.Add(CreateActionButton("Habilitar teste", AccentGreenColor), 0, 1);
-        layout.Controls.Add(CreateActionButton("Resetar saídas", AccentYellowColor), 1, 1);
-        layout.Controls.Add(CreateActionButton("Teste automático", AccentBlueColor), 2, 1);
-
-        panel.Controls.Add(layout);
-        return panel;
     }
+
+
 
     private Control CreateIoPanel()
     {
