@@ -246,10 +246,10 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         doColumn.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
 
         doColumn.Controls.Add(CreateSubTitle("Saídas digitais (D)"), 0, 0);
-        doColumn.Controls.Add(CreateDoRow("D000", AccentRedColor), 0, 1);
-        doColumn.Controls.Add(CreateDoRow("D001", Color.FromArgb(75, 180, 75)), 0, 2);
-        doColumn.Controls.Add(CreateDoRow("D002", AccentYellowColor), 0, 3);
-        doColumn.Controls.Add(CreateDoRow("D003", Color.DimGray), 0, 4);
+        doColumn.Controls.Add(CreateDoRow("D000", "push_button_red.png"), 0, 1);
+        doColumn.Controls.Add(CreateDoRow("D001", "push_button_green.png"), 0, 2);
+        doColumn.Controls.Add(CreateDoRow("D002", "push_button_yellow.png"), 0, 3);
+        doColumn.Controls.Add(CreateDoRow("D003", "push_button_blue.png"), 0, 4);
 
         return doColumn;
     }
@@ -514,7 +514,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         };
     }
 
-    private static Control CreateDoRow(string label, Color color)
+    private static Control CreateDoRow(string label, string imageFileName)
     {
         TableLayoutPanel row = new()
         {
@@ -538,10 +538,10 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             TextAlign = ContentAlignment.MiddleLeft
         };
 
-        Panel led = CreateRoundLed(color, 34);
+        PictureBox buttonImage = CreatePngImage(imageFileName, 42);
 
         row.Controls.Add(name, 0, 0);
-        row.Controls.Add(led, 1, 0);
+        row.Controls.Add(buttonImage, 1, 0);
 
         return row;
     }
@@ -559,7 +559,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         };
 
         cell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        cell.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
+        cell.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 54F));
 
         Label name = new()
         {
@@ -570,33 +570,40 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             TextAlign = ContentAlignment.MiddleLeft
         };
 
-        Panel led = CreateRoundLed(on ? Color.LimeGreen : Color.DimGray, 24);
+        PictureBox ledImage = CreatePngImage(
+            on ? "led_on_green.png" : "led_off_gray.png",
+            36);
 
         cell.Controls.Add(name, 0, 0);
-        cell.Controls.Add(led, 1, 0);
+        cell.Controls.Add(ledImage, 1, 0);
 
         return cell;
     }
 
-    private static Panel CreateRoundLed(Color color, int size)
+    private static PictureBox CreatePngImage(string imageFileName, int size)
     {
-        Panel led = new()
+        string imagePath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Assets",
+            "Ui",
+            imageFileName);
+
+        PictureBox picture = new()
         {
             Width = size,
             Height = size,
-            BackColor = Color.FromArgb(24, 34, 44),
+            SizeMode = PictureBoxSizeMode.Zoom,
             Margin = new Padding(8),
-            Anchor = AnchorStyles.None
+            Anchor = AnchorStyles.None,
+            BackColor = Color.FromArgb(24, 34, 44)
         };
 
-        led.Paint += (_, e) =>
+        if (File.Exists(imagePath))
         {
-            using Pen border = new(Color.FromArgb(130, 130, 130), 3F);
-            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            e.Graphics.FillEllipse(new SolidBrush(color), 2, 2, size - 4, size - 4);
-            e.Graphics.DrawEllipse(border, 1, 1, size - 3, size - 3);
-        };
+            using Image image = Image.FromFile(imagePath);
+            picture.Image = new Bitmap(image);
+        }
 
-        return led;
+        return picture;
     }
 }
