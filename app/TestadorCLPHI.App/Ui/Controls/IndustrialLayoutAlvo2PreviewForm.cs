@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Ui.Industrial;
 namespace TestadorCLPHI.App.Ui.Controls;
 
 public sealed class IndustrialLayoutAlvo2PreviewForm : Form
@@ -182,27 +183,16 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 
     private Control CreateIoPanel()
     {
-        Panel panel = CreateCardPanel();
-        panel.Margin = new Padding(5, 0, 0, 0);
-        panel.Padding = new Padding(18);
-
-        TableLayoutPanel layout = new()
+        IndustrialManualIoPanelControl panel = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2,
-            BackColor = PanelColor
+            Margin = new Padding(5, 0, 0, 0)
         };
 
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-                Label ioTitle = CreateTitle("🎛  I/O Manual");
-        ioTitle.TextAlign = ContentAlignment.MiddleCenter;
-        layout.Controls.Add(ioTitle, 0, 0);
-        layout.Controls.Add(CreateIoContent(), 0, 1);
-
-        panel.Controls.Add(layout);
+        panel.SetInputState(0, true);
+        panel.SetInputState(4, true);
+        panel.SetInputState(1, true);
+        panel.SetInputState(2, true);
 
         return panel;
     }
