@@ -2,10 +2,10 @@ namespace TestadorCLPHI.App.Ui.Controls;
 
 public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 {
-    private static readonly Color BackgroundColor = Color.FromArgb(12, 18, 24);
-    private static readonly Color PanelColor = Color.FromArgb(24, 32, 42);
-    private static readonly Color BorderColor = Color.FromArgb(64, 78, 92);
-    private static readonly Color TextMutedColor = Color.FromArgb(170, 190, 210);
+    private static readonly Color BackgroundColor = Color.FromArgb(10, 16, 22);
+    private static readonly Color PanelColor = Color.FromArgb(22, 31, 40);
+    private static readonly Color BorderColor = Color.FromArgb(58, 72, 86);
+    private static readonly Color TextMutedColor = Color.FromArgb(165, 185, 205);
     private static readonly Color AccentBlueColor = Color.FromArgb(74, 144, 226);
     private static readonly Color AccentGreenColor = Color.FromArgb(62, 210, 92);
     private static readonly Color AccentYellowColor = Color.FromArgb(245, 190, 45);
@@ -341,7 +341,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             Multiline = true,
             ReadOnly = true,
-            BackColor = Color.FromArgb(4, 7, 10),
+            BackColor = Color.FromArgb(3, 6, 9),
             ForeColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
             Font = new Font("Consolas", 10F),
@@ -450,9 +450,6 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         layout.Controls.Add(label, 0, row);
         layout.Controls.Add(combo, 1, row);
     }
-
-
-
     private static Button CreateTopButton(string icon, string text, Color accentColor)
     {
         Button button = new()
@@ -461,18 +458,28 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Width = 190,
             Height = 36,
             FlatStyle = FlatStyle.Flat,
-            ForeColor = Color.White,
-            BackColor = Color.FromArgb(18, 25, 32),
+            ForeColor = Color.WhiteSmoke,
+            BackColor = Color.FromArgb(24, 34, 44),
             Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleCenter,
             Margin = new Padding(0, 0, 10, 0)
         };
 
-        button.FlatAppearance.BorderColor = accentColor;
+        button.FlatAppearance.BorderColor = Color.FromArgb(82, 104, 126);
         button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(32, 45, 58);
+        button.FlatAppearance.MouseDownBackColor = Color.FromArgb(24, 34, 44);
+
+        button.Paint += (_, e) =>
+        {
+            using SolidBrush accentBrush = new(accentColor);
+            e.Graphics.FillRectangle(accentBrush, 0, 0, 3, button.Height);
+        };
 
         return button;
     }
+
+
 
     private static Button CreateFooterButton(string text, Color borderColor)
     {
@@ -482,7 +489,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
-            BackColor = Color.FromArgb(34, 42, 52),
+            BackColor = Color.FromArgb(24, 34, 44),
             Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleCenter,
             Margin = new Padding(4, 5, 4, 5)
@@ -514,7 +521,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = Color.FromArgb(18, 25, 32),
+            BackColor = Color.FromArgb(24, 34, 44),
             Margin = new Padding(0, 4, 0, 4),
             Padding = new Padding(16, 0, 16, 0)
         };
@@ -546,7 +553,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = Color.FromArgb(18, 25, 32),
+            BackColor = Color.FromArgb(24, 34, 44),
             Margin = new Padding(8, 5, 8, 5),
             Padding = new Padding(12, 0, 12, 0)
         };
@@ -577,7 +584,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         {
             Width = size,
             Height = size,
-            BackColor = Color.FromArgb(18, 25, 32),
+            BackColor = Color.FromArgb(24, 34, 44),
             Margin = new Padding(8),
             Anchor = AnchorStyles.None
         };
