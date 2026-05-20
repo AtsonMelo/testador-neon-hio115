@@ -13,6 +13,7 @@ public sealed class MainForm : Form
     private readonly PlcAutoDetectionService _autoDetectionService;
     private readonly PlcDigitalIoManualService _digitalIoManualService;
     private readonly MainFormCommandUiService _commandUiService;
+    private readonly MainFormDigitalIoUiService _digitalIoUiService;
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
@@ -119,6 +120,14 @@ public sealed class MainForm : Form
             Top = 390,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
+        _digitalIoUiService = new MainFormDigitalIoUiService(
+            this,
+            _digitalIoManualService,
+            _plcService,
+            _digitalIoManualPanel,
+            _statusLabel,
+            TryUpdateConnectionSettingsFromUi,
+            AtualizarEstadoConexao);
 
         _terminalLogPanel = new TerminalLogPanelControl
         {
@@ -625,36 +634,7 @@ public sealed class MainForm : Form
 
     private async void AcionarSaidaDigitalManual(int channel)
     {
-        if (!TryUpdateConnectionSettingsFromUi())
-        {
-            return;
-        }
-
-        _digitalIoManualPanel.SetPanelEnabled(false);
-
-        try
-        {
-            await _digitalIoManualService.ActivateManualOutputAsync(channel);
-            await AtualizarEntradasDigitaisAsync();
-
-            _statusLabel.Text =
-                $"Saída D{channel:000} acionada em modo manual. Retornos esperados atualizados.";
-        }
-        catch (Exception ex)
-        {
-            _plcService.State.SetError(ex.Message);
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                ex.Message,
-                $"Erro ao acionar D{channel:000}",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-        }
-        finally
-        {
-            _digitalIoManualPanel.SetPanelEnabled(true);
-        }
+        await _digitalIoUiService.AcionarSaidaDigitalManualAsync(channel);
     }
 
     private async void AtualizarEntradasDigitaisButton_Click(object? sender, EventArgs e)
@@ -664,44 +644,7 @@ public sealed class MainForm : Form
 
     private async System.Threading.Tasks.Task AtualizarEntradasDigitaisAsync()
     {
-        if (!TryUpdateConnectionSettingsFromUi())
-        {
-            return;
-        }
-
-        _digitalIoManualPanel.SetPanelEnabled(false);
-
-        try
-        {
-            bool[] inputStates =
-                await _digitalIoManualService.ReadDigitalInputsAsync();
-
-            for (int index = 0; index < inputStates.Length; index++)
-            {
-                _digitalIoManualPanel.SetInputState(
-                    index,
-                    inputStates[index]);
-            }
-
-            AtualizarEstadoConexao();
-
-            _statusLabel.Text = "Entradas digitais DI00 a DI07 atualizadas.";
-        }
-        catch (Exception ex)
-        {
-            _plcService.State.SetError(ex.Message);
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                ex.Message,
-                "Erro ao atualizar entradas digitais",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-        }
-        finally
-        {
-            _digitalIoManualPanel.SetPanelEnabled(true);
-        }
+        await _digitalIoUiService.AtualizarEntradasDigitaisAsync();
     }
 
     private async System.Threading.Tasks.Task ExecutarComandoRegistradorAsync(
