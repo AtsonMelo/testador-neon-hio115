@@ -105,7 +105,6 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 1F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 1F));
@@ -113,11 +112,10 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 
         layout.Controls.Add(CreateTitle("🔗  Comunicação com CLP"), 0, 0);
         layout.Controls.Add(CreateStatusText("Status:    ● Disconnected", AccentRedColor, true), 0, 1);
-        layout.Controls.Add(CreateStatusText("Mensagem:  Desconectado", Color.White, false), 0, 2);
-        layout.Controls.Add(CreateDivider(), 0, 3);
-        layout.Controls.Add(CreateCommunicationFields(), 0, 4);
-        layout.Controls.Add(CreateDivider(), 0, 5);
-        layout.Controls.Add(CreateCommunicationFooter(), 0, 6);
+        layout.Controls.Add(CreateDivider(), 0, 2);
+        layout.Controls.Add(CreateCommunicationFields(), 0, 3);
+        layout.Controls.Add(CreateDivider(), 0, 4);
+        layout.Controls.Add(CreateCommunicationFooter(), 0, 5);
 
         panel.Controls.Add(layout);
 
@@ -565,7 +563,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         {
             Width = size,
             Height = size,
-            BackColor = color,
+            BackColor = Color.FromArgb(18, 25, 32),
             Margin = new Padding(8),
             Anchor = AnchorStyles.None
         };
