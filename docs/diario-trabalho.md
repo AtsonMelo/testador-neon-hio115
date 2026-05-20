@@ -136,3 +136,14 @@ Continuar a Issue #24 com foco visual, agora com a MainForm mais organizada. Pr�
 - Próximo foco: retomar a Issue #24 visual, revisando o app em notebook/DPI alto.
 - Evitar misturar nova refatoração com ajuste visual no próximo ciclo.
 - Alvos prováveis: topo/header, STOP alinhado com tema, abas I/O Manual e Terminal/Log.
+
+## 20/05/2026 - Pausa do ciclo Issue #24
+
+- Horário de pausa: 13:06.
+- Motivo: retorno ao trabalho em campo.
+- Branch: ui/issue-24-integra-visual-industrial-main.
+- Último commit: ac13ce3 - docs: planeja integracao do layout alvo 2 na mainform.
+- Estado: status limpo.
+- Decisão técnica mantida: não aumentar novamente a MainForm.cs.
+- Próximo foco: criar componente separado para o painel I/O industrial aprovado no Layout Alvo 2.
+- Stash mantido como backup: ajuste antigo de STOP do layout atual.
