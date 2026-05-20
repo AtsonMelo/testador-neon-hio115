@@ -24,11 +24,11 @@ public static class AppThemeService
 
         if (darkMode)
         {
-            backgroundColor = Color.FromArgb(32, 32, 32);
-            textColor = Color.WhiteSmoke;
-            buttonColor = Color.FromArgb(55, 55, 55);
-            buttonTextColor = Color.White;
-            fieldColor = Color.FromArgb(45, 45, 45);
+            backgroundColor = Color.FromArgb(18, 24, 32);
+            textColor = Color.FromArgb(226, 232, 240);
+            buttonColor = Color.FromArgb(42, 52, 64);
+            buttonTextColor = Color.FromArgb(226, 232, 240);
+            fieldColor = Color.FromArgb(24, 32, 42);
         }
         else
         {
