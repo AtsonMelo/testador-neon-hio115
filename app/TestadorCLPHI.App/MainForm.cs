@@ -12,6 +12,7 @@ public sealed class MainForm : Form
     private readonly PlcRegisterCommandService _registerCommandService;
     private readonly PlcAutoDetectionService _autoDetectionService;
     private readonly PlcDigitalIoManualService _digitalIoManualService;
+    private readonly MainFormCommandUiService _commandUiService;
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
@@ -54,6 +55,12 @@ public sealed class MainForm : Form
         _registerCommandService = new PlcRegisterCommandService(_plcService, _connectionSettings);
         _autoDetectionService = new PlcAutoDetectionService(_plcService);
         _digitalIoManualService = new PlcDigitalIoManualService(_registerCommandService);
+        _commandUiService = new MainFormCommandUiService(
+            this,
+            _registerCommandService,
+            _plcService,
+            TryUpdateConnectionSettingsFromUi,
+            AtualizarEstadoConexao);
 
         _tituloLabel = new Label
         {
@@ -704,38 +711,14 @@ public sealed class MainForm : Form
         string dialogTitle,
         string errorTitle)
     {
-        if (!TryUpdateConnectionSettingsFromUi())
-        {
-            return;
-        }
-
-        try
-        {
-            PlcRegisterCommandResult result =
-                await _registerCommandService.WriteAndReadBackAsync(
-                    registerAddress,
-                    valueToWrite);
-
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                $"{commandName} aplicado: %MW{result.RegisterAddress} = {result.ReadBackValue}",
-                dialogTitle,
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
-        catch (Exception ex)
-        {
-            _plcService.State.SetError(ex.Message);
-            AtualizarEstadoConexao();
-
-            MessageBox.Show(
-                ex.Message,
-                errorTitle,
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
-        }
+        await _commandUiService.ExecutarComandoRegistradorAsync(
+            registerAddress,
+            valueToWrite,
+            commandName,
+            dialogTitle,
+            errorTitle);
     }
+
     private async void PararTudoButton_Click(object? sender, EventArgs e)
     {
         await ExecutarComandoRegistradorAsync(
