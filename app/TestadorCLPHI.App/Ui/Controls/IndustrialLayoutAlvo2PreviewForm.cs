@@ -121,54 +121,64 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 
         return panel;
     }
-
     private Control CreateCommunicationFields()
     {
-        TableLayoutPanel fields = new()
+        Panel host = new()
         {
             Dock = DockStyle.Fill,
+            BackColor = PanelColor,
+            Padding = new Padding(0, 14, 0, 14)
+        };
+
+        TableLayoutPanel fields = new()
+        {
+            Width = 560,
+            Height = 150,
+            Anchor = AnchorStyles.Left | AnchorStyles.Top,
             ColumnCount = 2,
             RowCount = 3,
-            Padding = new Padding(0, 14, 0, 14),
             BackColor = PanelColor
         };
 
-        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155F));
-        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+        fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390F));
 
-        fields.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
-        fields.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33F));
-        fields.RowStyles.Add(new RowStyle(SizeType.Percent, 33.34F));
+        fields.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
+        fields.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
+        fields.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
 
         AddFieldRow(fields, 0, "Porta COM", "COM1");
         AddFieldRow(fields, 1, "Baud rate", "9600");
         AddFieldRow(fields, 2, "Slave ID", "1");
 
-        return fields;
+        host.Controls.Add(fields);
+
+        return host;
     }
+
 
     private Control CreateCommunicationFooter()
     {
         TableLayoutPanel footer = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
+            ColumnCount = 3,
             RowCount = 1,
             BackColor = PanelColor
         };
 
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 27F));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 23F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
 
         footer.Controls.Add(CreateFooterLabel("●  Pronto para conectar", AccentGreenColor), 0, 0);
         footer.Controls.Add(CreateFooterButton("⏻  Conectar CLP", AccentBlueColor), 1, 0);
-        footer.Controls.Add(CreateFooterLabel("▣  Configuração salva", TextMutedColor), 2, 0);
-        footer.Controls.Add(CreateFooterButton("⚙  Avançado", AccentBlueColor), 3, 0);
+        footer.Controls.Add(CreateFooterButton("⚙  Avançado", AccentBlueColor), 2, 0);
 
         return footer;
     }
+
+
 
     private Control CreateIoPanel()
     {
@@ -187,7 +197,9 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
-        layout.Controls.Add(CreateTitle("🎛  I/O Manual"), 0, 0);
+                Label ioTitle = CreateTitle("🎛  I/O Manual");
+        ioTitle.TextAlign = ContentAlignment.MiddleCenter;
+        layout.Controls.Add(ioTitle, 0, 0);
         layout.Controls.Add(CreateIoContent(), 0, 1);
 
         panel.Controls.Add(layout);
@@ -292,7 +304,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             BackColor = PanelColor
         };
 
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         layout.Controls.Add(CreateTerminalHeader(), 0, 0);
@@ -314,7 +326,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         };
 
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 230F));
 
         header.Controls.Add(CreateTitle("▣  Terminal / Log"), 0, 0);
         header.Controls.Add(CreateFooterButton("🧹  Limpar log", TextMutedColor), 1, 0);
@@ -412,7 +424,6 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Margin = new Padding(0, 8, 0, 8)
         };
     }
-
     private static void AddFieldRow(TableLayoutPanel layout, int row, string labelText, string valueText)
     {
         Label label = new()
@@ -421,7 +432,8 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", 10F),
             ForeColor = Color.White,
-            TextAlign = ContentAlignment.MiddleLeft
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, 12, 0)
         };
 
         ComboBox combo = new()
@@ -429,7 +441,7 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             Dock = DockStyle.Fill,
             DropDownStyle = ComboBoxStyle.DropDownList,
             Font = new Font("Segoe UI", 10F),
-            Margin = new Padding(0, 5, 0, 5)
+            Margin = new Padding(0, 6, 0, 6)
         };
 
         combo.Items.Add(valueText);
@@ -439,17 +451,19 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         layout.Controls.Add(combo, 1, row);
     }
 
+
+
     private static Button CreateTopButton(string icon, string text, Color accentColor)
     {
         Button button = new()
         {
             Text = $"{icon}  {text}",
-            Width = 170,
+            Width = 190,
             Height = 36,
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
             BackColor = Color.FromArgb(18, 25, 32),
-            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleCenter,
             Margin = new Padding(0, 0, 10, 0)
         };
@@ -469,9 +483,9 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
             FlatStyle = FlatStyle.Flat,
             ForeColor = Color.White,
             BackColor = Color.FromArgb(34, 42, 52),
-            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleCenter,
-            Margin = new Padding(4, 8, 4, 8)
+            Margin = new Padding(4, 5, 4, 5)
         };
 
         button.FlatAppearance.BorderColor = borderColor;
