@@ -76,3 +76,52 @@
   2. validação;
   3. extração de componentes reutilizáveis;
   4. integração gradual no app principal.
+
+## 19/05/2026 - Issue #24 - Refatoração segura da MainForm
+
+**Horário do registro:** 22:41
+**Branch:** ui/issue-24-integra-visual-industrial-main
+**Foco:** enxugar a MainForm.cs antes de continuar a evolução visual do app principal.
+
+### Contexto
+
+Durante a Issue #24, a MainForm.cs estava concentrando muitas responsabilidades: criação de controles, conexão, comandos de registradores, I/O manual e organização visual. Para reduzir risco antes de novas alterações de layout, foi feito um ciclo de refatoração incremental, com commits pequenos e validação a cada etapa.
+
+### Entregas realizadas
+
+- Extração de helpers de criação da MainForm.
+- Extração de helpers de conexão.
+- Extração de helpers de comandos registradores.
+- Extração de helpers de I/O manual.
+- Redução da MainForm.cs para 685 linhas.
+- Manutenção do app abrindo normalmente após as refatorações.
+
+### Commits relevantes
+
+- d9f9594 - refactor: extrai helpers de criacao da mainform
+- 6c20fe7 - refactor: extrai helpers de conexao da mainform
+- b12c84f - refactor: extrai helpers de comandos da mainform
+- e334269 - refactor: extrai helpers de io manual da mainform
+
+### Arquivos criados/organizados
+
+- MainFormControlFactory.cs
+- MainFormConnectionUiService.cs
+- MainFormCommandUiService.cs
+- MainFormDigitalIoUiService.cs
+
+### Validações
+
+- check-csharp-literals.ps1 OK.
+- git diff --check OK, com apenas aviso LF/CRLF aceito quando apareceu.
+- dotnet build .\testador-neon-hio115.sln OK.
+- App abriu normalmente com o título Testador CLP HI.
+- Status final limpo após os commits.
+
+### Observações técnicas
+
+A extração foi feita em blocos pequenos para evitar misturar refatoração com alteração visual. Um ponto importante foi corrigir a ordem de inicialização do MainFormDigitalIoUiService, pois ele dependia de _digitalIoManualPanel e _statusLabel já instanciados. O build chegou a apontar warnings CS8604, que foram corrigidos antes do commit.
+
+### Próximo passo
+
+Continuar a Issue #24 com foco visual, agora com a MainForm mais organizada. Próximo ciclo recomendado: revisar layout principal em notebook/DPI alto e decidir se a próxima alteração será no painel superior, abas I/O/Terminal ou integração gradual do layout alvo industrial.
