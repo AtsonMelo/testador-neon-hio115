@@ -368,23 +368,23 @@ public sealed class MainForm : Form
     }
     private void AtualizarListaDePortas()
     {
-        PlcConnectionSettingsUiService.UpdatePortList(
+        MainFormConnectionUiService.AtualizarListaDePortas(
             _portaComboBox,
-            _connectionSettings.PortName);
+            _connectionSettings);
     }
     private void AtualizarResumoConexao()
     {
-        _conexaoResumoLabel.Text =
-            $"Atual: {_connectionSettings.PortName}, {_connectionSettings.BaudRate} bps, Slave {_connectionSettings.SlaveId}" +
-            $"{Environment.NewLine}Paridade: {_connectionSettings.Parity}, Stop bits: {_connectionSettings.StopBits}, Timeout: {_connectionSettings.TimeoutMilliseconds} ms";
+        MainFormConnectionUiService.AtualizarResumoConexao(
+            _conexaoResumoLabel,
+            _connectionSettings);
     }
-
     private void AtualizarEstadoConexao()
     {
-        PlcConnectionState state = _plcService.State;
-
-        _connectionStatePanel.UpdateState(state);
+        MainFormConnectionUiService.AtualizarEstadoConexao(
+            _connectionStatePanel,
+            _plcService.State);
     }
+
     private void AtualizarPortasButton_Click(object? sender, EventArgs e)
     {
         AtualizarListaDePortas();
@@ -414,11 +414,12 @@ public sealed class MainForm : Form
     }
     private int[] ObterBaudRatesSelecionadosParaBusca()
     {
-        return PlcConnectionSettingsUiService.GetSelectedBaudRatesForSearch(
+        return MainFormConnectionUiService.ObterBaudRatesSelecionadosParaBusca(
             _baudRateComboBox,
             _baudRateBuscaCheckedListBox,
-            _connectionSettings.BaudRate);
+            _connectionSettings);
     }
+
     private async void DetectarClpButton_Click(object? sender, EventArgs e)
     {
         _detectarClpButton.Enabled = false;
