@@ -132,7 +132,7 @@ public sealed class MainForm : Form
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        _portaTituloLabel = CriarLabel("Porta COM:", 20, 32);
+        _portaTituloLabel = MainFormControlFactory.CriarLabel("Porta COM:", 20, 32);
 
         _portaComboBox = new ComboBox
         {
@@ -151,7 +151,7 @@ public sealed class MainForm : Form
             Height = 30
         };
 
-        _baudRateTituloLabel = CriarLabel("Baud rate:", 20, 72);
+        _baudRateTituloLabel = MainFormControlFactory.CriarLabel("Baud rate:", 20, 72);
 
         _baudRateComboBox = new ComboBox
         {
@@ -172,7 +172,7 @@ public sealed class MainForm : Form
 
         _baudRateComboBox.SelectedItem = _connectionSettings.BaudRate.ToString();
 
-        _baudRateBuscaTituloLabel = CriarLabel("Busca:", 240, 65);
+        _baudRateBuscaTituloLabel = MainFormControlFactory.CriarLabel("Busca:", 240, 65);
 
         _baudRateBuscaCheckedListBox = new CheckedListBox
         {
@@ -200,7 +200,7 @@ public sealed class MainForm : Form
             Checked = false
         };
 
-        _slaveIdTituloLabel = CriarLabel("Slave ID:", 20, 112);
+        _slaveIdTituloLabel = MainFormControlFactory.CriarLabel("Slave ID:", 20, 112);
 
         _slaveIdTextBox = new TextBox
         {
@@ -366,32 +366,6 @@ public sealed class MainForm : Form
         AtualizarEstadoConexao();
         AplicarTemaSelecionado();
     }
-
-    private static Label CriarLabel(string text, int left, int top)
-    {
-        return new Label
-        {
-            Text = text,
-            AutoSize = true,
-            Left = left,
-            Top = top,
-            Font = new Font("Segoe UI", 10)
-        };
-    }
-
-    private static Label CriarLabelEstadoMensagem(int left, int top)
-    {
-        return new Label
-        {
-            AutoSize = false,
-            Left = left,
-            Top = top,
-            Width = 230,
-            Height = 55,
-            Font = new Font("Segoe UI", 10)
-        };
-    }
-
     private void AtualizarListaDePortas()
     {
         PlcConnectionSettingsUiService.UpdatePortList(
