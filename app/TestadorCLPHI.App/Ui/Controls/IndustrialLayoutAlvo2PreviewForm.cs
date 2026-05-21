@@ -10,6 +10,6 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
         MinimumSize = new Size(1280, 720);
         BackColor   = Color.FromArgb(10, 16, 22);
 
-        Controls.Add(new IndustrialMainContentControl());
+        Controls.Add(new IndustrialMainHostControl());
     }
 }
