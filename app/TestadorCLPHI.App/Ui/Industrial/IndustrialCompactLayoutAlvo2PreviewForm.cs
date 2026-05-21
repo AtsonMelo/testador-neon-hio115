@@ -155,11 +155,11 @@ public sealed class IndustrialCompactLayoutAlvo2PreviewForm : Form
             BackColor = PanelColor
         };
 
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36F));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32F));
-        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
+        footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
 
-        footer.Controls.Add(CreateFooterLabel("●  Pronto para conectar", AccentGreenColor), 0, 0);
+        footer.Controls.Add(CreateFooterLabel("● Pronto p/ conectar", AccentGreenColor), 0, 0);
         footer.Controls.Add(CreateFooterButton("⏻  Conectar CLP", AccentBlueColor), 1, 0);
         footer.Controls.Add(CreateFooterButton("⚙  Avançado", AccentBlueColor), 2, 0);
 
@@ -220,7 +220,11 @@ public sealed class IndustrialCompactLayoutAlvo2PreviewForm : Form
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
 
         header.Controls.Add(CreateTitle("▣  Terminal / Log"), 0, 0);
-        header.Controls.Add(CreateFooterButton("🧹  Limpar log", TextMutedColor), 1, 0);
+        Button clearLogButton = CreateFooterButton("🧹  Limpar log", TextMutedColor);
+        clearLogButton.Height = 32;
+        clearLogButton.Margin = new Padding(4, 4, 4, 4);
+        clearLogButton.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+        header.Controls.Add(clearLogButton, 1, 0);
 
         return header;
     }
