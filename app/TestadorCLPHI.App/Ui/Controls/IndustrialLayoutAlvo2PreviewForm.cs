@@ -6,13 +6,10 @@ public sealed class IndustrialLayoutAlvo2PreviewForm : Form
 {
     public IndustrialLayoutAlvo2PreviewForm()
     {
-        Text = "Preview - Layout Alvo 2 | Testador CLP HI";
-        MinimumSize = new Size(1120, 720);
-        BackColor = Color.FromArgb(10, 16, 22);
+        Text        = "Preview - Layout Alvo 2 | Testador CLP HI";
+        MinimumSize = new Size(1280, 720);
+        BackColor   = Color.FromArgb(10, 16, 22);
 
-        Controls.Add(new IndustrialMainContentControl
-        {
-            Dock = DockStyle.Fill
-        });
+        Controls.Add(new IndustrialMainContentControl());
     }
 }

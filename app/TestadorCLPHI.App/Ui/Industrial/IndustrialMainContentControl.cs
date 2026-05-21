@@ -11,15 +11,15 @@ public sealed class IndustrialMainContentControl : UserControl
     private static readonly Color AccentYellowColor = Color.FromArgb(245, 190, 45);
     private static readonly Color AccentRedColor = Color.FromArgb(245, 68, 68);
 
+
     public IndustrialMainContentControl()
     {
-        Dock = DockStyle.Fill;
-        MinimumSize = new Size(1120, 720);
-        BackColor = BackgroundColor;
+        Dock        = DockStyle.Fill;
+        MinimumSize = new Size(1280, 720);
+        BackColor   = BackgroundColor;
 
         BuildLayout();
     }
-
     private void BuildLayout()
     {
         TableLayoutPanel root = new()
