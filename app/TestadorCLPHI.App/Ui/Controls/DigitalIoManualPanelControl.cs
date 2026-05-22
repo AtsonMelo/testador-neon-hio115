@@ -1,6 +1,8 @@
+using TestadorCLPHI.App.Ui;
+
 namespace TestadorCLPHI.App.Ui.Controls;
 
-public sealed class DigitalIoManualPanelControl : UserControl
+public sealed class DigitalIoManualPanelControl : UserControl, IDigitalIoManualPanel
 {
     private readonly GroupBox _groupBox;
     private readonly IndustrialPushButtonControl[] _outputButtons = new IndustrialPushButtonControl[4];

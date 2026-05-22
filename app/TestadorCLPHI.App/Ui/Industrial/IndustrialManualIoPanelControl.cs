@@ -1,6 +1,8 @@
+using TestadorCLPHI.App.Ui;
+
 namespace TestadorCLPHI.App.Ui.Industrial;
 
-public sealed class IndustrialManualIoPanelControl : UserControl
+public sealed class IndustrialManualIoPanelControl : UserControl, IDigitalIoManualPanel
 {
     private static readonly Color PanelColor = Color.FromArgb(22, 31, 40);
     private static readonly Color RowColor = Color.FromArgb(24, 34, 44);

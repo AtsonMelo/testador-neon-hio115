@@ -1,5 +1,5 @@
 using TestadorCLPHI.App.Plc;
-using TestadorCLPHI.App.Ui.Controls;
+using TestadorCLPHI.App.Ui;
 
 namespace TestadorCLPHI.App;
 
@@ -8,7 +8,7 @@ internal sealed class MainFormDigitalIoUiService
     private readonly IWin32Window _owner;
     private readonly PlcDigitalIoManualService _digitalIoManualService;
     private readonly IPlcCommunicationService _plcService;
-    private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
+    private readonly IDigitalIoManualPanel _digitalIoManualPanel;
     private readonly Label _statusLabel;
     private readonly Func<bool> _tryUpdateConnectionSettingsFromUi;
     private readonly Action _updateConnectionState;
@@ -17,7 +17,7 @@ internal sealed class MainFormDigitalIoUiService
         IWin32Window owner,
         PlcDigitalIoManualService digitalIoManualService,
         IPlcCommunicationService plcService,
-        DigitalIoManualPanelControl digitalIoManualPanel,
+        IDigitalIoManualPanel digitalIoManualPanel,
         Label statusLabel,
         Func<bool> tryUpdateConnectionSettingsFromUi,
         Action updateConnectionState)
