@@ -2,6 +2,7 @@ using System.IO.Ports;
 using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
 using TestadorCLPHI.App.Ui.Controls;
+using TestadorCLPHI.App.Ui.Industrial;
 
 namespace TestadorCLPHI.App;
 
@@ -14,6 +15,7 @@ public sealed class MainForm : Form
     private readonly PlcDigitalIoManualService _digitalIoManualService;
     private readonly MainFormCommandUiService _commandUiService;
     private readonly MainFormDigitalIoUiService _digitalIoUiService;
+    private readonly bool _useIndustrialHost;
 
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
@@ -43,8 +45,10 @@ public sealed class MainForm : Form
     private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
     private readonly TerminalLogPanelControl _terminalLogPanel;
 
-    public MainForm()
+    public MainForm(bool useIndustrialHost = false)
     {
+        _useIndustrialHost = useIndustrialHost;
+
         Text = "Testador CLP HI";
         Width = 900;
         Height = 740;
@@ -272,6 +276,16 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
+        if (_useIndustrialHost)
+        {
+            Controls.Add(new IndustrialMainHostControl());
+            AtualizarListaDePortas();
+            AtualizarResumoConexao();
+            AtualizarEstadoConexao();
+            AplicarTemaSelecionado();
+            return;
+        }
+
         TableLayoutPanel rootLayout = new()
         {
             Dock = DockStyle.Fill,

@@ -34,6 +34,7 @@ internal static class Program
             return;
         }
 
-        Application.Run(new MainForm());
+        bool useIndustrialHost = args.Contains("--use-industrial-host", StringComparer.OrdinalIgnoreCase);
+        Application.Run(new MainForm(useIndustrialHost));
     }
 }
