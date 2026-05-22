@@ -11,6 +11,8 @@ public sealed class IndustrialMainContentControl : UserControl
     private static readonly Color AccentYellowColor = Color.FromArgb(245, 190, 45);
     private static readonly Color AccentRedColor = Color.FromArgb(245, 68, 68);
 
+    public event EventHandler? EnableTestClicked;
+    public event EventHandler? ResetOutputsClicked;
 
     public IndustrialMainContentControl()
     {
@@ -55,9 +57,16 @@ public sealed class IndustrialMainContentControl : UserControl
             BackColor = PanelColor
         };
 
-        row.Controls.Add(CreateTopButton("▷", "Habilitar teste", AccentGreenColor));
-        row.Controls.Add(CreateTopButton("↻", "Resetar saídas", AccentYellowColor));
-        row.Controls.Add(CreateTopButton("⚙", "Teste automático", AccentBlueColor));
+        Button enableTestButton = CreateTopButton("▷", "Habilitar teste", AccentGreenColor);
+        Button resetOutputsButton = CreateTopButton("↻", "Resetar saídas", AccentYellowColor);
+        Button automaticTestButton = CreateTopButton("⚙", "Teste automático", AccentBlueColor);
+
+        enableTestButton.Click += (_, e) => EnableTestClicked?.Invoke(this, e);
+        resetOutputsButton.Click += (_, e) => ResetOutputsClicked?.Invoke(this, e);
+
+        row.Controls.Add(enableTestButton);
+        row.Controls.Add(resetOutputsButton);
+        row.Controls.Add(automaticTestButton);
 
         panel.Controls.Add(row);
 

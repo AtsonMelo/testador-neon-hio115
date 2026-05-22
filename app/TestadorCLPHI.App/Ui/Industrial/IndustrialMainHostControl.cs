@@ -4,6 +4,9 @@ public sealed class IndustrialMainHostControl : UserControl
 {
     private readonly IndustrialMainContentControl _content;
 
+    public event EventHandler? EnableTestClicked;
+    public event EventHandler? ResetOutputsClicked;
+
     public IndustrialMainHostControl()
     {
         Dock = DockStyle.Fill;
@@ -19,6 +22,9 @@ public sealed class IndustrialMainHostControl : UserControl
             Size = new Size(1280, 720),
             Margin = new Padding(0)
         };
+
+        _content.EnableTestClicked += (_, e) => EnableTestClicked?.Invoke(this, e);
+        _content.ResetOutputsClicked += (_, e) => ResetOutputsClicked?.Invoke(this, e);
 
         Controls.Add(_content);
     }

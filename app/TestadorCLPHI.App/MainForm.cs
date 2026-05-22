@@ -278,7 +278,11 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
         if (_useIndustrialHost)
         {
-            Controls.Add(new IndustrialMainHostControl());
+            IndustrialMainHostControl industrialHost = new();
+            industrialHost.EnableTestClicked += HabilitarTesteButton_Click;
+            industrialHost.ResetOutputsClicked += ResetarSaidasButton_Click;
+
+            Controls.Add(industrialHost);
             AtualizarListaDePortas();
             AtualizarResumoConexao();
             AtualizarEstadoConexao();
