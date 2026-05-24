@@ -48,6 +48,20 @@ O projeto está em fase de evolução da interface industrial e organização da
 
 Há trabalho em andamento para integrar gradualmente o novo layout industrial ao fluxo principal da aplicação, mantendo o layout legado preservado durante a transição.
 
+## Referências de layout industrial
+
+A evolução visual do projeto é guiada por documentos de design versionados no próprio repositório.
+
+Principais referências:
+
+- `docs/design/issue-16-visual-alvo.md` — direção inicial do visual industrial dark, inspirada em painéis de controle, SCADA e bancadas de teste de CLP.
+- `docs/design/issue-24-layout-alvo-2.md` — referência visual mais recente do Layout Alvo 2.
+- `docs/design/issue-24-integracao-layout-alvo-2-mainform.md` — plano de integração gradual do Layout Alvo 2 na MainForm.
+
+Observação:
+
+O Layout Alvo 1 foi mantido como referência conceitual. A evolução atual do projeto segue o Layout Alvo 2 e a integração gradual por componentes, evitando aumentar novamente a responsabilidade da MainForm.
+
 ## Evidências técnicas
 
 Este projeto busca evidenciar:
