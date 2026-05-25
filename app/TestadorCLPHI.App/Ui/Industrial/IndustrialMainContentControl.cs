@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Ui;
+
 namespace TestadorCLPHI.App.Ui.Industrial;
 
 public sealed class IndustrialMainContentControl : UserControl
@@ -11,14 +13,24 @@ public sealed class IndustrialMainContentControl : UserControl
     private static readonly Color AccentYellowColor = Color.FromArgb(245, 190, 45);
     private static readonly Color AccentRedColor = Color.FromArgb(245, 68, 68);
 
+    private readonly IndustrialManualIoPanelControl _manualIoPanel;
+
     public event EventHandler? EnableTestClicked;
     public event EventHandler? ResetOutputsClicked;
+
+    public IDigitalIoManualPanel ManualIoPanel => _manualIoPanel;
 
     public IndustrialMainContentControl()
     {
         Dock        = DockStyle.Fill;
         MinimumSize = new Size(1280, 720);
         BackColor   = BackgroundColor;
+
+        _manualIoPanel = new IndustrialManualIoPanelControl
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(5, 0, 0, 0)
+        };
 
         BuildLayout();
     }
@@ -186,18 +198,7 @@ public sealed class IndustrialMainContentControl : UserControl
 
     private Control CreateIoPanel()
     {
-        IndustrialManualIoPanelControl panel = new()
-        {
-            Dock = DockStyle.Fill,
-            Margin = new Padding(5, 0, 0, 0)
-        };
-
-        panel.SetInputState(0, true);
-        panel.SetInputState(4, true);
-        panel.SetInputState(1, true);
-        panel.SetInputState(2, true);
-
-        return panel;
+        return _manualIoPanel;
     }
 
     private Control CreateIoContent()

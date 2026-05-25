@@ -124,11 +124,21 @@ public sealed class MainForm : Form
             Top = 390,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
+
+        IndustrialMainHostControl? industrialHost = null;
+        IDigitalIoManualPanel activeManualIoPanel = _digitalIoManualPanel;
+
+        if (_useIndustrialHost)
+        {
+            industrialHost = new IndustrialMainHostControl();
+            activeManualIoPanel = industrialHost.ManualIoPanel;
+        }
+
         _digitalIoUiService = new MainFormDigitalIoUiService(
             this,
             _digitalIoManualService,
             _plcService,
-            _digitalIoManualPanel,
+            activeManualIoPanel,
             _statusLabel,
             TryUpdateConnectionSettingsFromUi,
             AtualizarEstadoConexao);
@@ -261,8 +271,8 @@ public sealed class MainForm : Form
         _connectionStatePanel.ReadMw70Clicked += LerMw70Button_Click;
         _testerCommandPanel.EnableTestClicked += HabilitarTesteButton_Click;
         _testerCommandPanel.ResetOutputsClicked += ResetarSaidasButton_Click;
-        _digitalIoManualPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
-        _digitalIoManualPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
+        activeManualIoPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
+        activeManualIoPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -278,8 +288,7 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
         if (_useIndustrialHost)
         {
-            IndustrialMainHostControl industrialHost = new();
-            industrialHost.EnableTestClicked += HabilitarTesteButton_Click;
+            industrialHost!.EnableTestClicked += HabilitarTesteButton_Click;
             industrialHost.ResetOutputsClicked += ResetarSaidasButton_Click;
 
             Controls.Add(industrialHost);

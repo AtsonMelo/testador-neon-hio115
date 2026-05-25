@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Ui;
+
 namespace TestadorCLPHI.App.Ui.Industrial;
 
 public sealed class IndustrialMainHostControl : UserControl
@@ -6,6 +8,8 @@ public sealed class IndustrialMainHostControl : UserControl
 
     public event EventHandler? EnableTestClicked;
     public event EventHandler? ResetOutputsClicked;
+
+    public IDigitalIoManualPanel ManualIoPanel => _content.ManualIoPanel;
 
     public IndustrialMainHostControl()
     {
