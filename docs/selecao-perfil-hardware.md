@@ -17,10 +17,41 @@ Ela nao substitui a validacao em bancada.
 5. Selecionar o modulo de I/O.
 6. Selecionar o perfil de comunicacao.
 7. Selecionar o perfil de teste.
-8. Ler o resumo, os itens pendentes e as necessidades de validacao.
+8. Ler o relatorio/checklist, os itens pendentes e as necessidades de
+   validacao.
+9. Usar `Copiar resumo de teste` para copiar o relatorio para registro de
+   bancada ou roteiro do operador.
 
 A selecao e informativa. Ela nao altera porta, baud rate, slave ID, paridade,
 timeout ou qualquer parametro real de Modbus. Tambem nao envia comandos ao CLP.
+
+## Relatorio de preparacao de teste
+
+A area de texto da aba `Perfil hardware` mostra um relatorio de preparacao de
+teste gerado a partir do perfil selecionado. O botao `Copiar resumo de teste`
+apenas copia esse texto para a area de transferencia.
+
+O relatorio inclui:
+
+- familia selecionada;
+- modelo selecionado;
+- modulo de I/O selecionado;
+- perfil de comunicacao selecionado;
+- perfil de teste selecionado;
+- status de validacao do catalogo;
+- itens `pending_manual_validation` ou `official_reference_pending`;
+- itens `field_observed`;
+- necessidades de validacao em bancada;
+- checklist do operador antes do teste;
+- aviso de conflito de COM;
+- aviso para nao usar HIstudio, XCTU e Testador na mesma COM ao mesmo tempo;
+- aviso de que a selecao e o relatorio nao executam comandos fisicos;
+- aviso de que validacao em bancada ainda e obrigatoria.
+
+Gerar ou copiar o relatorio nao abre conexao, nao altera configuracao e nao
+envia comando fisico. O relatorio tambem nao substitui validacao de bancada:
+ele serve para preparar a execucao, organizar pendencias e registrar o que deve
+ser conferido antes do teste real.
 
 ## Validacao nao visual
 
@@ -40,6 +71,16 @@ com as listas usadas pela UI.
 Esta validacao e nao visual e nao fisica: nao abre tela, nao altera
 parametros Modbus, nao escreve em PLC e nao envia comandos. Ela nao substitui
 validacao em bancada; apenas cobre consistencia entre catalogo, resolver e UI.
+
+O comando abaixo valida a geracao do relatorio de preparacao sem abrir a UI:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-test-report
+```
+
+Ele carrega o catalogo, resolve os cenarios principais, gera um relatorio para
+cada um e verifica que os relatorios nao ficam vazios, mantem pendencias
+explicitas e contem os avisos de seguranca sobre comando fisico, COM e bancada.
 
 ## O que a tela mostra
 
@@ -64,7 +105,8 @@ Preparacao inicial:
 3. Selecionar `DIO605`.
 4. Comecar por `COMMUNICATION_DIAGNOSTIC`.
 5. Ajustar porta, baud rate e slave ID no painel de conexao normal.
-6. Manter `DIO605` e o conjunto como `pending_manual_validation` ate confirmar
+6. Copiar o relatorio/checklist e conferir os avisos de COM antes de conectar.
+7. Manter `DIO605` e o conjunto como `pending_manual_validation` ate confirmar
    mapa, ligacao e retorno em bancada.
 
 Nao usar validacao anterior do HIO115 como prova para DIO605.
@@ -79,7 +121,9 @@ Preparacao inicial:
 4. Comecar por `COMMUNICATION_DIAGNOSTIC`.
 5. Usar `REMOTE_IO_RS485` somente depois de confirmar topologia, endereco e
    ausencia de outro mestre na rede.
-6. Executar I/O apenas quando o programa carregado e o mapa usado pelo app
+6. Copiar o relatorio/checklist e anexar ao registro do teste quando
+   aplicavel.
+7. Executar I/O apenas quando o programa carregado e o mapa usado pelo app
    estiverem confirmados para o conjunto.
 
 `HIO115` aparece com historico de bancada no fluxo atual, mas isso nao valida

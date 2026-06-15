@@ -24,6 +24,14 @@ internal static class Program
             return;
         }
 
+        if (args.Contains("--validate-hardware-test-report", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = HardwareTestPreparationReportValidator.ValidateDefaultCatalog(
+                Console.Out,
+                Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         if (args.Contains("--preview-layout-alvo", StringComparer.OrdinalIgnoreCase))

@@ -1,4 +1,3 @@
-using System.Text;
 using TestadorCLPHI.App.Hardware;
 
 namespace TestadorCLPHI.App.Ui.Hardware;
@@ -9,12 +8,14 @@ public sealed class HardwareProfileSelectionControl : UserControl
 
     private readonly HardwareCatalog _catalog;
     private readonly HardwareProfileResolver _resolver;
+    private readonly HardwareTestPreparationReportFormatter _reportFormatter;
     private readonly ComboBox _familyComboBox;
     private readonly ComboBox _modelComboBox;
     private readonly ComboBox _ioModuleComboBox;
     private readonly ComboBox _communicationProfileComboBox;
     private readonly ComboBox _testProfileComboBox;
     private readonly Label _validationStatusLabel;
+    private readonly Button _copyReportButton;
     private readonly TextBox _summaryTextBox;
 
     private bool _updatingSelection;
@@ -25,6 +26,7 @@ public sealed class HardwareProfileSelectionControl : UserControl
     {
         _catalog = catalog ?? HardwareCatalog.Empty;
         _resolver = new HardwareProfileResolver();
+        _reportFormatter = new HardwareTestPreparationReportFormatter();
         SelectedProfile = SelectedHardwareProfile.Empty;
 
         Dock = DockStyle.Fill;
@@ -41,6 +43,12 @@ public sealed class HardwareProfileSelectionControl : UserControl
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font("Segoe UI", 9F, FontStyle.Bold),
             AutoEllipsis = true
+        };
+        _copyReportButton = new Button
+        {
+            Text = "Copiar resumo de teste",
+            Dock = DockStyle.Fill,
+            Margin = new Padding(8, 0, 0, 0)
         };
         _summaryTextBox = new TextBox
         {
@@ -115,16 +123,18 @@ public sealed class HardwareProfileSelectionControl : UserControl
         TableLayoutPanel statusLayout = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
+            ColumnCount = 3,
             RowCount = 1,
             Margin = new Padding(0, 0, 0, 6)
         };
 
         statusLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
         statusLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        statusLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 176F));
         statusLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         statusLayout.Controls.Add(CreateSelectorLabel("Status de validacao:"), 0, 0);
         statusLayout.Controls.Add(_validationStatusLabel, 1, 0);
+        statusLayout.Controls.Add(_copyReportButton, 2, 0);
 
         root.Controls.Add(safetyLabel, 0, 0);
         root.Controls.Add(selectors, 0, 1);
@@ -142,6 +152,7 @@ public sealed class HardwareProfileSelectionControl : UserControl
         _ioModuleComboBox.SelectedIndexChanged += (_, _) => IoModuleSelectionChanged();
         _communicationProfileComboBox.SelectedIndexChanged += (_, _) => UpdateSelectedProfile();
         _testProfileComboBox.SelectedIndexChanged += (_, _) => UpdateSelectedProfile();
+        _copyReportButton.Click += (_, _) => CopyPreparationReportToClipboard();
     }
 
     private void LoadCatalogSelections()
@@ -292,94 +303,35 @@ public sealed class HardwareProfileSelectionControl : UserControl
         SelectedProfile = new SelectedHardwareProfile(resolution);
 
         _validationStatusLabel.Text = BuildValidationStatusText(SelectedProfile);
-        _summaryTextBox.Text = BuildSummaryText(SelectedProfile);
+        _summaryTextBox.Text = _reportFormatter.Format(SelectedProfile).Text;
+        _copyReportButton.Text = "Copiar resumo de teste";
 
         SelectionChanged?.Invoke(
             this,
             new HardwareProfileSelectionChangedEventArgs(SelectedProfile));
     }
 
-    private string BuildSummaryText(SelectedHardwareProfile profile)
+    private void CopyPreparationReportToClipboard()
     {
-        StringBuilder builder = new();
+        string reportText = _summaryTextBox.Text;
 
-        builder.AppendLine("Perfil selecionado");
-        builder.AppendLine($"Familia: {FormatSelected(profile.Family?.DisplayName, profile.Family?.Id)}");
-        builder.AppendLine($"Modelo: {FormatSelected(profile.Model?.DisplayName, profile.Model?.Id)}");
-        builder.AppendLine($"CPU: {FormatValue(profile.Model?.ControllerCpu)}");
-        builder.AppendLine($"Modulo de I/O: {FormatSelected(profile.IoModule?.DisplayName, profile.IoModule?.Id)}");
-        builder.AppendLine(
-            $"Comunicacao: {FormatSelected(profile.CommunicationProfile?.DisplayName, profile.CommunicationProfile?.Id)}");
-        builder.AppendLine($"Perfil de teste: {FormatSelected(profile.TestProfile?.DisplayName, profile.TestProfile?.Id)}");
-        builder.AppendLine();
-
-        builder.AppendLine("Status do catalogo");
-        AppendItemStatus(builder, "Familia", profile.Family?.SourceStatus, profile.Family?.ValidationStatus);
-        AppendItemStatus(builder, "Modelo", profile.Model?.SourceStatus, profile.Model?.ValidationStatus);
-        AppendItemStatus(builder, "Modulo", profile.IoModule?.SourceStatus, profile.IoModule?.ValidationStatus);
-        AppendItemStatus(
-            builder,
-            "Comunicacao",
-            profile.CommunicationProfile?.SourceStatus,
-            profile.CommunicationProfile?.ValidationStatus);
-        AppendItemStatus(builder, "Teste", profile.TestProfile?.SourceStatus, profile.TestProfile?.ValidationStatus);
-        builder.AppendLine();
-
-        builder.AppendLine("Modulos compativeis");
-        AppendList(builder, profile.CompatibleModules.Select(item => $"{item.DisplayName} ({item.Id})"));
-        builder.AppendLine();
-
-        builder.AppendLine("Perfis de comunicacao possiveis");
-        AppendList(builder, profile.PossibleCommunicationProfiles.Select(item => $"{item.DisplayName} ({item.Id})"));
-        builder.AppendLine();
-
-        builder.AppendLine("Testes aplicaveis");
-        AppendList(builder, profile.ApplicableTestProfiles.Select(item => $"{item.DisplayName} ({item.Id})"));
-        builder.AppendLine();
-
-        builder.AppendLine("Itens pendentes");
-        AppendList(builder, profile.PendingItems);
-        builder.AppendLine();
-
-        builder.AppendLine("Itens observados em campo/bancada");
-        AppendList(builder, profile.FieldObservedItems);
-        builder.AppendLine();
-
-        builder.AppendLine("Necessidades de validacao em bancada");
-        AppendList(builder, profile.BenchValidationNeeds);
-        builder.AppendLine();
-
-        builder.AppendLine("Seguranca operacional");
-        builder.AppendLine("- Esta tela nao altera porta, baud rate, slave ID, paridade ou timeout.");
-        builder.AppendLine("- Esta tela nao envia comandos fisicos ao CLP.");
-        builder.AppendLine("- Parametros reais continuam no painel de conexao normal.");
-
-        return builder.ToString();
-    }
-
-    private static void AppendItemStatus(
-        StringBuilder builder,
-        string label,
-        string? sourceStatus,
-        string? validationStatus)
-    {
-        builder.AppendLine(
-            $"- {label}: source={FormatValue(sourceStatus)}; validation={FormatValue(validationStatus)}");
-    }
-
-    private static void AppendList(StringBuilder builder, IEnumerable<string> items)
-    {
-        bool hasItem = false;
-
-        foreach (string item in items)
+        if (string.IsNullOrWhiteSpace(reportText))
         {
-            builder.AppendLine($"- {item}");
-            hasItem = true;
+            reportText = _reportFormatter.Format(SelectedProfile).Text;
         }
 
-        if (!hasItem)
+        try
         {
-            builder.AppendLine("- Nenhum item disponivel no catalogo.");
+            Clipboard.SetText(reportText);
+            _copyReportButton.Text = "Resumo copiado";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                ex.Message,
+                "Falha ao copiar resumo",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
         }
     }
 
@@ -495,23 +447,6 @@ public sealed class HardwareProfileSelectionControl : UserControl
     private static string FormatTestProfile(TestProfile profile)
     {
         return $"{profile.DisplayName} ({profile.Id})";
-    }
-
-    private static string FormatSelected(string? displayName, string? id)
-    {
-        if (string.IsNullOrWhiteSpace(displayName))
-        {
-            return "pendente";
-        }
-
-        return string.IsNullOrWhiteSpace(id)
-            ? displayName
-            : $"{displayName} ({id})";
-    }
-
-    private static string FormatValue(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? "pendente" : value;
     }
 
     private sealed class SelectionItem<T>

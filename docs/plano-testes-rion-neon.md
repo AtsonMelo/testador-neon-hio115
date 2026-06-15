@@ -23,14 +23,22 @@
 1. Abrir o Testador em modo normal.
 2. Entrar na aba `Perfil hardware`.
 3. Selecionar familia, modelo, modulo de I/O, comunicacao e perfil de teste.
-4. Ler o resumo antes de conectar ao CLP.
+4. Ler o relatorio/checklist antes de conectar ao CLP.
 5. Tratar `pending_manual_validation` como bloqueio de validacao operacional,
    nao como erro de cadastro.
 6. Ajustar porta, baud rate e slave ID somente no painel de conexao normal.
+7. Usar `Copiar resumo de teste` para levar o checklist para o roteiro do
+   operador ou registro de bancada.
 
 A aba prepara a execucao e mostra o que se aplica ao conjunto selecionado. Ela
 nao valida bancada sozinha, nao altera parametros reais e nao envia comandos
 fisicos.
+
+O relatorio gerado pela aba contem a selecao atual, status de validacao,
+pendencias, itens observados em campo, necessidades de bancada, checklist do
+operador e avisos de seguranca. Ele alerta sobre conflito de COM, uso
+simultaneo de HIstudio/XCTU/Testador, ausencia de comando fisico e necessidade
+de validacao em bancada.
 
 ## Validador nao visual de perfil
 
@@ -50,6 +58,20 @@ Resultado OK nesse comando nao valida hardware real. A validacao em bancada
 continua exigindo equipamento identificado, programa HIstudio correto,
 comunicacao real, execucao controlada e registro do resultado.
 
+## Validador nao visual de relatorio
+
+Antes de liberar o roteiro para bancada, pode ser executado:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-test-report
+```
+
+Este comando gera relatorios para NEON-1S + DIO605, RION-502 + HIO115 em
+`COMMUNICATION_DIAGNOSTIC`, RION-502 + HIO115 em `REMOTE_IO_RS485` e casos
+pendentes NEON 5/RION 5. Ele verifica que os relatorios nao estao vazios, que
+pendencias continuam visiveis e que os avisos de nao executar comando fisico e
+de validacao obrigatoria em bancada continuam no texto.
+
 ## NEON-1S + DIO605
 
 Conjunto observado:
@@ -62,14 +84,16 @@ Plano inicial:
 
 1. Na aba `Perfil hardware`, selecionar `NEON_LEGACY`, `NEON-1S`, `DIO605`,
    um perfil serial compativel com a bancada e `COMMUNICATION_DIAGNOSTIC`.
-2. Ajustar porta, baud rate e slave ID no painel de conexao normal.
-3. Usar `COMMUNICATION_DIAGNOSTIC` para confirmar resposta Modbus.
-4. Manter `DIO605` como `pending_manual_validation` ate confirmar mapa e
+2. Copiar o relatorio/checklist e conferir os avisos de COM, HIstudio, XCTU e
+   Testador antes de conectar.
+3. Ajustar porta, baud rate e slave ID no painel de conexao normal.
+4. Usar `COMMUNICATION_DIAGNOSTIC` para confirmar resposta Modbus.
+5. Manter `DIO605` como `pending_manual_validation` ate confirmar mapa e
    ligacao de bancada.
-5. Preparar `DIGITAL_IO_BASIC`, `DIGITAL_OUTPUT_MANUAL` e
+6. Preparar `DIGITAL_IO_BASIC`, `DIGITAL_OUTPUT_MANUAL` e
    `DIGITAL_INPUT_READ`, mas nao tratar sucesso em HIO115 como prova para
    DIO605.
-6. Registrar qualquer diferenca entre retorno esperado e retorno observado.
+7. Registrar qualquer diferenca entre retorno esperado e retorno observado.
 
 ## RION-502 + HIO115
 
@@ -83,13 +107,15 @@ Plano inicial:
 
 1. Na aba `Perfil hardware`, selecionar `RION_LEGACY`, `RION-502`, `HIO115`,
    um perfil RS485 compativel com a bancada e `COMMUNICATION_DIAGNOSTIC`.
-2. Ajustar porta, baud rate e slave ID no painel de conexao normal.
-3. Executar `COMMUNICATION_DIAGNOSTIC`.
-4. Executar `REMOTE_IO_RS485` somente depois de confirmar topologia,
+2. Copiar o relatorio/checklist e anexar ao registro do teste quando
+   aplicavel.
+3. Ajustar porta, baud rate e slave ID no painel de conexao normal.
+4. Executar `COMMUNICATION_DIAGNOSTIC`.
+5. Executar `REMOTE_IO_RS485` somente depois de confirmar topologia,
    endereco e ausencia de outro mestre na rede.
-5. Executar `DIGITAL_IO_BASIC` apenas se o programa carregado e o mapa usado
+6. Executar `DIGITAL_IO_BASIC` apenas se o programa carregado e o mapa usado
    pelo app estiverem confirmados para o conjunto RION-502 + HIO115.
-6. Nao assumir que validacao anterior do HIO115 em outro controlador valida o
+7. Nao assumir que validacao anterior do HIO115 em outro controlador valida o
    conjunto RION automaticamente.
 
 ## RION 5 e NEON 5
