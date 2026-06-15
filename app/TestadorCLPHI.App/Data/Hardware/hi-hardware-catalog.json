@@ -1,0 +1,631 @@
+{
+  "catalogId": "hi-rion-neon-hardware-catalog",
+  "schemaVersion": "1.0",
+  "updatedAt": "2026-06-14",
+  "notes": "Base inicial para separar familias, controladores, modulos de I/O, perfis de comunicacao e perfis de teste. Dados tecnicos nao confirmados ficam pendentes.",
+  "families": [
+    {
+      "id": "NEON_LEGACY",
+      "displayName": "NEON legado",
+      "generation": "legacy",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Familia observada em bancada por modelos NEON. Compatibilidade por modulo ainda exige validacao manual por conjunto.",
+      "supportedSlots": [
+        "slot_0_controller_observed",
+        "slot_1_io_module_observed"
+      ],
+      "defaultCommunicationProfiles": [
+        "SERIAL_RS232_38400_8N1_MODBUS_RTU",
+        "SERIAL_RS485_38400_8N1_MODBUS_RTU"
+      ],
+      "supportedIoModules": [
+        "DIO605",
+        "HIO115"
+      ],
+      "testProfiles": [
+        "DIGITAL_IO_BASIC",
+        "DIGITAL_OUTPUT_MANUAL",
+        "DIGITAL_INPUT_READ",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "NEON_5",
+      "displayName": "NEON 5",
+      "generation": "5",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Familia reservada para evolucao futura. Nao ha especificacao eletrica ou mapa de registradores confirmado nesta base.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "RION_LEGACY",
+      "displayName": "RION legado",
+      "generation": "legacy",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Familia observada em bancada por RION-502 com HIO115. Validacao operacional por perfil ainda deve ser registrada.",
+      "supportedSlots": [
+        "slot_0_controller_observed",
+        "slot_1_io_module_observed"
+      ],
+      "defaultCommunicationProfiles": [
+        "SERIAL_RS485_38400_8N1_MODBUS_RTU",
+        "SERIAL_RS485_57600_8N1_MODBUS_RTU"
+      ],
+      "supportedIoModules": [
+        "HIO115"
+      ],
+      "testProfiles": [
+        "REMOTE_IO_RS485",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "RION_PLUS",
+      "displayName": "RION Plus",
+      "generation": "plus",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Familia cadastrada para planejamento. Associacoes de CPU, slots, modulos e comunicacao ainda pendentes.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "REMOTE_IO_RS485",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "RION_5",
+      "displayName": "RION 5",
+      "generation": "5",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Familia reservada para testes futuros. Nao ha nesta base confirmacao de mapa, pinagem ou quantidade de pontos.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "REMOTE_IO_RS485",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "NEON-1S",
+      "displayName": "NEON-1S",
+      "family": "NEON_LEGACY",
+      "generation": "legacy",
+      "controllerCpu": "CPU401",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Conjunto observado em bancada: CPU401 no slot 0 e DIO605 no slot 1. Especificacoes eletricas e mapa por modulo nao foram oficializados nesta base.",
+      "supportedSlots": [
+        "slot_0_cpu401_observed",
+        "slot_1_dio605_observed"
+      ],
+      "defaultCommunicationProfiles": [
+        "SERIAL_RS232_38400_8N1_MODBUS_RTU",
+        "SERIAL_RS485_38400_8N1_MODBUS_RTU"
+      ],
+      "supportedIoModules": [
+        "DIO605"
+      ],
+      "testProfiles": [
+        "DIGITAL_IO_BASIC",
+        "DIGITAL_OUTPUT_MANUAL",
+        "DIGITAL_INPUT_READ",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "NEON-2S",
+      "displayName": "NEON-2S",
+      "family": "NEON_LEGACY",
+      "generation": "legacy",
+      "controllerCpu": "",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Modelo conhecido para cadastro inicial. CPU, slots e modulos devem ser confirmados antes de teste operacional.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "NEON_5_CONTROLLER",
+      "displayName": "NEON 5",
+      "family": "NEON_5",
+      "generation": "5",
+      "controllerCpu": "",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Modelo reservado para preparacao futura. Nao usar como hardware validado sem registro de bancada.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "RION-502",
+      "displayName": "RION-502",
+      "family": "RION_LEGACY",
+      "generation": "legacy",
+      "controllerCpu": "CPU502",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Conjunto observado em bancada: CPU502 no slot 0 e HIO115 no slot 1. Mapa de teste generico ainda precisa de validacao especifica.",
+      "supportedSlots": [
+        "slot_0_cpu502_observed",
+        "slot_1_hio115_observed"
+      ],
+      "defaultCommunicationProfiles": [
+        "SERIAL_RS485_38400_8N1_MODBUS_RTU",
+        "SERIAL_RS485_57600_8N1_MODBUS_RTU"
+      ],
+      "supportedIoModules": [
+        "HIO115"
+      ],
+      "testProfiles": [
+        "REMOTE_IO_RS485",
+        "DIGITAL_IO_BASIC",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    },
+    {
+      "id": "RION_5_CONTROLLER",
+      "displayName": "RION 5",
+      "family": "RION_5",
+      "generation": "5",
+      "controllerCpu": "",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Modelo reservado para preparacao futura. Slots, CPU, modulos e perfis devem ser confirmados em referencia oficial e bancada.",
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "REMOTE_IO_RS485",
+        "COMMUNICATION_DIAGNOSTIC"
+      ]
+    }
+  ],
+  "ioModules": [
+    {
+      "id": "HIO115",
+      "displayName": "HIO115",
+      "family": "RION_LEGACY",
+      "generation": "legacy",
+      "sourceStatus": "field_observed",
+      "validationStatus": "verified_in_bench",
+      "validationNotes": "Historico do projeto registra HIO115 validado em bancada para o fluxo atual; uso com RION-502 ainda deve ser validado por conjunto.",
+      "notes": "Modulo usado pelo fluxo normal existente. Esta base nao redefine pinagem, quantidade de pontos ou mapa de registradores.",
+      "supportedFamilies": [
+        "RION_LEGACY",
+        "NEON_LEGACY"
+      ],
+      "supportedSlots": [
+        "slot_1_io_module_observed"
+      ],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "DIGITAL_IO_BASIC",
+        "DIGITAL_OUTPUT_MANUAL",
+        "DIGITAL_INPUT_READ",
+        "REMOTE_IO_RS485"
+      ]
+    },
+    {
+      "id": "DIO605",
+      "displayName": "DIO605",
+      "family": "NEON_LEGACY",
+      "generation": "legacy",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Modulo observado com NEON-1S. Quantidade de pontos, mapa e ligacoes devem ser confirmados antes de teste automatico.",
+      "supportedFamilies": [
+        "NEON_LEGACY"
+      ],
+      "supportedSlots": [
+        "slot_1_io_module_observed"
+      ],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "DIGITAL_IO_BASIC",
+        "DIGITAL_OUTPUT_MANUAL",
+        "DIGITAL_INPUT_READ"
+      ]
+    },
+    {
+      "id": "HIO130",
+      "displayName": "HIO130",
+      "family": "RION_LEGACY",
+      "generation": "legacy",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "supportedFamilies": [],
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": []
+    },
+    {
+      "id": "HIO140",
+      "displayName": "HIO140",
+      "family": "RION_LEGACY",
+      "generation": "legacy",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "supportedFamilies": [],
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": []
+    },
+    {
+      "id": "HIO165",
+      "displayName": "HIO165",
+      "family": "RION_LEGACY",
+      "generation": "legacy",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "validationNotes": "",
+      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "supportedFamilies": [],
+      "supportedSlots": [],
+      "defaultCommunicationProfiles": [],
+      "supportedIoModules": [],
+      "testProfiles": [
+        "COUNTER_ENCODER_PENDING_VALIDATION"
+      ]
+    }
+  ],
+  "communicationProfiles": [
+    {
+      "id": "SERIAL_RS232_38400_8N1_MODBUS_RTU",
+      "displayName": "Serial RS232 38400 8N1 Modbus RTU",
+      "transport": "serial_rs232",
+      "protocol": "modbus_rtu",
+      "generation": "generic",
+      "sourceStatus": "pending_manual_validation",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil inicial de configuracao. Confirmar porta, conversor e slave ID antes do teste.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "settings": {
+        "baudRate": "38400",
+        "dataBits": "8",
+        "parity": "None",
+        "stopBits": "One"
+      }
+    },
+    {
+      "id": "SERIAL_RS485_38400_8N1_MODBUS_RTU",
+      "displayName": "Serial RS485 38400 8N1 Modbus RTU",
+      "transport": "serial_rs485",
+      "protocol": "modbus_rtu",
+      "generation": "generic",
+      "sourceStatus": "pending_manual_validation",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil inicial de configuracao. Confirmar cabeamento, terminacao e slave ID antes do teste.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "settings": {
+        "baudRate": "38400",
+        "dataBits": "8",
+        "parity": "None",
+        "stopBits": "One"
+      }
+    },
+    {
+      "id": "SERIAL_RS485_57600_8N1_MODBUS_RTU",
+      "displayName": "Serial RS485 57600 8N1 Modbus RTU",
+      "transport": "serial_rs485",
+      "protocol": "modbus_rtu",
+      "generation": "generic",
+      "sourceStatus": "pending_manual_validation",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil inicial para cenarios em 57600 bps. Confirmar suporte do controlador antes de selecionar.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "settings": {
+        "baudRate": "57600",
+        "dataBits": "8",
+        "parity": "None",
+        "stopBits": "One"
+      }
+    },
+    {
+      "id": "ETHERNET_MODBUS_TCP",
+      "displayName": "Ethernet Modbus TCP",
+      "transport": "ethernet",
+      "protocol": "modbus_tcp",
+      "generation": "generic",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil reservado. O app atual nao implementa Modbus TCP nesta milestone.",
+      "applicableFamilies": [
+        "NEON_5",
+        "RION_5"
+      ],
+      "settings": {
+        "port": "502"
+      }
+    },
+    {
+      "id": "WIRELESS_RADIO_TRANSPARENT",
+      "displayName": "Radio transparente para enlace serial",
+      "transport": "wireless_radio_transparent",
+      "protocol": "external_serial_bridge",
+      "generation": "generic",
+      "sourceStatus": "pending_manual_validation",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Somente perfil de comunicacao/configuracao. Configuracao profunda de radio XBee/R9X307 deve ser feita fora do app, via XCTU.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "settings": {
+        "configurationTool": "XCTU",
+        "appConfiguresRadio": "false"
+      }
+    }
+  ],
+  "testProfiles": [
+    {
+      "id": "DIGITAL_IO_BASIC",
+      "displayName": "I/O digital basico",
+      "generation": "generic",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil generico para acionar saida e ler retorno. Nao define quantidade de pontos nem mapa fisico.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "RION_LEGACY"
+      ],
+      "applicableIoModules": [
+        "HIO115",
+        "DIO605"
+      ],
+      "prerequisites": [
+        "Projeto HIstudio carregado e compativel com o fluxo de teste.",
+        "Somente um software usando a porta COM do CLP.",
+        "Fonte e bancada revisadas antes de energizar."
+      ],
+      "testActions": [
+        "Conectar ao CLP pelo perfil de comunicacao selecionado.",
+        "Habilitar teste no programa do CLP.",
+        "Acionar um canal de saida previsto pelo fluxo atual.",
+        "Ler retorno digital correspondente quando existir ligacao de bancada."
+      ],
+      "acceptanceCriteria": [
+        "CLP responde a leitura Modbus.",
+        "Comando de teste retorna sem erro de comunicacao.",
+        "Retorno digital esperado e observado quando a ligacao de bancada estiver preparada."
+      ],
+      "risksAndCare": [
+        "Nao assumir mapa de registradores para modulo ainda nao validado.",
+        "Nao manter HIstudio e Testador usando a mesma COM simultaneamente.",
+        "Nao acionar carga real sem intertravamento e revisao eletrica."
+      ]
+    },
+    {
+      "id": "DIGITAL_OUTPUT_MANUAL",
+      "displayName": "Saida digital manual",
+      "generation": "generic",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil para comando manual de saidas ja suportado pelo fluxo atual. A aplicabilidade por modulo segue pendente quando nao houver bancada.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "RION_LEGACY"
+      ],
+      "applicableIoModules": [
+        "HIO115",
+        "DIO605"
+      ],
+      "prerequisites": [
+        "Comunicacao Modbus validada.",
+        "Modo de teste habilitado no CLP.",
+        "Canal e carga de bancada identificados."
+      ],
+      "testActions": [
+        "Selecionar canal manual.",
+        "Enviar comando de acionamento.",
+        "Conferir estado de retorno ou indicacao de bancada.",
+        "Executar reset de saidas ao final."
+      ],
+      "acceptanceCriteria": [
+        "Comando aceito sem erro de comunicacao.",
+        "Saida observada no estado esperado.",
+        "Reset retorna saidas ao estado seguro."
+      ],
+      "risksAndCare": [
+        "Confirmar que a saida comanda apenas carga de teste.",
+        "Evitar repeticao rapida de comandos em hardware sem validacao.",
+        "Registrar divergencias antes de marcar perfil como validado."
+      ]
+    },
+    {
+      "id": "DIGITAL_INPUT_READ",
+      "displayName": "Leitura de entrada digital",
+      "generation": "generic",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil para leitura de entradas digitais via fluxo atual. Nao define pinagem ou quantidade de entradas.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "RION_LEGACY"
+      ],
+      "applicableIoModules": [
+        "HIO115",
+        "DIO605"
+      ],
+      "prerequisites": [
+        "Comunicacao Modbus validada.",
+        "Sinal de bancada identificado.",
+        "Mapa logico confirmado para o programa carregado."
+      ],
+      "testActions": [
+        "Solicitar atualizacao de entradas.",
+        "Aplicar ou remover sinal de bancada quando permitido.",
+        "Comparar leitura do app com estado esperado."
+      ],
+      "acceptanceCriteria": [
+        "Leitura concluida sem erro de comunicacao.",
+        "Estado lido acompanha o sinal de bancada validado."
+      ],
+      "risksAndCare": [
+        "Nao usar leitura como prova de pinagem oficial sem documentacao.",
+        "Cuidar para nao compartilhar COM com HIstudio durante a leitura."
+      ]
+    },
+    {
+      "id": "REMOTE_IO_RS485",
+      "displayName": "I/O remoto via RS485",
+      "generation": "generic",
+      "sourceStatus": "pending_manual_validation",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil de preparacao para conjuntos RION/remote I/O. Deve ser validado por topologia, endereco e modulo.",
+      "applicableFamilies": [
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "applicableIoModules": [
+        "HIO115"
+      ],
+      "prerequisites": [
+        "Topologia RS485 revisada.",
+        "Endereco do equipamento confirmado.",
+        "Somente um mestre ativo na rede durante o teste."
+      ],
+      "testActions": [
+        "Validar comunicacao RS485 com leitura diagnostica.",
+        "Executar acao de I/O somente se o modulo tiver perfil confirmado.",
+        "Registrar resultado por controlador e modulo."
+      ],
+      "acceptanceCriteria": [
+        "Resposta Modbus estavel no endereco configurado.",
+        "Sem timeout recorrente durante leituras consecutivas.",
+        "I/O acionado apenas quando mapeamento estiver confirmado."
+      ],
+      "risksAndCare": [
+        "Evitar dois mestres RS485 na mesma rede.",
+        "Nao assumir que validacao de HIO115 em NEON equivale a validacao em RION.",
+        "Documentar terminacao e conversor usado na bancada."
+      ]
+    },
+    {
+      "id": "COMMUNICATION_DIAGNOSTIC",
+      "displayName": "Diagnostico de comunicacao",
+      "generation": "generic",
+      "sourceStatus": "field_observed",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil para confirmar resposta do CLP antes de qualquer teste de I/O.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "applicableIoModules": [],
+      "prerequisites": [
+        "Porta COM ou rede liberada.",
+        "Parametro de comunicacao selecionado.",
+        "HIstudio desconectado da mesma porta durante o teste."
+      ],
+      "testActions": [
+        "Abrir conexao.",
+        "Executar leitura diagnostica do registrador usado pelo programa de teste.",
+        "Registrar porta, baud rate, slave ID e resultado."
+      ],
+      "acceptanceCriteria": [
+        "Conexao abre sem excecao.",
+        "CLP responde a leitura diagnostica.",
+        "Timeouts e erros ficam registrados para analise."
+      ],
+      "risksAndCare": [
+        "Nao confundir comunicacao do CLP com configuracao interna de radio.",
+        "Nao usar XCTU ao mesmo tempo que o app se ambos disputarem a mesma porta serial."
+      ]
+    },
+    {
+      "id": "COUNTER_ENCODER_PENDING_VALIDATION",
+      "displayName": "Contador/encoder pendente de validacao",
+      "generation": "generic",
+      "sourceStatus": "official_reference_pending",
+      "validationStatus": "pending_manual_validation",
+      "notes": "Perfil reservado. Nao ha nesta milestone regra de teste, pinagem ou mapa confirmado para contador/encoder.",
+      "applicableFamilies": [
+        "NEON_LEGACY",
+        "NEON_5",
+        "RION_LEGACY",
+        "RION_PLUS",
+        "RION_5"
+      ],
+      "applicableIoModules": [
+        "HIO165"
+      ],
+      "prerequisites": [
+        "Referencia oficial do modulo.",
+        "Mapa de registradores confirmado.",
+        "Bancada com fonte de pulsos adequada."
+      ],
+      "testActions": [
+        "Nao executar automaticamente nesta milestone.",
+        "Registrar procedimento manual antes de implementar comandos no app."
+      ],
+      "acceptanceCriteria": [
+        "Perfil permanece pendente ate haver validacao de bancada documentada."
+      ],
+      "risksAndCare": [
+        "Nao ligar encoder ou gerador de pulsos sem conferir niveis eletricos.",
+        "Nao reaproveitar mapa de outro modulo por semelhanca de nome."
+      ]
+    }
+  ]
+}
