@@ -20,6 +20,11 @@
 | `RION-502` | `RION_LEGACY` | `CPU502` | `HIO115` | RS485 remoto, comunicacao, I/O digital basico | `pending_manual_validation` |
 | `RION_5_CONTROLLER` | `RION_5` | Pendente | Pendente | RS485 remoto, comunicacao | `pending_manual_validation` |
 
+Na aba `Perfil hardware`, esta matriz aparece de forma operacional: a familia
+filtra modelos, o modelo sugere modulos, comunicacao e testes, e o resumo
+mantem `pending_manual_validation` visivel quando a validacao por conjunto
+ainda nao existe.
+
 ## Modulos de I/O
 
 | Modulo | Familia inicial | Status | Observacao |
@@ -50,3 +55,15 @@
 | `REMOTE_IO_RS485` | Preparacao para RION/remote I/O via RS485. |
 | `COMMUNICATION_DIAGNOSTIC` | Diagnostico inicial antes de qualquer I/O. |
 | `COUNTER_ENCODER_PENDING_VALIDATION` | Reservado; nao executar automaticamente nesta milestone. |
+
+## Interpretacao operacional
+
+- Selecionar um perfil nao muda parametros reais de comunicacao.
+- Selecionar um perfil nao executa comando fisico.
+- `field_observed` indica item observado, mas nao substitui validacao do
+  conjunto completo.
+- `verified_in_bench` em um modulo nao valida automaticamente outro
+  controlador, outro slot ou outro perfil.
+- Radio transparente deve ser configurado fora do app, via XCTU, quando
+  aplicavel.
+- HIstudio, XCTU e Testador nao devem disputar a mesma COM.

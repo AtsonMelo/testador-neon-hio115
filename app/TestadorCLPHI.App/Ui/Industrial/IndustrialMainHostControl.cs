@@ -4,6 +4,9 @@ namespace TestadorCLPHI.App.Ui.Industrial;
 
 public sealed class IndustrialMainHostControl : UserControl
 {
+    private const int MinimumContentWidth = 1280;
+    private const int MinimumContentHeight = 720;
+
     private readonly IndustrialMainContentControl _content;
 
     public event EventHandler? EnableTestClicked;
@@ -17,13 +20,13 @@ public sealed class IndustrialMainHostControl : UserControl
         BackColor = Color.FromArgb(10, 16, 22);
         Padding = new Padding(0);
         AutoScroll = true;
-        AutoScrollMinSize = new Size(1280, 720);
+        AutoScrollMinSize = new Size(MinimumContentWidth, MinimumContentHeight);
 
         _content = new IndustrialMainContentControl
         {
             Dock = DockStyle.None,
             Location = new Point(0, 0),
-            Size = new Size(1280, 720),
+            Size = new Size(MinimumContentWidth, MinimumContentHeight),
             Margin = new Padding(0)
         };
 
@@ -31,16 +34,26 @@ public sealed class IndustrialMainHostControl : UserControl
         _content.ResetOutputsClicked += (_, e) => ResetOutputsClicked?.Invoke(this, e);
 
         Controls.Add(_content);
+        ResizeContentToViewport();
     }
 
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
+        ResizeContentToViewport();
+    }
 
-        int width = Math.Max(ClientSize.Width, 1280);
-        int height = Math.Max(ClientSize.Height, 720);
+    private void ResizeContentToViewport()
+    {
+        int width = Math.Max(ClientSize.Width, MinimumContentWidth);
+        int height = Math.Max(ClientSize.Height, MinimumContentHeight);
+        Size desiredSize = new(width, height);
 
-        _content.Size = new Size(width, height);
-        AutoScrollMinSize = new Size(1280, 720);
+        if (_content.Size != desiredSize)
+        {
+            _content.Size = desiredSize;
+        }
+
+        AutoScrollMinSize = desiredSize;
     }
 }
