@@ -3,6 +3,7 @@ using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
 using TestadorCLPHI.App.Ui.Controls;
+using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
 
 namespace TestadorCLPHI.App;
@@ -45,6 +46,7 @@ public sealed class MainForm : Form
     private readonly TesterCommandPanelControl _testerCommandPanel;
     private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
     private readonly TerminalLogPanelControl _terminalLogPanel;
+    private readonly HardwareProfileSelectionControl _hardwareProfileSelectionControl;
 
     public MainForm(bool useIndustrialHost = false, HardwareCatalog? hardwareCatalog = null)
     {
@@ -153,6 +155,8 @@ public sealed class MainForm : Form
             Height = 150,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
+
+        _hardwareProfileSelectionControl = new HardwareProfileSelectionControl(HardwareCatalog);
 
         _conexaoGroupBox = new GroupBox
         {
@@ -383,6 +387,12 @@ public sealed class MainForm : Form
             AutoScroll = true
         };
 
+        TabPage hardwareProfileTabPage = new("Perfil hardware")
+        {
+            Padding = new Padding(6),
+            AutoScroll = true
+        };
+
         TabPage terminalTabPage = new("Terminal / Log")
         {
             Padding = new Padding(6),
@@ -395,9 +405,14 @@ public sealed class MainForm : Form
         _terminalLogPanel.Dock = DockStyle.Fill;
         _terminalLogPanel.Margin = new Padding(0);
 
+        _hardwareProfileSelectionControl.Dock = DockStyle.Fill;
+        _hardwareProfileSelectionControl.Margin = new Padding(0);
+
+        hardwareProfileTabPage.Controls.Add(_hardwareProfileSelectionControl);
         ioTabPage.Controls.Add(_digitalIoManualPanel);
         terminalTabPage.Controls.Add(_terminalLogPanel);
 
+        workTabs.TabPages.Add(hardwareProfileTabPage);
         workTabs.TabPages.Add(ioTabPage);
         workTabs.TabPages.Add(terminalTabPage);
 

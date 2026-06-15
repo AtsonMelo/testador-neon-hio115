@@ -18,6 +18,20 @@
 5. Registrar resultado por conjunto: modelo, CPU, modulo, slot, porta, baud
    rate, slave ID e observacoes.
 
+## Uso da aba Perfil hardware
+
+1. Abrir o Testador em modo normal.
+2. Entrar na aba `Perfil hardware`.
+3. Selecionar familia, modelo, modulo de I/O, comunicacao e perfil de teste.
+4. Ler o resumo antes de conectar ao CLP.
+5. Tratar `pending_manual_validation` como bloqueio de validacao operacional,
+   nao como erro de cadastro.
+6. Ajustar porta, baud rate e slave ID somente no painel de conexao normal.
+
+A aba prepara a execucao e mostra o que se aplica ao conjunto selecionado. Ela
+nao valida bancada sozinha, nao altera parametros reais e nao envia comandos
+fisicos.
+
 ## NEON-1S + DIO605
 
 Conjunto observado:
@@ -28,13 +42,16 @@ Conjunto observado:
 
 Plano inicial:
 
-1. Usar `COMMUNICATION_DIAGNOSTIC` para confirmar resposta Modbus.
-2. Manter `DIO605` como `pending_manual_validation` ate confirmar mapa e
+1. Na aba `Perfil hardware`, selecionar `NEON_LEGACY`, `NEON-1S`, `DIO605`,
+   um perfil serial compativel com a bancada e `COMMUNICATION_DIAGNOSTIC`.
+2. Ajustar porta, baud rate e slave ID no painel de conexao normal.
+3. Usar `COMMUNICATION_DIAGNOSTIC` para confirmar resposta Modbus.
+4. Manter `DIO605` como `pending_manual_validation` ate confirmar mapa e
    ligacao de bancada.
-3. Preparar `DIGITAL_IO_BASIC`, `DIGITAL_OUTPUT_MANUAL` e
+5. Preparar `DIGITAL_IO_BASIC`, `DIGITAL_OUTPUT_MANUAL` e
    `DIGITAL_INPUT_READ`, mas nao tratar sucesso em HIO115 como prova para
    DIO605.
-4. Registrar qualquer diferenca entre retorno esperado e retorno observado.
+6. Registrar qualquer diferenca entre retorno esperado e retorno observado.
 
 ## RION-502 + HIO115
 
@@ -46,13 +63,15 @@ Conjunto observado:
 
 Plano inicial:
 
-1. Usar perfil RS485 Modbus RTU compativel com a bancada.
-2. Executar `COMMUNICATION_DIAGNOSTIC`.
-3. Executar `REMOTE_IO_RS485` somente depois de confirmar topologia,
+1. Na aba `Perfil hardware`, selecionar `RION_LEGACY`, `RION-502`, `HIO115`,
+   um perfil RS485 compativel com a bancada e `COMMUNICATION_DIAGNOSTIC`.
+2. Ajustar porta, baud rate e slave ID no painel de conexao normal.
+3. Executar `COMMUNICATION_DIAGNOSTIC`.
+4. Executar `REMOTE_IO_RS485` somente depois de confirmar topologia,
    endereco e ausencia de outro mestre na rede.
-4. Executar `DIGITAL_IO_BASIC` apenas se o programa carregado e o mapa usado
+5. Executar `DIGITAL_IO_BASIC` apenas se o programa carregado e o mapa usado
    pelo app estiverem confirmados para o conjunto RION-502 + HIO115.
-5. Nao assumir que validacao anterior do HIO115 em outro controlador valida o
+6. Nao assumir que validacao anterior do HIO115 em outro controlador valida o
    conjunto RION automaticamente.
 
 ## RION 5 e NEON 5
@@ -66,6 +85,10 @@ Antes de uso operacional:
 3. Criar ou ajustar perfil de comunicacao.
 4. Validar `COMMUNICATION_DIAGNOSTIC`.
 5. So depois criar perfis de I/O especificos.
+
+Na UI, `RION_5_CONTROLLER` e `NEON_5_CONTROLLER` devem continuar aparecendo
+como preparacao futura enquanto faltarem referencia oficial, modulos,
+comunicacao e validacao de bancada.
 
 ## Cuidados
 

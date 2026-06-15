@@ -34,6 +34,27 @@ Os itens usam campos como `id`, `displayName`, `family`,
 `supportedSlots`, `defaultCommunicationProfiles`, `supportedIoModules` e
 `testProfiles`.
 
+## Uso pela interface de selecao
+
+A aba `Perfil hardware`, disponivel no modo normal do Testador, le este
+catalogo e permite selecionar:
+
+- familia;
+- modelo;
+- modulo de I/O;
+- perfil de comunicacao;
+- perfil de teste.
+
+A selecao e informativa. Ela nao altera porta COM, baud rate, slave ID,
+paridade, timeout ou qualquer parametro real de Modbus. Tambem nao envia
+comandos fisicos ao CLP. Os parametros reais continuam no painel de conexao
+normal e os comandos continuam nos paineis de teste existentes.
+
+A UI mostra resumo, modulos compativeis, perfis possiveis, testes aplicaveis,
+itens `field_observed`, pendencias e necessidades de validacao em bancada.
+Quando qualquer item estiver como `pending_manual_validation`, isso deve
+continuar explicito ate haver registro real de bancada.
+
 ## Status
 
 Valores usados:
@@ -58,6 +79,8 @@ pontos, mapa de registradores ou especificacao eletrica sem confirmacao.
 7. Deixar `validationStatus` como `pending_manual_validation` ate haver
    registro de bancada.
 8. Executar a validacao do catalogo e o build.
+9. Abrir a aba `Perfil hardware` e conferir se o modelo aparece sem criar
+   associacoes tecnicas nao confirmadas.
 
 ## Como cadastrar novo modulo
 
@@ -68,6 +91,7 @@ pontos, mapa de registradores ou especificacao eletrica sem confirmacao.
 5. Nao copiar mapa, pontos ou pinagem de outro modulo por semelhanca de nome.
 6. Marcar dados nao confirmados como `pending_manual_validation` ou
    `official_reference_pending`.
+7. Executar a validacao do catalogo, o build e conferir a aba `Perfil hardware`.
 
 ## Como marcar validado em bancada
 
@@ -87,6 +111,9 @@ O app nao configura radio XBee/R9X307 nesta milestone.
 
 Configuracao profunda de radio deve ser feita como processo externo via XCTU.
 Nao confundir comunicacao normal do CLP com configuracao interna do radio.
+
+Selecionar `WIRELESS_RADIO_TRANSPARENT` na UI nao abre XCTU, nao aplica
+parametros de radio e nao substitui a validacao serial/Modbus normal do CLP.
 
 ## Porta COM
 

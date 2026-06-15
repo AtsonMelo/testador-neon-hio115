@@ -7,6 +7,8 @@
 - Confirmar mapas e procedimentos de teste antes de cadastrar pontos de I/O.
 - Confirmar aplicabilidade de `HIO130`, `HIO140` e `HIO165`.
 - Confirmar se cada perfil de comunicacao e suportado por cada modelo real.
+- Conferir na aba `Perfil hardware` se novos cadastros aparecem como
+  preparacao e nao como validacao operacional.
 
 ## NEON-1S + DIO605
 
@@ -47,6 +49,17 @@
 5. `validationNotes` foi preenchido quando `validationStatus` mudar para
    `verified_in_bench`.
 6. O validador e o build passaram.
+
+## Selecionar perfil vs validar hardware
+
+A selecao na UI organiza informacao do catalogo. Ela ajuda o operador a ver
+testes aplicaveis, modulos compativeis, perfis possiveis e pendencias, mas nao
+remove nenhuma pendencia por si so.
+
+A validacao em bancada exige CLP real identificado, programa HIstudio correto,
+porta COM livre, comunicacao confirmada, execucao controlada do perfil e
+registro do resultado. So depois disso um item deve sair de
+`pending_manual_validation`.
 
 ## Comandos de apoio
 
