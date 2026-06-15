@@ -1,4 +1,5 @@
 using System.IO.Ports;
+using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
 using TestadorCLPHI.App.Ui.Controls;
@@ -45,9 +46,10 @@ public sealed class MainForm : Form
     private readonly DigitalIoManualPanelControl _digitalIoManualPanel;
     private readonly TerminalLogPanelControl _terminalLogPanel;
 
-    public MainForm(bool useIndustrialHost = false)
+    public MainForm(bool useIndustrialHost = false, HardwareCatalog? hardwareCatalog = null)
     {
         _useIndustrialHost = useIndustrialHost;
+        HardwareCatalog = hardwareCatalog ?? HardwareCatalog.Empty;
 
         Text = "Testador CLP HI";
         Width = 900;
@@ -409,6 +411,9 @@ public sealed class MainForm : Form
         AtualizarEstadoConexao();
         AplicarTemaSelecionado();
     }
+
+    public HardwareCatalog HardwareCatalog { get; }
+
     private void AtualizarListaDePortas()
     {
         MainFormConnectionUiService.AtualizarListaDePortas(
