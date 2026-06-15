@@ -55,6 +55,26 @@ itens `field_observed`, pendencias e necessidades de validacao em bancada.
 Quando qualquer item estiver como `pending_manual_validation`, isso deve
 continuar explicito ate haver registro real de bancada.
 
+## Validacao da selecao
+
+Use tambem o validador nao visual:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-profile-selection
+```
+
+Ele carrega este catalogo e exercita o resolver que alimenta a aba
+`Perfil hardware`. Os cenarios cobrem NEON-1S + DIO605, RION-502 + HIO115,
+`COMMUNICATION_DIAGNOSTIC`, `REMOTE_IO_RS485` e modelos NEON 5/RION 5 com
+dados pendentes. O objetivo e validar consistencia catalogo/resolver/UI:
+ids existentes precisam resolver, listas compativeis precisam conter os itens
+esperados, pendencias continuam expostas e `field_observed` aparece quando
+aplicavel.
+
+O comando e nao visual e nao fisico. Ele nao altera parametros reais, nao
+executa escrita Modbus, nao envia comando a PLC e nao substitui validacao em
+bancada.
+
 ## Status
 
 Valores usados:

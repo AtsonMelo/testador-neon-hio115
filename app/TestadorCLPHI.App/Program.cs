@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Ui.Controls;
+using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
 
 namespace TestadorCLPHI.App;
@@ -12,6 +13,14 @@ internal static class Program
         if (args.Contains("--validate-hardware-catalog", StringComparer.OrdinalIgnoreCase))
         {
             Environment.ExitCode = ValidateHardwareCatalogForCommandLine();
+            return;
+        }
+
+        if (args.Contains("--validate-hardware-profile-selection", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = HardwareProfileSelectionValidator.ValidateDefaultCatalog(
+                Console.Out,
+                Console.Error);
             return;
         }
 

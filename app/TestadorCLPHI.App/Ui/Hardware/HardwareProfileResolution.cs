@@ -2,9 +2,9 @@ using TestadorCLPHI.App.Hardware;
 
 namespace TestadorCLPHI.App.Ui.Hardware;
 
-public sealed class SelectedHardwareProfile
+public sealed class HardwareProfileResolution
 {
-    public static SelectedHardwareProfile Empty { get; } = new(
+    public static HardwareProfileResolution Empty { get; } = new(
         null,
         null,
         null,
@@ -17,7 +17,7 @@ public sealed class SelectedHardwareProfile
         [],
         []);
 
-    public SelectedHardwareProfile(
+    public HardwareProfileResolution(
         HardwareFamily? family,
         HardwareModel? model,
         IoModuleDefinition? ioModule,
@@ -41,22 +41,6 @@ public sealed class SelectedHardwareProfile
         PendingItems = pendingItems.ToArray();
         FieldObservedItems = fieldObservedItems.ToArray();
         BenchValidationNeeds = benchValidationNeeds.ToArray();
-    }
-
-    public SelectedHardwareProfile(HardwareProfileResolution resolution)
-        : this(
-            resolution.Family,
-            resolution.Model,
-            resolution.IoModule,
-            resolution.CommunicationProfile,
-            resolution.TestProfile,
-            resolution.CompatibleModules,
-            resolution.PossibleCommunicationProfiles,
-            resolution.ApplicableTestProfiles,
-            resolution.PendingItems,
-            resolution.FieldObservedItems,
-            resolution.BenchValidationNeeds)
-    {
     }
 
     public HardwareFamily? Family { get; }

@@ -56,6 +56,12 @@ A selecao na UI organiza informacao do catalogo. Ela ajuda o operador a ver
 testes aplicaveis, modulos compativeis, perfis possiveis e pendencias, mas nao
 remove nenhuma pendencia por si so.
 
+O comando `--validate-hardware-profile-selection` cobre somente a consistencia
+nao visual entre catalogo, resolver e UI. Ele verifica cenarios de NEON-1S,
+RION-502, NEON 5 e RION 5, confirma que pendencias continuam visiveis e que
+itens `field_observed` aparecem quando aplicavel. Ele nao abre UI, nao altera
+parametros, nao escreve em PLC e nao envia comando fisico.
+
 A validacao em bancada exige CLP real identificado, programa HIstudio correto,
 porta COM livre, comunicacao confirmada, execucao controlada do perfil e
 registro do resultado. So depois disso um item deve sair de
@@ -66,6 +72,7 @@ registro do resultado. So depois disso um item deve sair de
 ```powershell
 dotnet build .\testador-neon-hio115.sln
 dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-catalog
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-profile-selection
 git diff --check
 git status --short
 git diff --stat
