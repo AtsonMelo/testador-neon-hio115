@@ -22,6 +22,25 @@ Ela nao substitui a validacao em bancada.
 A selecao e informativa. Ela nao altera porta, baud rate, slave ID, paridade,
 timeout ou qualquer parametro real de Modbus. Tambem nao envia comandos ao CLP.
 
+## Validacao nao visual
+
+O comando abaixo valida a selecao sem abrir a UI WinForms:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-profile-selection
+```
+
+Ele carrega o catalogo, executa cenarios do resolver para NEON-1S + DIO605,
+RION-502 + HIO115, `COMMUNICATION_DIAGNOSTIC`, `REMOTE_IO_RS485` e modelos
+NEON 5/RION 5 pendentes. O comando verifica que os ids existentes resolvem,
+que pendencias/manual validation continuam visiveis, que itens
+`field_observed` aparecem quando aplicavel e que a selecao segue consistente
+com as listas usadas pela UI.
+
+Esta validacao e nao visual e nao fisica: nao abre tela, nao altera
+parametros Modbus, nao escreve em PLC e nao envia comandos. Ela nao substitui
+validacao em bancada; apenas cobre consistencia entre catalogo, resolver e UI.
+
 ## O que a tela mostra
 
 - perfil selecionado;

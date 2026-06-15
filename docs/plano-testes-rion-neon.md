@@ -32,6 +32,24 @@ A aba prepara a execucao e mostra o que se aplica ao conjunto selecionado. Ela
 nao valida bancada sozinha, nao altera parametros reais e nao envia comandos
 fisicos.
 
+## Validador nao visual de perfil
+
+Antes de abrir bancada, pode ser executado:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --validate-hardware-profile-selection
+```
+
+Este comando nao abre a UI e nao toca no CLP. Ele valida apenas a consistencia
+entre catalogo, resolver e listas usadas pela aba `Perfil hardware`. Os
+cenarios incluem NEON-1S + DIO605 + `COMMUNICATION_DIAGNOSTIC`, RION-502 +
+HIO115 + `COMMUNICATION_DIAGNOSTIC`, RION-502 + HIO115 + `REMOTE_IO_RS485` e
+modelos NEON 5/RION 5 ainda pendentes.
+
+Resultado OK nesse comando nao valida hardware real. A validacao em bancada
+continua exigindo equipamento identificado, programa HIstudio correto,
+comunicacao real, execucao controlada e registro do resultado.
+
 ## NEON-1S + DIO605
 
 Conjunto observado:
