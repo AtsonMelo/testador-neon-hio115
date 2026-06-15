@@ -244,7 +244,7 @@ public sealed class HardwareProfileResolver
 
             if (model.SupportedIoModules.Count == 0)
             {
-                AddUnique(pending, $"Modelo {model.DisplayName}: modulos compativeis pendentes.");
+                AddUnique(pending, $"Modelo {model.DisplayName}: nenhum modulo confirmado para este modelo.");
             }
         }
 
@@ -442,6 +442,11 @@ public sealed class HardwareProfileResolver
             AddUnique(pending, $"{itemType} {displayName}: official_reference_pending.");
         }
 
+        if (IsOfficialReference(sourceStatus) && IsPending(validationStatus))
+        {
+            AddUnique(pending, $"{itemType} {displayName}: official_reference; bancada pendente.");
+        }
+
         if (IsPending(sourceStatus) || IsPending(validationStatus))
         {
             AddUnique(pending, $"{itemType} {displayName}: pending_manual_validation.");
@@ -464,6 +469,11 @@ public sealed class HardwareProfileResolver
     private static bool IsOfficialReferencePending(string? status)
     {
         return string.Equals(status, "official_reference_pending", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsOfficialReference(string? status)
+    {
+        return string.Equals(status, "official_reference", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsFieldObserved(string? status)

@@ -228,9 +228,9 @@ public static class HardwareProfileSelectionValidator
 
         if (!resolution.PendingItems.Any(item =>
                 item.Contains("pending_manual_validation", StringComparison.OrdinalIgnoreCase) ||
-                item.Contains("official_reference_pending", StringComparison.OrdinalIgnoreCase)))
+                item.Contains("official_reference", StringComparison.OrdinalIgnoreCase)))
         {
-            failures.Add("PendingItems nao mostra pending_manual_validation ou official_reference_pending.");
+            failures.Add("PendingItems nao mostra pending_manual_validation ou official_reference.");
         }
     }
 

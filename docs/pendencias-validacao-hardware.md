@@ -2,10 +2,12 @@
 
 ## Pendencias gerais
 
-- Confirmar referencias oficiais para `NEON_5`, `RION_PLUS` e `RION_5`.
+- Confirmar referencias oficiais para `RION_PLUS`.
+- Validar em bancada as referencias oficiais agora registradas para `NEON_5`
+  e `RION_5`.
 - Confirmar CPU e slots de `NEON-2S`, `NEON 5` e `RION 5`.
 - Confirmar mapas e procedimentos de teste antes de cadastrar pontos de I/O.
-- Confirmar aplicabilidade de `HIO130`, `HIO140` e `HIO165`.
+- Confirmar aplicabilidade de `HIO130`, `HIO140` e `HIO165` em bancada.
 - Confirmar se cada perfil de comunicacao e suportado por cada modelo real.
 - Conferir na aba `Perfil hardware` se novos cadastros aparecem como
   preparacao e nao como validacao operacional.
@@ -32,11 +34,35 @@
 
 ## RION 5 e NEON 5
 
-- Obter referencia oficial.
-- Confirmar comunicacao disponivel.
-- Definir modulos aplicaveis.
+- Referencias oficiais foram registradas no catalogo.
+- Para RION 5, a referencia oficial informa CLP e/ou I/O remoto, suporte para
+  1 modulo, ate 16 pontos de I/O e ate 14 RION 5 como I/O remoto ao CLP NEON.
+- Para NEON 5, a navegacao oficial lista ate 240 pontos de I/O.
+- Confirmar comunicacao disponivel em bancada.
+- Definir modulos aplicaveis por conjunto real.
 - Validar `COMMUNICATION_DIAGNOSTIC`.
 - Criar perfis de I/O somente apos confirmar mapa e bancada.
+- Quando a UI mostrar ausencia de modulo, interpretar como "nenhum modulo
+  confirmado para este modelo", nao como falha de comunicacao.
+
+## Referencia oficial vs bancada
+
+- `official_reference` registra fonte oficial HI Tecnologia consultada.
+- `field_observed` preserva evidencia observada no projeto.
+- `verified_in_bench` exige resultado de bancada documentado.
+
+Referencia oficial nao valida mapa, pinagem, comando, topologia, slave ID,
+programa HIstudio carregado ou retorno fisico. Por isso `NEON_5_CONTROLLER`,
+`RION_5_CONTROLLER`, `HIO130`, `HIO140`, `HIO165` e os conjuntos ainda sem
+teste permanecem `pending_manual_validation`.
+
+Referencias de modulos adicionadas:
+
+- HIO115: especificacao oficial HIO115.
+- HIO130: especificacao oficial HIO130.
+- HIO140: especificacao oficial HIO140.
+- HIO165: especificacao oficial HIO165.
+- DIO605: especificacao oficial DIO605.
 
 ## Radio transparente
 

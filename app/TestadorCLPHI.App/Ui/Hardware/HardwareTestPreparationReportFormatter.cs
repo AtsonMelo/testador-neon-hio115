@@ -112,11 +112,20 @@ public sealed class HardwareTestPreparationReportFormatter
 
         builder.AppendLine("Opcoes disponiveis no catalogo");
         builder.AppendLine("- Modulos compativeis:");
-        AppendIndentedList(builder, compatibleModules.Select(item => $"{item.DisplayName} ({item.Id})"));
+        AppendIndentedList(
+            builder,
+            compatibleModules.Select(item => $"{item.DisplayName} ({item.Id})"),
+            "Nenhum modulo confirmado para este modelo.");
         builder.AppendLine("- Perfis de comunicacao possiveis:");
-        AppendIndentedList(builder, possibleCommunicationProfiles.Select(item => $"{item.DisplayName} ({item.Id})"));
+        AppendIndentedList(
+            builder,
+            possibleCommunicationProfiles.Select(item => $"{item.DisplayName} ({item.Id})"),
+            "Nenhum perfil de comunicacao disponivel no catalogo.");
         builder.AppendLine("- Perfis de teste aplicaveis:");
-        AppendIndentedList(builder, applicableTestProfiles.Select(item => $"{item.DisplayName} ({item.Id})"));
+        AppendIndentedList(
+            builder,
+            applicableTestProfiles.Select(item => $"{item.DisplayName} ({item.Id})"),
+            "Nenhum perfil de teste disponivel no catalogo.");
 
         return new HardwareTestPreparationReport(builder.ToString());
     }
@@ -208,7 +217,10 @@ public sealed class HardwareTestPreparationReportFormatter
         }
     }
 
-    private static void AppendIndentedList(StringBuilder builder, IEnumerable<string> items)
+    private static void AppendIndentedList(
+        StringBuilder builder,
+        IEnumerable<string> items,
+        string emptyText)
     {
         bool hasItem = false;
 
@@ -220,7 +232,7 @@ public sealed class HardwareTestPreparationReportFormatter
 
         if (!hasItem)
         {
-            builder.AppendLine("  - Nenhum item disponivel no catalogo.");
+            builder.AppendLine($"  - {emptyText}");
         }
     }
 

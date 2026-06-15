@@ -51,6 +51,7 @@ public static class HardwareCatalogValidator
     private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
         "field_observed",
+        "official_reference",
         "official_reference_pending",
         "pending_manual_validation",
         "verified_in_bench"
@@ -115,6 +116,11 @@ public static class HardwareCatalogValidator
         {
             ValidateStatus(family.SourceStatus, $"familia {family.Id} sourceStatus", result);
             ValidateStatus(family.ValidationStatus, $"familia {family.Id} validationStatus", result);
+            ValidateOfficialReferences(
+                family.OfficialReferences,
+                family.SourceStatus,
+                $"familia {family.Id} officialReferences",
+                result);
             ValidateReferences(family.DefaultCommunicationProfiles, communicationProfileIds, $"familia {family.Id} defaultCommunicationProfiles", result);
             ValidateReferences(family.SupportedIoModules, ioModuleIds, $"familia {family.Id} supportedIoModules", result);
             ValidateReferences(family.TestProfiles, testProfileIds, $"familia {family.Id} testProfiles", result);
@@ -134,6 +140,11 @@ public static class HardwareCatalogValidator
             ValidateReference(model.Family, familyIds, $"modelo {model.Id} family", result);
             ValidateStatus(model.SourceStatus, $"modelo {model.Id} sourceStatus", result);
             ValidateStatus(model.ValidationStatus, $"modelo {model.Id} validationStatus", result);
+            ValidateOfficialReferences(
+                model.OfficialReferences,
+                model.SourceStatus,
+                $"modelo {model.Id} officialReferences",
+                result);
             ValidateReferences(model.DefaultCommunicationProfiles, communicationProfileIds, $"modelo {model.Id} defaultCommunicationProfiles", result);
             ValidateReferences(model.SupportedIoModules, ioModuleIds, $"modelo {model.Id} supportedIoModules", result);
             ValidateReferences(model.TestProfiles, testProfileIds, $"modelo {model.Id} testProfiles", result);
@@ -159,6 +170,11 @@ public static class HardwareCatalogValidator
             ValidateReference(module.Family, familyIds, $"modulo {module.Id} family", result);
             ValidateStatus(module.SourceStatus, $"modulo {module.Id} sourceStatus", result);
             ValidateStatus(module.ValidationStatus, $"modulo {module.Id} validationStatus", result);
+            ValidateOfficialReferences(
+                module.OfficialReferences,
+                module.SourceStatus,
+                $"modulo {module.Id} officialReferences",
+                result);
             ValidateReferences(module.SupportedFamilies, familyIds, $"modulo {module.Id} supportedFamilies", result);
             ValidateReferences(module.DefaultCommunicationProfiles, communicationProfileIds, $"modulo {module.Id} defaultCommunicationProfiles", result);
             ValidateReferences(module.SupportedIoModules, ioModuleIds, $"modulo {module.Id} supportedIoModules", result);
@@ -175,6 +191,11 @@ public static class HardwareCatalogValidator
         {
             ValidateStatus(profile.SourceStatus, $"perfil de comunicacao {profile.Id} sourceStatus", result);
             ValidateStatus(profile.ValidationStatus, $"perfil de comunicacao {profile.Id} validationStatus", result);
+            ValidateOfficialReferences(
+                profile.OfficialReferences,
+                profile.SourceStatus,
+                $"perfil de comunicacao {profile.Id} officialReferences",
+                result);
             ValidateReferences(profile.ApplicableFamilies, familyIds, $"perfil de comunicacao {profile.Id} applicableFamilies", result);
         }
     }
@@ -189,6 +210,11 @@ public static class HardwareCatalogValidator
         {
             ValidateStatus(profile.SourceStatus, $"perfil de teste {profile.Id} sourceStatus", result);
             ValidateStatus(profile.ValidationStatus, $"perfil de teste {profile.Id} validationStatus", result);
+            ValidateOfficialReferences(
+                profile.OfficialReferences,
+                profile.SourceStatus,
+                $"perfil de teste {profile.Id} officialReferences",
+                result);
             ValidateReferences(profile.ApplicableFamilies, familyIds, $"perfil de teste {profile.Id} applicableFamilies", result);
             ValidateReferences(profile.ApplicableIoModules, ioModuleIds, $"perfil de teste {profile.Id} applicableIoModules", result);
         }
@@ -325,6 +351,45 @@ public static class HardwareCatalogValidator
         }
     }
 
+    private static void ValidateOfficialReferences(
+        IReadOnlyList<HardwareOfficialReference> references,
+        string sourceStatus,
+        string context,
+        HardwareCatalogValidationResult result)
+    {
+        if (IsOfficialReference(sourceStatus) &&
+            !references.Any(reference => !string.IsNullOrWhiteSpace(reference.Url)))
+        {
+            result.AddError($"{context} deve conter URL oficial quando sourceStatus for official_reference.");
+        }
+
+        for (int index = 0; index < references.Count; index++)
+        {
+            HardwareOfficialReference reference = references[index];
+            string referenceContext = $"{context}[{index}]";
+
+            if (string.IsNullOrWhiteSpace(reference.Title))
+            {
+                result.AddError($"{referenceContext}.title deve ser informado.");
+            }
+
+            if (string.IsNullOrWhiteSpace(reference.Url))
+            {
+                result.AddError($"{referenceContext}.url deve ser informado.");
+            }
+
+            if (string.IsNullOrWhiteSpace(reference.SourceType))
+            {
+                result.AddError($"{referenceContext}.sourceType deve ser informado.");
+            }
+
+            if (string.IsNullOrWhiteSpace(reference.Note))
+            {
+                result.AddError($"{referenceContext}.note deve ser informado.");
+            }
+        }
+    }
+
     private static HashSet<string> BuildIdSet(IEnumerable<string> ids)
     {
         return new HashSet<string>(
@@ -335,6 +400,11 @@ public static class HardwareCatalogValidator
     private static bool IsVerified(string status)
     {
         return string.Equals(status, "verified_in_bench", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsOfficialReference(string status)
+    {
+        return string.Equals(status, "official_reference", StringComparison.OrdinalIgnoreCase);
     }
 }
 

@@ -18,6 +18,8 @@ public sealed class CommunicationProfile
 
     public string Notes { get; init; } = string.Empty;
 
+    public List<HardwareOfficialReference> OfficialReferences { get; init; } = [];
+
     public List<string> ApplicableFamilies { get; init; } = [];
 
     public Dictionary<string, string> Settings { get; init; } = [];
