@@ -20,6 +20,13 @@ public static class HardwareCatalogValidator
         "RION_5_CONTROLLER"
     ];
 
+    private static readonly HashSet<string> PendingOfficialReferenceModels =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "NEON_5_CONTROLLER",
+            "RION_5_CONTROLLER"
+        };
+
     private static readonly string[] RequiredIoModules =
     [
         "HIO115",
@@ -148,6 +155,7 @@ public static class HardwareCatalogValidator
             ValidateReferences(model.DefaultCommunicationProfiles, communicationProfileIds, $"modelo {model.Id} defaultCommunicationProfiles", result);
             ValidateReferences(model.SupportedIoModules, ioModuleIds, $"modelo {model.Id} supportedIoModules", result);
             ValidateReferences(model.TestProfiles, testProfileIds, $"modelo {model.Id} testProfiles", result);
+            ValidatePendingOfficialReferenceModel(model, result);
 
             if ((IsVerified(model.SourceStatus) || IsVerified(model.ValidationStatus)) &&
                 string.IsNullOrWhiteSpace(model.ValidationNotes))
@@ -352,21 +360,33 @@ public static class HardwareCatalogValidator
     }
 
     private static void ValidateOfficialReferences(
-        IReadOnlyList<HardwareOfficialReference> references,
+        IReadOnlyList<HardwareOfficialReference>? references,
         string sourceStatus,
         string context,
         HardwareCatalogValidationResult result)
     {
-        if (IsOfficialReference(sourceStatus) &&
-            !references.Any(reference => !string.IsNullOrWhiteSpace(reference.Url)))
+        if (references is null)
         {
-            result.AddError($"{context} deve conter URL oficial quando sourceStatus for official_reference.");
+            result.AddError($"{context} deve ser uma lista.");
+            return;
+        }
+
+        if (IsOfficialReference(sourceStatus) && references.Count == 0)
+        {
+            result.AddError(
+                $"{context} deve conter pelo menos uma referencia quando sourceStatus for official_reference.");
         }
 
         for (int index = 0; index < references.Count; index++)
         {
-            HardwareOfficialReference reference = references[index];
+            HardwareOfficialReference? reference = references[index];
             string referenceContext = $"{context}[{index}]";
+
+            if (reference is null)
+            {
+                result.AddError($"{referenceContext} deve ser informado.");
+                continue;
+            }
 
             if (string.IsNullOrWhiteSpace(reference.Title))
             {
@@ -390,6 +410,28 @@ public static class HardwareCatalogValidator
         }
     }
 
+    private static void ValidatePendingOfficialReferenceModel(
+        HardwareModel model,
+        HardwareCatalogValidationResult result)
+    {
+        if (!PendingOfficialReferenceModels.Contains(model.Id))
+        {
+            return;
+        }
+
+        if (!IsOfficialReference(model.SourceStatus))
+        {
+            result.AddError(
+                $"modelo {model.Id} deve manter sourceStatus official_reference nesta milestone.");
+        }
+
+        if (!IsPending(model.ValidationStatus))
+        {
+            result.AddError(
+                $"modelo {model.Id} deve manter validationStatus pending_manual_validation ate validacao em bancada.");
+        }
+    }
+
     private static HashSet<string> BuildIdSet(IEnumerable<string> ids)
     {
         return new HashSet<string>(
@@ -405,6 +447,11 @@ public static class HardwareCatalogValidator
     private static bool IsOfficialReference(string status)
     {
         return string.Equals(status, "official_reference", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPending(string status)
+    {
+        return string.Equals(status, "pending_manual_validation", StringComparison.OrdinalIgnoreCase);
     }
 }
 
