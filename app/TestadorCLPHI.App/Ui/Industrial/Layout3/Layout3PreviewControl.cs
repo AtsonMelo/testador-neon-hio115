@@ -6,7 +6,7 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 public sealed class Layout3PreviewControl : UserControl
 {
-    private const int MinimumContentWidth = 1240;
+    private const int MinimumContentWidth = 1180;
     private const int MinimumContentHeight = 660;
 
     private static readonly Color BackgroundColor = Color.FromArgb(10, 16, 22);
@@ -17,7 +17,6 @@ public sealed class Layout3PreviewControl : UserControl
     private static readonly Color TextColor = Color.FromArgb(226, 232, 240);
     private static readonly Color MutedTextColor = Color.FromArgb(165, 185, 205);
     private static readonly Color AccentBlueColor = Color.FromArgb(74, 144, 226);
-    private static readonly Color AccentGreenColor = Color.FromArgb(62, 210, 92);
     private static readonly Color AccentYellowColor = Color.FromArgb(245, 190, 45);
     private static readonly Color AccentRedColor = Color.FromArgb(245, 68, 68);
 
@@ -65,7 +64,7 @@ public sealed class Layout3PreviewControl : UserControl
             BackColor = BackgroundColor
         };
 
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 94F));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 420F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
@@ -89,10 +88,10 @@ public sealed class Layout3PreviewControl : UserControl
             BackColor = PanelColor
         };
 
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 205F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 225F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16F));
 
         TableLayoutPanel identity = new()
         {
@@ -107,7 +106,7 @@ public sealed class Layout3PreviewControl : UserControl
         identity.Controls.Add(CreateLabel("Conceito hibrido: diagnostico + operacao industrial", 8.5F, FontStyle.Regular, MutedTextColor), 0, 1);
 
         layout.Controls.Add(identity, 0, 0);
-        layout.Controls.Add(CreateStatusCard("STATUS GERAL", "DESCONECTADO", AccentRedColor), 1, 0);
+        layout.Controls.Add(CreateStatusCard("STATUS GERAL", "DESCONECTADO", MutedTextColor), 1, 0);
         layout.Controls.Add(CreatePreviewBadge(), 2, 0);
         layout.Controls.Add(CreateEmergencyPreviewArea(), 3, 0);
 
@@ -126,9 +125,9 @@ public sealed class Layout3PreviewControl : UserControl
             BackColor = BackgroundColor
         };
 
-        main.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 270F));
-        main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        main.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390F));
+        main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+        main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 49F));
+        main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 31F));
 
         main.Controls.Add(CreateConnectionArea(), 0, 0);
         main.Controls.Add(CreateOperationArea(), 1, 0);
@@ -161,7 +160,7 @@ public sealed class Layout3PreviewControl : UserControl
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
 
         layout.Controls.Add(CreateSectionTitle("CONEXAO E DIAGNOSTICO"), 0, 0);
-        layout.Controls.Add(CreateStatusCard("COMUNICACAO", "Nao conectada", AccentRedColor), 0, 1);
+        layout.Controls.Add(CreateStatusCard("COMUNICACAO", "Nao conectada", MutedTextColor), 0, 1);
         layout.Controls.Add(CreateReadOnlyField("Porta COM", "Nao selecionada"), 0, 2);
         layout.Controls.Add(CreateReadOnlyField("Baud rate", "9600 (referencia)"), 0, 3);
         layout.Controls.Add(CreateReadOnlyField("Slave ID", "1 (referencia)"), 0, 4);
@@ -169,8 +168,7 @@ public sealed class Layout3PreviewControl : UserControl
         layout.Controls.Add(CreateDiagnosticSummary(), 0, 6);
 
         Button unavailableButton = CreateActionButton(
-            "Conectar indisponivel na preview",
-            AccentBlueColor,
+            "PREVIEW | Conexao indisponivel",
             enabled: false);
         layout.Controls.Add(unavailableButton, 0, 7);
 
@@ -223,14 +221,12 @@ public sealed class Layout3PreviewControl : UserControl
             RowCount = 1,
             BackColor = PanelColor
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 16F));
 
-        Button enablePreviewButton = CreateActionButton("PREVIEW | Habilitar teste", AccentGreenColor);
-        Button resetPreviewButton = CreateActionButton("PREVIEW | Resetar saidas", AccentYellowColor);
-        enablePreviewButton.Click += (_, _) => AppendPreviewLog("Intencao visual: habilitar teste. Nenhum comando foi enviado.");
-        resetPreviewButton.Click += (_, _) => AppendPreviewLog("Intencao visual: resetar saidas. Nenhum comando foi enviado.");
+        Button enablePreviewButton = CreateActionButton("PREVIEW | Habilitar teste", enabled: false);
+        Button resetPreviewButton = CreateActionButton("PREVIEW | Resetar saidas", enabled: false);
 
         layout.Controls.Add(enablePreviewButton, 0, 0);
         layout.Controls.Add(resetPreviewButton, 1, 0);
@@ -252,21 +248,36 @@ public sealed class Layout3PreviewControl : UserControl
             RowCount = 2,
             BackColor = PanelColor
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
+        TableLayoutPanel header = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            BackColor = PanelColor,
+            Padding = new Padding(4, 0, 4, 0)
+        };
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 48F));
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 52F));
+
+        Label titleLabel = CreateLabel("PERFIL E PREPARACAO", 8.5F, FontStyle.Bold, TextColor);
+        titleLabel.AutoEllipsis = true;
         Label pendingLabel = CreateLabel(
-            "PERFIL E PREPARACAO | RION 5 / NEON 5: pending_manual_validation",
-            8.5F,
+            "RION 5 / NEON 5 | validacao manual pendente",
+            8F,
             FontStyle.Bold,
             AccentYellowColor);
-        pendingLabel.Padding = new Padding(4, 0, 4, 0);
         pendingLabel.AutoEllipsis = true;
+        header.Controls.Add(titleLabel, 0, 0);
+        header.Controls.Add(pendingLabel, 0, 1);
 
         HardwareProfileSelectionControl profileSelection = new(_hardwareCatalog)
         {
             Dock = DockStyle.Fill,
-            MinimumSize = new Size(360, 350),
+            MinimumSize = Size.Empty,
+            Size = Size.Empty,
             Margin = Padding.Empty
         };
         AppThemeService.ApplyControlTree(
@@ -276,8 +287,9 @@ public sealed class Layout3PreviewControl : UserControl
             FieldColor,
             ButtonColor,
             TextColor);
+        ConfigureHardwareProfileForPreview(profileSelection);
 
-        layout.Controls.Add(pendingLabel, 0, 0);
+        layout.Controls.Add(header, 0, 0);
         layout.Controls.Add(profileSelection, 0, 1);
         panel.Controls.Add(layout);
         return panel;
@@ -306,19 +318,19 @@ public sealed class Layout3PreviewControl : UserControl
             RowCount = 1,
             BackColor = PanelColor
         };
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
 
         header.Controls.Add(CreateSectionTitle("TERMINAL / LOG"), 0, 0);
         header.Controls.Add(CreateLabel(
-            "PREVIEW ISOLADA - sem leitura, escrita ou comandos fisicos",
-            9F,
+            "PREVIEW ONLY | sem leitura, escrita ou comandos fisicos",
+            8.5F,
             FontStyle.Bold,
             AccentYellowColor,
             ContentAlignment.MiddleCenter), 1, 0);
 
-        Button clearButton = CreateActionButton("Limpar log", MutedTextColor);
+        Button clearButton = CreateActionButton("Limpar log");
         clearButton.Click += (_, _) => _previewLogTextBox.Clear();
         header.Controls.Add(clearButton, 2, 0);
 
@@ -389,10 +401,10 @@ public sealed class Layout3PreviewControl : UserControl
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         layout.Controls.Add(CreateSectionTitle("RESUMO DE DIAGNOSTICO"), 0, 0);
-        layout.Controls.Add(CreateStatusCard("Configuracao", "Somente referencia visual", AccentBlueColor), 0, 1);
-        layout.Controls.Add(CreateStatusCard("Catalogo", "Informativo e local", AccentGreenColor), 0, 2);
+        layout.Controls.Add(CreateStatusCard("Configuracao", "Referencia visual", AccentBlueColor), 0, 1);
+        layout.Controls.Add(CreateStatusCard("Catalogo", "Somente local", MutedTextColor), 0, 2);
         layout.Controls.Add(CreateLabel(
-            "Deteccao, conexao e leitura nao sao executadas nesta etapa.",
+            "Sem deteccao/conexao na preview.",
             8.5F,
             FontStyle.Regular,
             MutedTextColor), 0, 3);
@@ -409,7 +421,7 @@ public sealed class Layout3PreviewControl : UserControl
             Margin = new Padding(0, 2, 0, 2),
             Padding = new Padding(8, 2, 8, 2),
             BackColor = FieldColor,
-            CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
+            CellBorderStyle = TableLayoutPanelCellBorderStyle.None
         };
         field.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
         field.RowStyles.Add(new RowStyle(SizeType.Percent, 56F));
@@ -428,10 +440,10 @@ public sealed class Layout3PreviewControl : UserControl
             Margin = new Padding(3),
             Padding = new Padding(7, 0, 7, 0),
             BackColor = FieldColor,
-            CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
+            CellBorderStyle = TableLayoutPanelCellBorderStyle.None
         };
-        card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
-        card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58F));
+        card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 46F));
+        card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 54F));
         card.Controls.Add(CreateLabel(title, 7.5F, FontStyle.Bold, MutedTextColor), 0, 0);
         card.Controls.Add(CreateLabel(status, 8.5F, FontStyle.Bold, statusColor, ContentAlignment.MiddleRight), 1, 0);
         return card;
@@ -452,7 +464,8 @@ public sealed class Layout3PreviewControl : UserControl
             Text =
                 "[PREVIEW] Layout 3 iniciado em modo isolado.\r\n" +
                 "[SEGURANCA] Nenhum servico PLC/Modbus foi criado ou conectado.\r\n" +
-                "[INFO] Botoes PREVIEW registram apenas mensagens neste log."
+                "[SEGURANCA] Comandos fisicos executados: 0.\r\n" +
+                "[INFO] Botoes PREVIEW demonstrativos permanecem desabilitados."
         };
     }
 
@@ -485,11 +498,12 @@ public sealed class Layout3PreviewControl : UserControl
             Font = new Font("Segoe UI", size, style),
             ForeColor = color,
             BackColor = PanelColor,
-            TextAlign = alignment
+            TextAlign = alignment,
+            AutoEllipsis = true
         };
     }
 
-    private static Button CreateActionButton(string text, Color borderColor, bool enabled = true)
+    private static Button CreateActionButton(string text, bool enabled = true)
     {
         Button button = new()
         {
@@ -500,12 +514,51 @@ public sealed class Layout3PreviewControl : UserControl
             ForeColor = TextColor,
             BackColor = ButtonColor,
             Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
-            Margin = new Padding(4)
+            Margin = new Padding(4),
+            Cursor = Cursors.Default,
+            TabStop = enabled,
+            UseVisualStyleBackColor = false
         };
-        button.FlatAppearance.BorderColor = borderColor;
+        button.FlatAppearance.BorderColor = BorderColor;
         button.FlatAppearance.BorderSize = 1;
         button.FlatAppearance.MouseOverBackColor = Color.FromArgb(38, 53, 68);
         return button;
+    }
+
+    private static void ConfigureHardwareProfileForPreview(Control root)
+    {
+        foreach (TableLayoutPanel layout in FindControls<TableLayoutPanel>(root))
+        {
+            if (layout.ColumnCount == 2 && layout.RowCount == 5)
+            {
+                layout.ColumnStyles[0].Width = 120F;
+            }
+
+            Button? copyButton = layout.Controls.OfType<Button>().FirstOrDefault();
+            if (layout.ColumnCount == 3 && copyButton is not null)
+            {
+                layout.ColumnStyles[0].Width = 120F;
+                layout.ColumnStyles[2].Width = 140F;
+                copyButton.Text = "Copiar resumo";
+            }
+        }
+    }
+
+    private static IEnumerable<TControl> FindControls<TControl>(Control root)
+        where TControl : Control
+    {
+        foreach (Control child in root.Controls)
+        {
+            if (child is TControl match)
+            {
+                yield return match;
+            }
+
+            foreach (TControl descendant in FindControls<TControl>(child))
+            {
+                yield return descendant;
+            }
+        }
     }
 
     private static Control CreateDivider()
@@ -516,12 +569,6 @@ public sealed class Layout3PreviewControl : UserControl
             BackColor = BorderColor,
             Margin = Padding.Empty
         };
-    }
-
-    private void AppendPreviewLog(string message)
-    {
-        string timestamp = DateTime.Now.ToString("HH:mm:ss");
-        _previewLogTextBox.AppendText($"{Environment.NewLine}[{timestamp}] [PREVIEW] {message}");
     }
 
     private void ResizeContentToViewport()

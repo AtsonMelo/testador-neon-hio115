@@ -11,7 +11,7 @@ public sealed class Layout3PreviewForm : Form
         Text = "Layout 3 - Preview isolado | Testador CLP HI";
         StartPosition = FormStartPosition.CenterScreen;
         Size = new Size(1280, 720);
-        MinimumSize = new Size(1100, 650);
+        MinimumSize = new Size(1000, 620);
         BackColor = BackgroundColor;
         ForeColor = Color.FromArgb(226, 232, 240);
         Font = new Font("Segoe UI", 9F);
