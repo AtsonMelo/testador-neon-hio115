@@ -93,5 +93,18 @@ smoke GUI, total de comandos físicos e próximo passo recomendado. Com
 
 Arquivos proibidos, branch diferente de `-ExpectedBranch`, falha ao obter a
 comparação, validador reprovado, build reprovado, diff-check reprovado ou smoke
-GUI reprovado produzem exit code `1`. A ausência de `-RunGuiSmoke` é registrada
+GUI reprovado marcam falha crítica. A ausência de `-RunGuiSmoke` é registrada
 como não solicitada e não reprova a análise.
+
+O script **não usa `exit`** para encerrar, evitando fechar a sessão interativa do
+PowerShell. Ele retorna de forma segura e publica o código em `$LASTEXITCODE`
+(`1` em falha crítica, `0` caso contrário), que automação pode consultar. Quando
+há bloqueio, a linha `BLOQUEADO: encerrando de forma segura...` é registrada antes
+do retorno.
+
+## Comportamento com árvore limpa
+
+Quando não há arquivos alterados (`LocalWip` em árvore limpa, por exemplo), a
+busca por termos operacionais fortes não é executada e o relatório registra
+`OK: nenhum arquivo alterado para escanear.`. Isso não gera warning nem falha
+crítica: o status final permanece `OK`.
