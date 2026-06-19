@@ -321,15 +321,20 @@ try {
     Write-QaLine ''
     Write-QaLine '## Busca por termos operacionais fortes'
     Write-QaLine 'Escopo: arquivos alterados, exceto o próprio script que declara os termos.'
-    $strongTermHits = @(Find-StrongTermHits -Paths $changedPaths)
-    if ($strongTermHits.Count -gt 0) {
-        foreach ($hit in $strongTermHits) {
-            Write-QaLine ("ALERTA: {0}" -f $hit)
-        }
-        $warningFound = $true
+    if ($changedPaths.Count -eq 0) {
+        Write-QaLine 'OK: nenhum arquivo alterado para escanear.'
     }
     else {
-        Write-QaLine 'OK: nenhum termo operacional forte encontrado.'
+        $strongTermHits = @(Find-StrongTermHits -Paths $changedPaths)
+        if ($strongTermHits.Count -gt 0) {
+            foreach ($hit in $strongTermHits) {
+                Write-QaLine ("ALERTA: {0}" -f $hit)
+            }
+            $warningFound = $true
+        }
+        else {
+            Write-QaLine 'OK: nenhum termo operacional forte encontrado.'
+        }
     }
 
     $validators = [ordered]@{
@@ -440,11 +445,16 @@ try {
         }
     }
 
+    # Evita 'exit', que encerraria uma sessão interativa do PowerShell.
+    # Mantém um código de saída consultável por automação via $LASTEXITCODE/$global:LASTEXITCODE.
     if ($criticalFailure) {
-        exit 1
+        Write-QaLine 'BLOQUEADO: encerrando de forma segura sem fechar a sessão (código 1).'
+        $global:LASTEXITCODE = 1
+        return
     }
 
-    exit 0
+    $global:LASTEXITCODE = 0
+    return
 }
 finally {
     Pop-Location
