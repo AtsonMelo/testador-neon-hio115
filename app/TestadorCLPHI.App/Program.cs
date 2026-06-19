@@ -2,6 +2,7 @@ using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
+using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App;
 
@@ -33,6 +34,28 @@ internal static class Program
         }
 
         ApplicationConfiguration.Initialize();
+
+        if (args.Contains("--preview-layout-3-auto", StringComparer.OrdinalIgnoreCase))
+        {
+            Application.Run(new Layout3PreviewForm(
+                LoadHardwareCatalogForApp(),
+                Layout3PreviewTheme.Automatic));
+            return;
+        }
+
+        if (args.Contains("--preview-layout-3-light", StringComparer.OrdinalIgnoreCase))
+        {
+            Application.Run(new Layout3PreviewForm(
+                LoadHardwareCatalogForApp(),
+                Layout3PreviewTheme.Light));
+            return;
+        }
+
+        if (args.Contains("--preview-layout-3", StringComparer.OrdinalIgnoreCase))
+        {
+            Application.Run(new Layout3PreviewForm(LoadHardwareCatalogForApp()));
+            return;
+        }
 
         if (args.Contains("--preview-layout-alvo", StringComparer.OrdinalIgnoreCase))
         {
