@@ -2,20 +2,14 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 internal sealed class Layout3IoPanelControl : UserControl
 {
-    private static readonly Color SurfaceColor = Color.FromArgb(24, 32, 42);
-    private static readonly Color FieldColor = Color.FromArgb(18, 25, 34);
-    private static readonly Color RowColor = Color.FromArgb(34, 44, 56);
-    private static readonly Color DividerColor = Color.FromArgb(72, 96, 116);
-    private static readonly Color TextColor = Color.FromArgb(226, 232, 240);
-    private static readonly Color MutedTextColor = Color.FromArgb(170, 184, 198);
-    private static readonly Color AccentBlueColor = Color.FromArgb(83, 151, 210);
-
+    private readonly Layout3ThemePalette _palette;
     private readonly List<Image> _ownedImages = [];
     private readonly PictureBox[] _inputIndicators = new PictureBox[8];
 
-    public Layout3IoPanelControl()
+    public Layout3IoPanelControl(Layout3ThemePalette palette)
     {
-        BackColor = SurfaceColor;
+        _palette = palette;
+        BackColor = _palette.Surface;
         BorderStyle = BorderStyle.FixedSingle;
         BuildLayout();
     }
@@ -27,7 +21,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 3,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Padding = new Padding(14)
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
@@ -40,47 +34,47 @@ internal sealed class Layout3IoPanelControl : UserControl
         Controls.Add(root);
     }
 
-    private static Control CreateHeader()
+    private Control CreateHeader()
     {
         TableLayoutPanel header = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 2,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
 
-        Label index = CreateLabel("02", 8F, FontStyle.Bold, AccentBlueColor, ContentAlignment.MiddleCenter);
-        index.BackColor = FieldColor;
+        Label index = CreateLabel("02", 8F, FontStyle.Bold, _palette.AccentBlue, ContentAlignment.MiddleCenter);
+        index.BackColor = _palette.Field;
         index.Margin = new Padding(0, 4, 7, 4);
         header.Controls.Add(index, 0, 0);
         header.SetRowSpan(index, 2);
-        header.Controls.Add(CreateLabel("I/O MANUAL", 10F, FontStyle.Bold, TextColor), 1, 0);
-        header.Controls.Add(CreateLabel("Painel industrial em estado seguro", 8F, FontStyle.Regular, MutedTextColor), 1, 1);
+        header.Controls.Add(CreateLabel("I/O MANUAL", 10F, FontStyle.Bold, _palette.Text), 1, 0);
+        header.Controls.Add(CreateLabel("Painel industrial em estado seguro", 8F, FontStyle.Regular, _palette.MutedText), 1, 1);
         return header;
     }
 
-    private static Control CreateSafetyStrip()
+    private Control CreateSafetyStrip()
     {
         TableLayoutPanel strip = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = FieldColor,
+            BackColor = _palette.Field,
             Margin = new Padding(0, 2, 0, 6),
             Padding = new Padding(12, 0, 12, 0)
         };
         strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62F));
         strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38F));
-        Label description = CreateLabel("ESCRITA FISICA BLOQUEADA", 8F, FontStyle.Bold, TextColor);
-        Label state = CreateLabel("0 COMANDOS", 8F, FontStyle.Bold, MutedTextColor, ContentAlignment.MiddleRight);
-        description.BackColor = FieldColor;
-        state.BackColor = FieldColor;
+        Label description = CreateLabel("ESCRITA FISICA BLOQUEADA", 8F, FontStyle.Bold, _palette.Text);
+        Label state = CreateLabel("0 COMANDOS", 8F, FontStyle.Bold, _palette.MutedText, ContentAlignment.MiddleRight);
+        description.BackColor = _palette.Field;
+        state.BackColor = _palette.Field;
         strip.Controls.Add(description, 0, 0);
         strip.Controls.Add(state, 1, 0);
         return strip;
@@ -93,7 +87,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         area.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 43F));
         area.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1F));
@@ -102,7 +96,7 @@ internal sealed class Layout3IoPanelControl : UserControl
         area.Controls.Add(new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = DividerColor,
+            BackColor = _palette.Divider,
             Margin = new Padding(0, 8, 0, 4)
         }, 1, 0);
         area.Controls.Add(CreateInputs(), 2, 0);
@@ -116,7 +110,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 5,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Padding = new Padding(0, 0, 12, 0)
         };
         outputs.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
@@ -140,7 +134,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
-            BackColor = RowColor,
+            BackColor = _palette.Row,
             Margin = new Padding(0, 4, 0, 4),
             Padding = new Padding(10, 2, 8, 2),
             Cursor = Cursors.Default
@@ -149,11 +143,11 @@ internal sealed class Layout3IoPanelControl : UserControl
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 58F));
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48F));
 
-        Label name = CreateLabel(channel, 10F, FontStyle.Bold, TextColor);
-        name.BackColor = RowColor;
+        Label name = CreateLabel(channel, 10F, FontStyle.Bold, _palette.Text);
+        name.BackColor = _palette.Row;
 
-        Label state = CreateLabel("INATIVA", 7.5F, FontStyle.Bold, MutedTextColor, ContentAlignment.MiddleRight);
-        state.BackColor = RowColor;
+        Label state = CreateLabel("INATIVA", 7.5F, FontStyle.Bold, _palette.MutedText, ContentAlignment.MiddleRight);
+        state.BackColor = _palette.Row;
         row.Controls.Add(name, 0, 0);
         row.Controls.Add(state, 1, 0);
         row.Controls.Add(CreateAssetPicture("push_button_green.png", 42), 2, 0);
@@ -167,7 +161,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 5,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Padding = new Padding(12, 0, 0, 0)
         };
         inputs.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -197,14 +191,14 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = RowColor,
+            BackColor = _palette.Row,
             Margin = new Padding(4),
             Padding = new Padding(8, 2, 6, 2)
         };
         cell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         cell.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42F));
-        Label name = CreateLabel(channel, 9F, FontStyle.Bold, TextColor);
-        name.BackColor = RowColor;
+        Label name = CreateLabel(channel, 9F, FontStyle.Bold, _palette.Text);
+        name.BackColor = _palette.Row;
         PictureBox indicator = CreateAssetPicture("led_off_gray.png", 36);
         _inputIndicators[channelIndex] = indicator;
         cell.Controls.Add(name, 0, 0);
@@ -238,19 +232,19 @@ internal sealed class Layout3IoPanelControl : UserControl
         }
     }
 
-    private static Control CreateColumnHeader(string title, string subtitle)
+    private Control CreateColumnHeader(string title, string subtitle)
     {
         TableLayoutPanel header = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 56F));
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
-        header.Controls.Add(CreateLabel(title, 8.5F, FontStyle.Bold, TextColor), 0, 0);
-        header.Controls.Add(CreateLabel(subtitle, 7.5F, FontStyle.Regular, MutedTextColor), 0, 1);
+        header.Controls.Add(CreateLabel(title, 8.5F, FontStyle.Bold, _palette.Text), 0, 0);
+        header.Controls.Add(CreateLabel(subtitle, 7.5F, FontStyle.Regular, _palette.MutedText), 0, 1);
         return header;
     }
 
@@ -260,7 +254,7 @@ internal sealed class Layout3IoPanelControl : UserControl
         {
             Size = new Size(size, size),
             SizeMode = PictureBoxSizeMode.Zoom,
-            BackColor = RowColor,
+            BackColor = _palette.Row,
             Margin = new Padding(4),
             Cursor = Cursors.Default,
             TabStop = false,
@@ -283,7 +277,7 @@ internal sealed class Layout3IoPanelControl : UserControl
         return new Bitmap(source);
     }
 
-    private static Label CreateLabel(
+    private Label CreateLabel(
         string text,
         float size,
         FontStyle style,
@@ -296,7 +290,7 @@ internal sealed class Layout3IoPanelControl : UserControl
             Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", size, style),
             ForeColor = color,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             TextAlign = alignment,
             AutoEllipsis = true
         };

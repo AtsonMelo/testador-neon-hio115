@@ -8,11 +8,30 @@ comunicacao com o CLP.
 
 ## Como abrir
 
+Tema dark aprovado (comportamento original):
+
 ```powershell
 dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --preview-layout-3
 ```
 
+Tema claro tecnico:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --preview-layout-3-light
+```
+
+Tema automatico, seguindo a preferencia de aplicativos do Windows:
+
+```powershell
+dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --preview-layout-3-auto
+```
+
 Sem a flag, o aplicativo continua abrindo a interface de producao existente.
+As tres flags abrem o mesmo layout isolado; somente a paleta e o tratamento da
+barra de titulo mudam. O modo automatico consulta `AppsUseLightTheme` ao abrir
+a janela. O tema claro usa fundo branco gelo, superficies claras, texto grafite
+e azul discreto, preservando amarelo para `PREVIEW ONLY` e vermelho para a
+parada estritamente visual.
 
 ## Estrutura visual
 
@@ -28,10 +47,11 @@ Sem a flag, o aplicativo continua abrindo a interface de producao existente.
 - resumo curto de preparacao com copia local, sem exibir o relatorio extenso;
 - terminal inferior reduzido, reservado para a garantia de isolamento.
 
-A composicao tem largura minima de 1180 px, colunas de 26% / 44% / 30% e
-`AutoScroll` apenas como contingencia. Em 1280x720 os elementos principais ficam
-visiveis na abertura; em 1366x768 e 1920x1080 o espaco adicional e distribuido
-entre as tres zonas.
+A composicao e fluida a partir de 1000x560, com colunas de 26% / 44% / 30%.
+Entre a janela minima e a maximizada, o canvas acompanha toda a area disponivel
+e redistribui o espaco entre as tres zonas. Abaixo da area minima, `AutoScroll`
+preserva a legibilidade sem comprimir os paineis. Em 1280x720 e 1366x768 os
+elementos principais ficam visiveis e mantem a mesma hierarquia visual.
 
 ## Garantias de isolamento
 

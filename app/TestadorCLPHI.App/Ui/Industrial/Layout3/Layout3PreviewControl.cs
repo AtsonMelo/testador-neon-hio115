@@ -4,34 +4,29 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 public sealed class Layout3PreviewControl : UserControl
 {
-    private const int MinimumContentWidth = 1180;
-    private const int MinimumContentHeight = 640;
+    private const int MinimumContentWidth = 1000;
+    private const int MinimumContentHeight = 560;
 
-    private static readonly Color BackgroundColor = Color.FromArgb(18, 24, 32);
-    private static readonly Color SurfaceColor = Color.FromArgb(24, 32, 42);
-    private static readonly Color SurfaceRaisedColor = Color.FromArgb(42, 52, 64);
-    private static readonly Color FieldColor = Color.FromArgb(18, 25, 34);
-    private static readonly Color DividerColor = Color.FromArgb(72, 96, 116);
-    private static readonly Color TextColor = Color.FromArgb(226, 232, 240);
-    private static readonly Color MutedTextColor = Color.FromArgb(170, 184, 198);
-    private static readonly Color AccentBlueColor = Color.FromArgb(83, 151, 210);
-    private static readonly Color WarningColor = Color.FromArgb(222, 178, 72);
-    private static readonly Color EmergencyColor = Color.FromArgb(224, 92, 92);
-
+    private readonly Layout3ThemePalette _palette;
     private readonly TextBox _previewLogTextBox;
     private readonly Panel _content;
 
-    public Layout3PreviewControl(HardwareCatalog? hardwareCatalog)
+    public Layout3PreviewControl(
+        HardwareCatalog? hardwareCatalog,
+        Layout3PreviewTheme theme = Layout3PreviewTheme.Dark)
     {
+        _palette = Layout3ThemePalette.For(theme);
         Dock = DockStyle.Fill;
-        BackColor = BackgroundColor;
+        BackColor = _palette.Background;
+        DoubleBuffered = true;
+        ResizeRedraw = true;
         AutoScroll = true;
         AutoScrollMinSize = new Size(MinimumContentWidth, MinimumContentHeight);
 
         _previewLogTextBox = CreatePreviewLogTextBox();
         _content = new Panel
         {
-            BackColor = BackgroundColor,
+            BackColor = _palette.Background,
             Location = Point.Empty,
             Margin = Padding.Empty,
             Size = new Size(MinimumContentWidth, MinimumContentHeight)
@@ -56,7 +51,7 @@ public sealed class Layout3PreviewControl : UserControl
             ColumnCount = 1,
             RowCount = 3,
             Padding = new Padding(10),
-            BackColor = BackgroundColor
+            BackColor = _palette.Background
         };
 
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 70F));
@@ -70,7 +65,7 @@ public sealed class Layout3PreviewControl : UserControl
         _content.Controls.Add(root);
     }
 
-    private static Control CreateTopBar()
+    private Control CreateTopBar()
     {
         Panel panel = CreateSurfacePanel();
         panel.Padding = new Padding(16, 8, 10, 8);
@@ -80,7 +75,7 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 4,
             RowCount = 1,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
@@ -94,7 +89,7 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Margin = Padding.Empty
         };
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -103,7 +98,7 @@ public sealed class Layout3PreviewControl : UserControl
         identity.Controls.Add(new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = AccentBlueColor,
+            BackColor = _palette.AccentBlue,
             Margin = new Padding(0, 5, 0, 5)
         }, 0, 0);
 
@@ -111,7 +106,7 @@ public sealed class Layout3PreviewControl : UserControl
             "TESTADOR CLP HI\r\nLAYOUT 3  /  CONSOLE INDUSTRIAL DE BANCADA",
             11F,
             FontStyle.Bold,
-            TextColor);
+            _palette.Text);
         identityText.Padding = new Padding(12, 0, 0, 0);
         identity.Controls.Add(identityText, 1, 0);
 
@@ -124,41 +119,41 @@ public sealed class Layout3PreviewControl : UserControl
         return panel;
     }
 
-    private static Control CreateGeneralStatus()
+    private Control CreateGeneralStatus()
     {
         Label status = CreateLabel(
             "STATUS GERAL\r\n●  DESCONECTADO",
             8.5F,
             FontStyle.Bold,
-            TextColor,
+            _palette.Text,
             ContentAlignment.MiddleLeft);
-        status.BackColor = FieldColor;
+        status.BackColor = _palette.Field;
         status.Margin = new Padding(8, 3, 8, 3);
         status.Padding = new Padding(14, 0, 8, 0);
         return status;
     }
 
-    private static Control CreatePreviewBadge()
+    private Control CreatePreviewBadge()
     {
         Label badge = CreateLabel(
             "PREVIEW ONLY\r\n0 COMANDOS FISICOS",
             8.5F,
             FontStyle.Bold,
-            WarningColor,
+            _palette.Warning,
             ContentAlignment.MiddleCenter);
-        badge.BackColor = Color.FromArgb(53, 45, 27);
+        badge.BackColor = _palette.WarningBackground;
         badge.Margin = new Padding(8, 3, 8, 3);
         return badge;
     }
 
-    private static Control CreateEmergencyPreviewArea()
+    private Control CreateEmergencyPreviewArea()
     {
         TableLayoutPanel emergency = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = Color.FromArgb(43, 30, 33),
+            BackColor = _palette.EmergencyBackground,
             Margin = new Padding(8, 3, 0, 3),
             Padding = new Padding(8, 3, 6, 3)
         };
@@ -170,7 +165,7 @@ public sealed class Layout3PreviewControl : UserControl
             "PARADA\r\nVISUAL",
             8.5F,
             FontStyle.Bold,
-            EmergencyColor,
+            _palette.Emergency,
             ContentAlignment.MiddleRight);
         text.BackColor = emergency.BackColor;
         emergency.Controls.Add(text, 0, 0);
@@ -195,7 +190,7 @@ public sealed class Layout3PreviewControl : UserControl
         return emergency;
     }
 
-    private static Control CreateMainArea(HardwareCatalog hardwareCatalog)
+    private Control CreateMainArea(HardwareCatalog hardwareCatalog)
     {
         TableLayoutPanel main = new()
         {
@@ -203,7 +198,7 @@ public sealed class Layout3PreviewControl : UserControl
             ColumnCount = 3,
             RowCount = 1,
             Margin = new Padding(0, 8, 0, 8),
-            BackColor = BackgroundColor
+            BackColor = _palette.Background
         };
 
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 26F));
@@ -214,14 +209,14 @@ public sealed class Layout3PreviewControl : UserControl
         connection.Margin = new Padding(0, 0, 6, 0);
         main.Controls.Add(connection, 0, 0);
 
-        Layout3IoPanelControl ioPanel = new()
+        Layout3IoPanelControl ioPanel = new(_palette)
         {
             Dock = DockStyle.Fill,
             Margin = new Padding(2, 0, 6, 0)
         };
         main.Controls.Add(ioPanel, 1, 0);
 
-        Layout3ProfilePanelControl profilePanel = new(hardwareCatalog)
+        Layout3ProfilePanelControl profilePanel = new(hardwareCatalog, _palette)
         {
             Dock = DockStyle.Fill,
             Margin = new Padding(2, 0, 0, 0)
@@ -231,7 +226,7 @@ public sealed class Layout3PreviewControl : UserControl
         return main;
     }
 
-    private static Control CreateConnectionArea()
+    private Control CreateConnectionArea()
     {
         Panel panel = CreateSurfacePanel();
         panel.Padding = new Padding(14);
@@ -241,7 +236,7 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 9,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
@@ -259,16 +254,16 @@ public sealed class Layout3PreviewControl : UserControl
         layout.Controls.Add(CreateReferenceRow("VELOCIDADE", "9600  /  referencia"), 0, 3);
         layout.Controls.Add(CreateReferenceRow("ENDERECO", "Slave 1  /  referencia"), 0, 4);
         layout.Controls.Add(CreateDivider(), 0, 5);
-        layout.Controls.Add(CreateDiagnosticItem("CONFIGURACAO", "Referencia local", AccentBlueColor), 0, 6);
+        layout.Controls.Add(CreateDiagnosticItem("CONFIGURACAO", "Referencia local", _palette.AccentBlue), 0, 6);
         layout.Controls.Add(CreateDiagnosticNote(), 0, 7);
 
         Label unavailable = CreateLabel(
             "CONEXAO INDISPONIVEL NESTA PREVIEW",
             8F,
             FontStyle.Bold,
-            MutedTextColor,
+            _palette.MutedText,
             ContentAlignment.MiddleCenter);
-        unavailable.BackColor = FieldColor;
+        unavailable.BackColor = _palette.Field;
         unavailable.Margin = new Padding(0, 5, 0, 0);
         layout.Controls.Add(unavailable, 0, 8);
 
@@ -276,21 +271,21 @@ public sealed class Layout3PreviewControl : UserControl
         return panel;
     }
 
-    private static Control CreateCommunicationState()
+    private Control CreateCommunicationState()
     {
         TableLayoutPanel row = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = SurfaceRaisedColor,
+            BackColor = _palette.Raised,
             Margin = new Padding(0, 2, 0, 6),
             Padding = new Padding(10, 0, 10, 0)
         };
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55F));
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45F));
-        Label label = CreateLabel("COMUNICACAO", 8F, FontStyle.Bold, MutedTextColor);
-        Label value = CreateLabel("DESCONECTADA", 9F, FontStyle.Bold, TextColor, ContentAlignment.MiddleRight);
+        Label label = CreateLabel("COMUNICACAO", 8F, FontStyle.Bold, _palette.MutedText);
+        Label value = CreateLabel("DESCONECTADA", 9F, FontStyle.Bold, _palette.Text, ContentAlignment.MiddleRight);
         label.BackColor = row.BackColor;
         value.BackColor = row.BackColor;
         row.Controls.Add(label, 0, 0);
@@ -298,32 +293,32 @@ public sealed class Layout3PreviewControl : UserControl
         return row;
     }
 
-    private static Control CreateReferenceRow(string title, string value)
+    private Control CreateReferenceRow(string title, string value)
     {
         TableLayoutPanel row = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Margin = Padding.Empty,
             Padding = new Padding(2, 0, 2, 0)
         };
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42F));
         row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58F));
         row.Controls.Add(CreateFieldLabel(title), 0, 0);
-        row.Controls.Add(CreateLabel(value, 8.5F, FontStyle.Regular, TextColor, ContentAlignment.MiddleRight), 1, 0);
+        row.Controls.Add(CreateLabel(value, 8.5F, FontStyle.Regular, _palette.Text, ContentAlignment.MiddleRight), 1, 0);
         return row;
     }
 
-    private static Control CreateDiagnosticItem(string title, string value, Color valueColor)
+    private Control CreateDiagnosticItem(string title, string value, Color valueColor)
     {
         TableLayoutPanel item = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            BackColor = FieldColor,
+            BackColor = _palette.Field,
             Margin = new Padding(0, 4, 0, 4),
             Padding = new Padding(10, 3, 10, 3)
         };
@@ -331,31 +326,31 @@ public sealed class Layout3PreviewControl : UserControl
         item.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
         item.Controls.Add(CreateFieldLabel(title), 0, 0);
         Label valueLabel = CreateLabel(value, 9F, FontStyle.Bold, valueColor);
-        valueLabel.BackColor = FieldColor;
+        valueLabel.BackColor = _palette.Field;
         item.Controls.Add(valueLabel, 0, 1);
         return item;
     }
 
-    private static Control CreateDiagnosticNote()
+    private Control CreateDiagnosticNote()
     {
         TableLayoutPanel note = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 3,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Padding = new Padding(2, 8, 2, 0)
         };
         note.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
         note.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
         note.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        note.Controls.Add(CreateLabel("CATALOGO", 8F, FontStyle.Bold, MutedTextColor), 0, 0);
-        note.Controls.Add(CreateLabel("Disponivel somente em memoria local", 9F, FontStyle.Regular, TextColor), 0, 1);
+        note.Controls.Add(CreateLabel("CATALOGO", 8F, FontStyle.Bold, _palette.MutedText), 0, 0);
+        note.Controls.Add(CreateLabel("Disponivel somente em memoria local", 9F, FontStyle.Regular, _palette.Text), 0, 1);
         note.Controls.Add(CreateLabel(
             "Nenhuma deteccao automatica. Nenhum canal de comunicacao e aberto.",
             8.5F,
             FontStyle.Regular,
-            MutedTextColor), 0, 2);
+            _palette.MutedText), 0, 2);
         return note;
     }
 
@@ -369,7 +364,7 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -379,18 +374,18 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 1,
-            BackColor = SurfaceColor
+            BackColor = _palette.Surface
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 94F));
 
-        header.Controls.Add(CreateLabel("TERMINAL / LOG", 9F, FontStyle.Bold, TextColor), 0, 0);
+        header.Controls.Add(CreateLabel("TERMINAL / LOG", 9F, FontStyle.Bold, _palette.Text), 0, 0);
         header.Controls.Add(CreateLabel(
             "PREVIEW ONLY  |  sem leitura, escrita ou comandos fisicos",
             8.5F,
             FontStyle.Bold,
-            WarningColor,
+            _palette.Warning,
             ContentAlignment.MiddleCenter), 1, 0);
 
         Button clearButton = CreateLocalButton("LIMPAR LOG");
@@ -403,14 +398,14 @@ public sealed class Layout3PreviewControl : UserControl
         return panel;
     }
 
-    private static Control CreateSectionHeader(string number, string title, string detail)
+    private Control CreateSectionHeader(string number, string title, string detail)
     {
         TableLayoutPanel header = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 2,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             Margin = Padding.Empty
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34F));
@@ -418,17 +413,17 @@ public sealed class Layout3PreviewControl : UserControl
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 56F));
         header.RowStyles.Add(new RowStyle(SizeType.Percent, 44F));
 
-        Label index = CreateLabel(number, 8F, FontStyle.Bold, AccentBlueColor, ContentAlignment.MiddleCenter);
-        index.BackColor = FieldColor;
+        Label index = CreateLabel(number, 8F, FontStyle.Bold, _palette.AccentBlue, ContentAlignment.MiddleCenter);
+        index.BackColor = _palette.Field;
         index.Margin = new Padding(0, 4, 7, 4);
         header.Controls.Add(index, 0, 0);
         header.SetRowSpan(index, 2);
-        header.Controls.Add(CreateLabel(title, 10F, FontStyle.Bold, TextColor), 1, 0);
-        header.Controls.Add(CreateLabel(detail, 8F, FontStyle.Regular, MutedTextColor), 1, 1);
+        header.Controls.Add(CreateLabel(title, 10F, FontStyle.Bold, _palette.Text), 1, 0);
+        header.Controls.Add(CreateLabel(detail, 8F, FontStyle.Regular, _palette.MutedText), 1, 1);
         return header;
     }
 
-    private static TextBox CreatePreviewLogTextBox()
+    private TextBox CreatePreviewLogTextBox()
     {
         return new TextBox
         {
@@ -436,8 +431,8 @@ public sealed class Layout3PreviewControl : UserControl
             Multiline = true,
             ReadOnly = true,
             ScrollBars = ScrollBars.Vertical,
-            BackColor = Color.FromArgb(5, 9, 13),
-            ForeColor = Color.FromArgb(178, 191, 203),
+            BackColor = _palette.TerminalBackground,
+            ForeColor = _palette.TerminalText,
             BorderStyle = BorderStyle.None,
             Font = new Font("Consolas", 8.5F),
             Text =
@@ -446,24 +441,24 @@ public sealed class Layout3PreviewControl : UserControl
         };
     }
 
-    private static Panel CreateSurfacePanel()
+    private Panel CreateSurfacePanel()
     {
         return new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             BorderStyle = BorderStyle.FixedSingle
         };
     }
 
-    private static Label CreateFieldLabel(string text)
+    private Label CreateFieldLabel(string text)
     {
-        Label label = CreateLabel(text, 8F, FontStyle.Bold, MutedTextColor);
-        label.BackColor = label.Parent?.BackColor ?? SurfaceColor;
+        Label label = CreateLabel(text, 8F, FontStyle.Bold, _palette.MutedText);
+        label.BackColor = label.Parent?.BackColor ?? _palette.Surface;
         return label;
     }
 
-    private static Label CreateLabel(
+    private Label CreateLabel(
         string text,
         float size,
         FontStyle style,
@@ -476,38 +471,38 @@ public sealed class Layout3PreviewControl : UserControl
             Dock = DockStyle.Fill,
             Font = new Font("Segoe UI", size, style),
             ForeColor = color,
-            BackColor = SurfaceColor,
+            BackColor = _palette.Surface,
             TextAlign = alignment,
             AutoEllipsis = true
         };
     }
 
-    private static Button CreateLocalButton(string text)
+    private Button CreateLocalButton(string text)
     {
         Button button = new()
         {
             Text = text,
             Dock = DockStyle.Fill,
             FlatStyle = FlatStyle.Flat,
-            ForeColor = MutedTextColor,
-            BackColor = SurfaceRaisedColor,
+            ForeColor = _palette.MutedText,
+            BackColor = _palette.Raised,
             Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
             Margin = new Padding(4, 1, 0, 1),
             Cursor = Cursors.Hand,
             UseVisualStyleBackColor = false
         };
-        button.FlatAppearance.BorderColor = DividerColor;
+        button.FlatAppearance.BorderColor = _palette.Divider;
         button.FlatAppearance.BorderSize = 1;
-        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(31, 45, 58);
+        button.FlatAppearance.MouseOverBackColor = _palette.ButtonHover;
         return button;
     }
 
-    private static Control CreateDivider()
+    private Control CreateDivider()
     {
         return new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = DividerColor,
+            BackColor = _palette.Divider,
             Margin = new Padding(0, 8, 0, 9)
         };
     }
@@ -518,11 +513,19 @@ public sealed class Layout3PreviewControl : UserControl
             Math.Max(ClientSize.Width, MinimumContentWidth),
             Math.Max(ClientSize.Height, MinimumContentHeight));
 
-        if (_content.Size != desiredSize)
+        if (_content.Size == desiredSize && _content.Location == Point.Empty)
         {
-            _content.Size = desiredSize;
+            return;
         }
 
-        AutoScrollMinSize = desiredSize;
+        _content.SuspendLayout();
+        try
+        {
+            _content.Bounds = new Rectangle(Point.Empty, desiredSize);
+        }
+        finally
+        {
+            _content.ResumeLayout(performLayout: true);
+        }
     }
 }
