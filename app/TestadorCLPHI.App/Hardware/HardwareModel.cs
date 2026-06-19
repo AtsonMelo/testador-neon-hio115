@@ -20,6 +20,8 @@ public sealed class HardwareModel
 
     public string Notes { get; init; } = string.Empty;
 
+    public List<HardwareOfficialReference> OfficialReferences { get; init; } = [];
+
     public List<string> SupportedSlots { get; init; } = [];
 
     public List<string> DefaultCommunicationProfiles { get; init; } = [];

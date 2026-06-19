@@ -14,6 +14,8 @@ public sealed class TestProfile
 
     public string Notes { get; init; } = string.Empty;
 
+    public List<HardwareOfficialReference> OfficialReferences { get; init; } = [];
+
     public List<string> ApplicableFamilies { get; init; } = [];
 
     public List<string> ApplicableIoModules { get; init; } = [];

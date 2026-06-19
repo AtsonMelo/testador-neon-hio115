@@ -4,7 +4,8 @@ namespace TestadorCLPHI.App.Ui.Hardware;
 
 public sealed class HardwareProfileSelectionControl : UserControl
 {
-    private const string EmptySelectionText = "(nao disponivel)";
+    private const string EmptySelectionText = "(nenhuma opcao disponivel no catalogo)";
+    private const string EmptyModuleSelectionText = "(nenhum modulo confirmado para este modelo)";
 
     private readonly HardwareCatalog _catalog;
     private readonly HardwareProfileResolver _resolver;
@@ -234,7 +235,11 @@ public sealed class HardwareProfileSelectionControl : UserControl
             null);
 
         _updatingSelection = true;
-        PopulateComboBox(_ioModuleComboBox, resolution.CompatibleModules, FormatIoModule);
+        PopulateComboBox(
+            _ioModuleComboBox,
+            resolution.CompatibleModules,
+            FormatIoModule,
+            EmptyModuleSelectionText);
         _updatingSelection = false;
     }
 
@@ -389,7 +394,8 @@ public sealed class HardwareProfileSelectionControl : UserControl
     private static void PopulateComboBox<T>(
         ComboBox comboBox,
         IReadOnlyList<T> items,
-        Func<T, string> formatText)
+        Func<T, string> formatText,
+        string emptyText = EmptySelectionText)
         where T : class
     {
         comboBox.BeginUpdate();
@@ -397,7 +403,7 @@ public sealed class HardwareProfileSelectionControl : UserControl
 
         if (items.Count == 0)
         {
-            comboBox.Items.Add(new SelectionItem<T>(null, EmptySelectionText));
+            comboBox.Items.Add(new SelectionItem<T>(null, emptyText));
             comboBox.SelectedIndex = 0;
             comboBox.Enabled = false;
             comboBox.EndUpdate();

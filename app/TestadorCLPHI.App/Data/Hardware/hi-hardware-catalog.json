@@ -1,8 +1,8 @@
 {
   "catalogId": "hi-rion-neon-hardware-catalog",
   "schemaVersion": "1.0",
-  "updatedAt": "2026-06-14",
-  "notes": "Base inicial para separar familias, controladores, modulos de I/O, perfis de comunicacao e perfis de teste. Dados tecnicos nao confirmados ficam pendentes.",
+  "updatedAt": "2026-06-15",
+  "notes": "Base inicial para separar familias, controladores, modulos de I/O, perfis de comunicacao e perfis de teste. Referencias oficiais documentais nao substituem validacao em bancada.",
   "families": [
     {
       "id": "NEON_LEGACY",
@@ -34,9 +34,23 @@
       "id": "NEON_5",
       "displayName": "NEON 5",
       "generation": "5",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
-      "notes": "Familia reservada para evolucao futura. Nao ha especificacao eletrica ou mapa de registradores confirmado nesta base.",
+      "notes": "Familia reservada para evolucao futura. A navegacao oficial da HI Tecnologia lista NEON 5 como ate 240 pontos de I/O; CPU, slots, modulos, mapas e bancada seguem pendentes nesta base.",
+      "officialReferences": [
+        {
+          "title": "HI Tecnologia - Hardware",
+          "url": "https://www.hitecnologia.com.br/categoria-produto/hardware/",
+          "sourceType": "official_knowledge_base",
+          "note": "Navegacao oficial de hardware lista NEON 5 como ate 240 pontos de I/O."
+        },
+        {
+          "title": "HI Tecnologia - Base de Conhecimento",
+          "url": "https://www.hitecnologia.com.br/base-de-conhecimento/",
+          "sourceType": "official_knowledge_base",
+          "note": "Navegacao oficial de suporte/produtos referencia a familia NEON 5."
+        }
+      ],
       "supportedSlots": [],
       "defaultCommunicationProfiles": [],
       "supportedIoModules": [],
@@ -86,10 +100,32 @@
       "id": "RION_5",
       "displayName": "RION 5",
       "generation": "5",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
-      "notes": "Familia reservada para testes futuros. Nao ha nesta base confirmacao de mapa, pinagem ou quantidade de pontos.",
-      "supportedSlots": [],
+      "notes": "Referencia oficial indica RION 5 como CLP e/ou I/O remoto, com suporte para 1 modulo, ate 16 pontos de I/O e ate 14 unidades RION 5 simultaneas como I/O remoto ao CLP NEON. Mapa, pinagem, modulo confirmado e bancada seguem pendentes.",
+      "officialReferences": [
+        {
+          "title": "CLP RION 5 - HI Tecnologia",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial informa operacao como CLP e/ou I/O remoto, suporte para 1 modulo e uso de ate 14 unidades RION 5 como I/O remoto ao CLP NEON."
+        },
+        {
+          "title": "RION-5 - Manual do Usuario",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmuc0150200.pdf",
+          "sourceType": "official_user_manual",
+          "note": "Manual oficial do RION-5 usado como referencia documental; nao substitui teste em bancada."
+        },
+        {
+          "title": "HI Tecnologia - Hardware",
+          "url": "https://www.hitecnologia.com.br/categoria-produto/hardware/",
+          "sourceType": "official_knowledge_base",
+          "note": "Navegacao oficial de hardware lista RION 5 como ate 16 pontos de I/O."
+        }
+      ],
+      "supportedSlots": [
+        "slot_1_io_module_official_reference"
+      ],
       "defaultCommunicationProfiles": [],
       "supportedIoModules": [],
       "testProfiles": [
@@ -150,10 +186,24 @@
       "family": "NEON_5",
       "generation": "5",
       "controllerCpu": "",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Modelo reservado para preparacao futura. Nao usar como hardware validado sem registro de bancada.",
+      "notes": "Modelo reservado para preparacao futura. A navegacao oficial lista NEON 5 como ate 240 pontos de I/O; a pagina RION 5 cita uso de RION 5 como I/O remoto ao CLP NEON, mas este catalogo nao valida topologia, CPU, modulos ou mapas para NEON 5.",
+      "officialReferences": [
+        {
+          "title": "HI Tecnologia - Hardware",
+          "url": "https://www.hitecnologia.com.br/categoria-produto/hardware/",
+          "sourceType": "official_knowledge_base",
+          "note": "Navegacao oficial de hardware lista NEON 5 como ate 240 pontos de I/O."
+        },
+        {
+          "title": "CLP RION 5 - HI Tecnologia",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Referencia oficial do RION 5 informa conexao de ate 14 unidades RION 5 como I/O remoto ao CLP NEON; nao valida bancada NEON 5 neste projeto."
+        }
+      ],
       "supportedSlots": [],
       "defaultCommunicationProfiles": [],
       "supportedIoModules": [],
@@ -194,11 +244,33 @@
       "family": "RION_5",
       "generation": "5",
       "controllerCpu": "",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Modelo reservado para preparacao futura. Slots, CPU, modulos e perfis devem ser confirmados em referencia oficial e bancada.",
-      "supportedSlots": [],
+      "notes": "Referencia oficial indica RION 5 como CLP e/ou I/O remoto, com suporte para 1 modulo, ate 16 pontos de I/O e ate 14 unidades RION 5 simultaneas como I/O remoto ao CLP NEON. Nenhum modulo foi confirmado para este modelo no projeto; bancada segue pendente.",
+      "officialReferences": [
+        {
+          "title": "CLP RION 5 - HI Tecnologia",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial informa operacao como CLP e/ou I/O remoto, suporte para 1 modulo e uso de ate 14 unidades RION 5 como I/O remoto ao CLP NEON."
+        },
+        {
+          "title": "RION-5 - Manual do Usuario",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmuc0150200.pdf",
+          "sourceType": "official_user_manual",
+          "note": "Manual oficial do RION-5 usado como referencia documental; nao substitui teste em bancada."
+        },
+        {
+          "title": "HI Tecnologia - Hardware",
+          "url": "https://www.hitecnologia.com.br/categoria-produto/hardware/",
+          "sourceType": "official_knowledge_base",
+          "note": "Navegacao oficial de hardware lista RION 5 como ate 16 pontos de I/O."
+        }
+      ],
+      "supportedSlots": [
+        "slot_1_io_module_official_reference"
+      ],
       "defaultCommunicationProfiles": [],
       "supportedIoModules": [],
       "testProfiles": [
@@ -216,7 +288,21 @@
       "sourceStatus": "field_observed",
       "validationStatus": "verified_in_bench",
       "validationNotes": "Historico do projeto registra HIO115 validado em bancada para o fluxo atual; uso com RION-502 ainda deve ser validado por conjunto.",
-      "notes": "Modulo usado pelo fluxo normal existente. Esta base nao redefine pinagem, quantidade de pontos ou mapa de registradores.",
+      "notes": "Modulo usado pelo fluxo normal existente. Referencia oficial adicionada apenas como documentacao; esta base nao redefine pinagem, quantidade de pontos ou mapa de registradores.",
+      "officialReferences": [
+        {
+          "title": "HIO115 - Especificacao Tecnica",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmu11111500.pdf",
+          "sourceType": "official_module_spec",
+          "note": "PDF oficial de especificacao do modulo HIO115; nao altera mapas ou validacao do app."
+        },
+        {
+          "title": "CLP RION 5 - Modulos de I/O",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial do RION 5 lista HIO115 entre os modulos de I/O; compatibilidade de bancada por conjunto continua pendente."
+        }
+      ],
       "supportedFamilies": [
         "RION_LEGACY",
         "NEON_LEGACY"
@@ -241,7 +327,21 @@
       "sourceStatus": "field_observed",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Modulo observado com NEON-1S. Quantidade de pontos, mapa e ligacoes devem ser confirmados antes de teste automatico.",
+      "notes": "Modulo observado com NEON-1S. Referencia oficial adicionada apenas como documentacao; quantidade de pontos, mapa e ligacoes devem ser confirmados antes de teste automatico.",
+      "officialReferences": [
+        {
+          "title": "DIO605 - Especificacao Tecnica",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmu11160500.pdf",
+          "sourceType": "official_module_spec",
+          "note": "PDF oficial de especificacao do modulo DIO605; nao altera mapas ou validacao do app."
+        },
+        {
+          "title": "CLP RION 5 - Modulos de I/O",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial do RION 5 lista DIO605 entre os modulos de I/O; compatibilidade de bancada por conjunto continua pendente."
+        }
+      ],
       "supportedFamilies": [
         "NEON_LEGACY"
       ],
@@ -261,10 +361,24 @@
       "displayName": "HIO130",
       "family": "RION_LEGACY",
       "generation": "legacy",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "notes": "Referencia oficial localizada. Especificacao eletrica detalhada, mapa aplicado pelo app e validacao de bancada nao foram incorporados nesta milestone.",
+      "officialReferences": [
+        {
+          "title": "HIO130 - Especificacao Tecnica",
+          "url": "https://materiais.hitecnologia.com.br/downloads/PMU11113000.pdf",
+          "sourceType": "official_module_spec",
+          "note": "PDF oficial de especificacao do modulo HIO130; usado como referencia documental, sem validar bancada."
+        },
+        {
+          "title": "CLP RION 5 - Modulos de I/O",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial do RION 5 lista HIO130 entre os modulos de I/O; nao cria perfil de teste validado."
+        }
+      ],
       "supportedFamilies": [],
       "supportedSlots": [],
       "defaultCommunicationProfiles": [],
@@ -276,10 +390,24 @@
       "displayName": "HIO140",
       "family": "RION_LEGACY",
       "generation": "legacy",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "notes": "Referencia oficial localizada. Especificacao eletrica detalhada, mapa aplicado pelo app e validacao de bancada nao foram incorporados nesta milestone.",
+      "officialReferences": [
+        {
+          "title": "HIO140 - Especificacao Tecnica",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmu11114000.pdf",
+          "sourceType": "official_module_spec",
+          "note": "PDF oficial de especificacao do modulo HIO140; usado como referencia documental, sem validar bancada."
+        },
+        {
+          "title": "CLP RION 5 - Modulos de I/O",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial do RION 5 lista HIO140 entre os modulos de I/O; nao cria perfil de teste validado."
+        }
+      ],
       "supportedFamilies": [],
       "supportedSlots": [],
       "defaultCommunicationProfiles": [],
@@ -291,10 +419,24 @@
       "displayName": "HIO165",
       "family": "RION_LEGACY",
       "generation": "legacy",
-      "sourceStatus": "official_reference_pending",
+      "sourceStatus": "official_reference",
       "validationStatus": "pending_manual_validation",
       "validationNotes": "",
-      "notes": "Cadastro inicial sem especificacao eletrica ou mapa confirmado no projeto.",
+      "notes": "Referencia oficial localizada. Especificacao eletrica detalhada, mapa aplicado pelo app e validacao de bancada nao foram incorporados nesta milestone.",
+      "officialReferences": [
+        {
+          "title": "HIO165 - Especificacao Tecnica",
+          "url": "https://materiais.hitecnologia.com.br/downloads/pmu11116500.pdf",
+          "sourceType": "official_module_spec",
+          "note": "PDF oficial de especificacao do modulo HIO165; usado como referencia documental, sem validar bancada."
+        },
+        {
+          "title": "CLP RION 5 - Modulos de I/O",
+          "url": "https://www.hitecnologia.com.br/produto/rion/",
+          "sourceType": "official_product_page",
+          "note": "Pagina oficial do RION 5 lista HIO165 entre os modulos de I/O; nao cria perfil de teste validado."
+        }
+      ],
       "supportedFamilies": [],
       "supportedSlots": [],
       "defaultCommunicationProfiles": [],

@@ -5,6 +5,8 @@
 - O modo normal existente do Testador deve continuar funcionando.
 - Nenhum arquivo HIstudio `.dpk`, `.dmf`, `.prj`, `.hst` ou equivalente e
   alterado nesta milestone.
+- Referencia oficial HI Tecnologia e informacao documental; nao substitui
+  validacao de bancada.
 - Modulos sem mapa confirmado ficam pendentes.
 - A selecao futura de modelo nao deve bloquear o fluxo atual do app.
 
@@ -124,15 +126,31 @@ Plano inicial:
 
 Antes de uso operacional:
 
-1. Confirmar referencia oficial do modelo.
-2. Confirmar CPU, slots, comunicacao e modulos aplicaveis.
+1. Revisar as referencias oficiais registradas.
+2. Confirmar CPU, slots, comunicacao e modulos aplicaveis em bancada.
 3. Criar ou ajustar perfil de comunicacao.
 4. Validar `COMMUNICATION_DIAGNOSTIC`.
 5. So depois criar perfis de I/O especificos.
 
 Na UI, `RION_5_CONTROLLER` e `NEON_5_CONTROLLER` devem continuar aparecendo
-como preparacao futura enquanto faltarem referencia oficial, modulos,
-comunicacao e validacao de bancada.
+como preparacao futura enquanto faltarem modulos confirmados, comunicacao real,
+mapas e validacao de bancada.
+
+Referencias oficiais ja registradas:
+
+- RION 5: pagina oficial do produto, manual RION-5 e navegacao oficial de
+  hardware. O catalogo registra suporte a 1 modulo, ate 16 pontos de I/O,
+  operacao como CLP e/ou I/O remoto e ate 14 unidades RION 5 como I/O remoto
+  ao CLP NEON.
+- NEON 5: navegacao oficial de hardware/base lista NEON 5 como ate 240 pontos
+  de I/O.
+- HIO115, HIO130, HIO140, HIO165 e DIO605: especificacoes oficiais
+  registradas como referencia documental.
+
+Essas referencias nao autorizam comando fisico, nao alteram logica Modbus e
+nao criam mapa de registradores. Se a tela indicar nenhum modulo confirmado
+para um modelo, isso e uma pendencia de catalogo/validacao, nao uma falha de
+comunicacao.
 
 ## Cuidados
 

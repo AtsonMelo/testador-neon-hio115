@@ -31,8 +31,12 @@ O JSON possui cinco secoes principais:
 
 Os itens usam campos como `id`, `displayName`, `family`,
 `generation`, `sourceStatus`, `validationStatus`, `notes`,
-`supportedSlots`, `defaultCommunicationProfiles`, `supportedIoModules` e
-`testProfiles`.
+`officialReferences`, `supportedSlots`, `defaultCommunicationProfiles`,
+`supportedIoModules` e `testProfiles`.
+
+`officialReferences` e uma lista informativa. Cada entrada guarda `title`,
+`url`, `sourceType` e `note`. Ela documenta a origem oficial consultada, mas
+nao cria validacao operacional.
 
 ## Uso pela interface de selecao
 
@@ -54,6 +58,10 @@ A UI mostra resumo, modulos compativeis, perfis possiveis, testes aplicaveis,
 itens `field_observed`, pendencias e necessidades de validacao em bancada.
 Quando qualquer item estiver como `pending_manual_validation`, isso deve
 continuar explicito ate haver registro real de bancada.
+
+Quando o combo de modulo mostrar "nenhum modulo confirmado para este modelo",
+isso significa ausencia de associacao confirmada no catalogo. Nao deve ser
+interpretado como falha de comunicacao com o CLP.
 
 ## Validacao da selecao
 
@@ -80,12 +88,68 @@ bancada.
 Valores usados:
 
 - `field_observed`: item observado em bancada ou no historico do projeto.
+- `official_reference`: ha referencia oficial HI Tecnologia registrada, mas
+  isso nao equivale a validacao de bancada.
 - `official_reference_pending`: cadastro depende de referencia oficial.
 - `pending_manual_validation`: precisa de teste manual antes de uso operacional.
 - `verified_in_bench`: validado em bancada e acompanhado de observacao.
 
+Referencia oficial, item observado e bancada validada sao evidencias
+diferentes:
+
+- referencia oficial confirma apenas que uma informacao foi encontrada em
+  fonte HI Tecnologia;
+- `field_observed` preserva historico do projeto, mas pode continuar pendente
+  por conjunto, mapa ou procedimento;
+- `verified_in_bench` so deve ser usado quando houver resultado de bancada
+  documentado.
+
 Dados incompletos ficam como pendentes. Nao cadastrar pinagem, quantidade de
 pontos, mapa de registradores ou especificacao eletrica sem confirmacao.
+
+## Referencias oficiais adicionadas
+
+RION 5:
+
+- Pagina oficial: https://www.hitecnologia.com.br/produto/rion/
+- Manual do usuario RION-5:
+  https://materiais.hitecnologia.com.br/downloads/pmuc0150200.pdf
+- Navegacao oficial de hardware:
+  https://www.hitecnologia.com.br/categoria-produto/hardware/
+
+O catalogo registra de forma conservadora que RION 5 pode operar como CLP
+e/ou I/O remoto, suporta 1 modulo, aparece como ate 16 pontos de I/O na
+navegacao oficial e pode ter ate 14 unidades RION 5 como I/O remoto ao CLP
+NEON. Isso permanece `pending_manual_validation`.
+
+NEON 5:
+
+- Navegacao oficial de hardware:
+  https://www.hitecnologia.com.br/categoria-produto/hardware/
+- Base de conhecimento/navegacao oficial:
+  https://www.hitecnologia.com.br/base-de-conhecimento/
+
+O catalogo registra NEON 5 como ate 240 pontos de I/O conforme navegacao
+oficial. A referencia do RION 5 cita expansao por RION 5 como I/O remoto ao
+CLP NEON, mas o catalogo nao valida topologia, CPU, modulos ou mapas para
+NEON 5.
+
+Modulos com referencia adicionada:
+
+- HIO115:
+  https://materiais.hitecnologia.com.br/downloads/pmu11111500.pdf
+- HIO130:
+  https://materiais.hitecnologia.com.br/downloads/PMU11113000.pdf
+- HIO140:
+  https://materiais.hitecnologia.com.br/downloads/pmu11114000.pdf
+- HIO165:
+  https://materiais.hitecnologia.com.br/downloads/pmu11116500.pdf
+- DIO605:
+  https://materiais.hitecnologia.com.br/downloads/pmu11160500.pdf
+
+Esses links nao adicionam pinagem, detalhes eletricos, mapas exatos ou
+contagens de canais ao schema atual. Eles apenas documentam a fonte oficial
+para futura validacao manual.
 
 ## Como cadastrar novo modelo
 
@@ -98,8 +162,10 @@ pontos, mapa de registradores ou especificacao eletrica sem confirmacao.
 6. Preencher `defaultCommunicationProfiles` apenas com perfis existentes.
 7. Deixar `validationStatus` como `pending_manual_validation` ate haver
    registro de bancada.
-8. Executar a validacao do catalogo e o build.
-9. Abrir a aba `Perfil hardware` e conferir se o modelo aparece sem criar
+8. Se `sourceStatus` for `official_reference`, preencher `officialReferences`
+   com URL oficial.
+9. Executar a validacao do catalogo e o build.
+10. Abrir a aba `Perfil hardware` e conferir se o modelo aparece sem criar
    associacoes tecnicas nao confirmadas.
 
 ## Como cadastrar novo modulo
@@ -111,7 +177,9 @@ pontos, mapa de registradores ou especificacao eletrica sem confirmacao.
 5. Nao copiar mapa, pontos ou pinagem de outro modulo por semelhanca de nome.
 6. Marcar dados nao confirmados como `pending_manual_validation` ou
    `official_reference_pending`.
-7. Executar a validacao do catalogo, o build e conferir a aba `Perfil hardware`.
+7. Se `sourceStatus` for `official_reference`, preencher `officialReferences`
+   com URL oficial.
+8. Executar a validacao do catalogo, o build e conferir a aba `Perfil hardware`.
 
 ## Como marcar validado em bancada
 

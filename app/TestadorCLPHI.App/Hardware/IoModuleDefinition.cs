@@ -18,6 +18,8 @@ public sealed class IoModuleDefinition
 
     public string Notes { get; init; } = string.Empty;
 
+    public List<HardwareOfficialReference> OfficialReferences { get; init; } = [];
+
     public List<string> SupportedFamilies { get; init; } = [];
 
     public List<string> SupportedSlots { get; init; } = [];

@@ -232,7 +232,7 @@ public static class HardwareTestPreparationReportValidator
         }
 
         if (!Contains(reportText, "pending_manual_validation") &&
-            !Contains(reportText, "official_reference_pending"))
+            !Contains(reportText, "official_reference"))
         {
             failures.Add("Relatorio nao mantem pendencias explicitas.");
         }
@@ -242,7 +242,8 @@ public static class HardwareTestPreparationReportValidator
             return;
         }
 
-        if (!Contains(reportText, "Modulo de I/O nao selecionado") &&
+        if (!Contains(reportText, "nenhum modulo confirmado para este modelo") &&
+            !Contains(reportText, "Modulo de I/O nao selecionado") &&
             !Contains(reportText, "Modulo de I/O selecionado: pendente"))
         {
             failures.Add("Caso pendente sem modulo nao permaneceu explicito no relatorio.");

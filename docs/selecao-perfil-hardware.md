@@ -24,6 +24,8 @@ Ela nao substitui a validacao em bancada.
 
 A selecao e informativa. Ela nao altera porta, baud rate, slave ID, paridade,
 timeout ou qualquer parametro real de Modbus. Tambem nao envia comandos ao CLP.
+Gerar ou copiar o relatorio segue a mesma regra: nao abre conexao, nao escreve
+em PLC e nao executa acao fisica.
 
 ## Relatorio de preparacao de teste
 
@@ -39,7 +41,8 @@ O relatorio inclui:
 - perfil de comunicacao selecionado;
 - perfil de teste selecionado;
 - status de validacao do catalogo;
-- itens `pending_manual_validation` ou `official_reference_pending`;
+- itens `pending_manual_validation`, `official_reference` ou
+  `official_reference_pending`;
 - itens `field_observed`;
 - necessidades de validacao em bancada;
 - checklist do operador antes do teste;
@@ -96,6 +99,24 @@ explicitas e contem os avisos de seguranca sobre comando fisico, COM e bancada.
 Se o catalogo estiver vazio ou indisponivel, a tela deve continuar segura,
 mostrar a indisponibilidade e nao executar nenhuma acao fisica.
 
+Se o campo de modulo mostrar "nenhum modulo confirmado para este modelo", a
+mensagem significa que nao existe modulo associado com confianca suficiente no
+catalogo para o modelo escolhido. Isso nao significa erro de COM, falha Modbus
+ou resposta negativa do CLP.
+
+## Estados de evidencia
+
+- `official_reference`: fonte oficial HI Tecnologia registrada. Serve para
+  rastrear a origem documental, mas nao valida bancada.
+- `field_observed`: item observado no projeto ou historico de bancada.
+- `verified_in_bench`: validacao real documentada. So deve ser usado com
+  resultado registrado.
+- `pending_manual_validation`: validacao manual ainda obrigatoria.
+
+RION 5 e NEON 5 agora possuem referencias oficiais registradas, mas continuam
+pendentes porque CPU, modulos confirmados, mapas aplicaveis, comunicacao real
+e testes em bancada ainda precisam ser documentados.
+
 ## NEON-1S + DIO605
 
 Preparacao inicial:
@@ -133,12 +154,18 @@ automaticamente `RION-502 + HIO115`.
 
 `NEON_5_CONTROLLER` e `RION_5_CONTROLLER` sao preparacao futura. Antes de uso:
 
-1. Obter referencia oficial.
-2. Confirmar CPU, slots e modulos.
+1. Revisar as referencias oficiais ja registradas.
+2. Confirmar CPU, slots e modulos em bancada.
 3. Confirmar comunicacao disponivel.
 4. Ajustar ou criar perfis no catalogo.
 5. Validar `COMMUNICATION_DIAGNOSTIC` em bancada.
 6. Criar perfis de I/O somente depois de confirmar mapa e bancada.
+
+Referencias documentais adicionadas:
+
+- RION 5: pagina oficial, manual RION-5 e navegacao oficial de hardware.
+- NEON 5: navegacao oficial de hardware/base.
+- HIO115, HIO130, HIO140, HIO165 e DIO605: PDFs oficiais de especificacao.
 
 ## Como adicionar modelo
 
