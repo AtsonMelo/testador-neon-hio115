@@ -4,8 +4,9 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 internal sealed class Layout3HostControl : UserControl
 {
-    private const int MinimumContentWidth = 1000;
+    private const int MinimumContentWidth = 860;
     private const int MinimumContentHeight = 580;
+    private const int CompactHeaderBreakpoint = 1080;
 
     private readonly Layout3HostState _state;
     private readonly ILayout3CommandGuard _commandGuard;
@@ -99,7 +100,7 @@ internal sealed class Layout3HostControl : UserControl
             Margin = Padding.Empty
         };
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 76F));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 104F));
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 136F));
 
@@ -121,19 +122,80 @@ internal sealed class Layout3HostControl : UserControl
             RowCount = 1,
             BackColor = _palette.Surface
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        // Title stays on the left; the status indicators sit centered in the middle
-        // region and the theme selector is anchored to the right.
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 17F));
 
-        layout.Controls.Add(CreateIdentity(), 0, 0);
-        layout.Controls.Add(CreateIndicatorStrip(), 1, 0);
-        layout.Controls.Add(CreateThemeSelector(), 2, 0);
+        Control identity = CreateIdentity();
+        Control indicators = CreateIndicatorStrip();
+        Control themeSelector = CreateThemeSelector();
+        layout.Controls.Add(identity, 0, 0);
+        layout.Controls.Add(indicators, 1, 0);
+        layout.Controls.Add(themeSelector, 2, 0);
+
+        bool? compactLayout = null;
+        void UpdateLayout()
+        {
+            bool compact = layout.ClientSize.Width < CompactHeaderBreakpoint;
+            if (compactLayout == compact)
+            {
+                return;
+            }
+
+            compactLayout = compact;
+            ConfigureTopBarLayout(layout, identity, indicators, themeSelector, compact);
+        }
+
+        layout.ClientSizeChanged += (_, _) => UpdateLayout();
+        UpdateLayout();
 
         panel.Controls.Add(layout);
         return panel;
+    }
+
+    private static void ConfigureTopBarLayout(
+        TableLayoutPanel layout,
+        Control identity,
+        Control indicators,
+        Control themeSelector,
+        bool compact)
+    {
+        layout.SuspendLayout();
+        try
+        {
+            layout.ColumnStyles.Clear();
+            layout.RowStyles.Clear();
+
+            if (compact)
+            {
+                layout.ColumnCount = 2;
+                layout.RowCount = 2;
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 52F));
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 48F));
+
+                layout.SetCellPosition(identity, new TableLayoutPanelCellPosition(0, 0));
+                layout.SetCellPosition(themeSelector, new TableLayoutPanelCellPosition(1, 0));
+                layout.SetCellPosition(indicators, new TableLayoutPanelCellPosition(0, 1));
+                layout.SetColumnSpan(indicators, 2);
+            }
+            else
+            {
+                layout.ColumnCount = 3;
+                layout.RowCount = 1;
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280F));
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160F));
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+                layout.SetColumnSpan(indicators, 1);
+                layout.SetCellPosition(identity, new TableLayoutPanelCellPosition(0, 0));
+                layout.SetCellPosition(indicators, new TableLayoutPanelCellPosition(1, 0));
+                layout.SetCellPosition(themeSelector, new TableLayoutPanelCellPosition(2, 0));
+            }
+        }
+        finally
+        {
+            layout.ResumeLayout(performLayout: true);
+        }
     }
 
     private Control CreateIndicatorStrip()
@@ -234,19 +296,21 @@ internal sealed class Layout3HostControl : UserControl
         };
         identity.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 4F));
         identity.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        identity.Controls.Add(new Panel
+        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        Panel accent = new()
         {
             Dock = DockStyle.Fill,
             BackColor = _palette.AccentBlue,
             Margin = new Padding(0, 5, 0, 5)
-        }, 0, 0);
+        };
+        identity.Controls.Add(accent, 0, 0);
 
         Label title = CreateLabel(
-            "TESTADOR CLP HI\r\nLAYOUT 3  /  HOST OPERACIONAL READ-ONLY",
-            11F,
+            "TESTADOR CLP HI",
+            11.5F,
             FontStyle.Bold,
             _palette.Text);
-        title.Padding = new Padding(12, 0, 0, 0);
+        title.Padding = new Padding(12, 0, 4, 0);
         identity.Controls.Add(title, 1, 0);
         return identity;
     }

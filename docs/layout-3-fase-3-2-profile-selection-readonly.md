@@ -45,7 +45,13 @@ Ajustes apenas de apresentacao, sem tocar no comportamento read-only:
   tambem atualiza a barra de titulo da janela;
 - os indicadores principais do topo (comunicacao, modo e contador de comandos
   fisicos) passam a ficar **centralizados e distribuidos de forma equilibrada**
-  na faixa central do cabecalho, com o titulo mantido a esquerda.
+  na faixa central do cabecalho, com o titulo mantido a esquerda;
+- o nome do programa ocupa sozinho o bloco de identidade e permanece
+  centralizado verticalmente, sem competir com texto secundario;
+- em larguras compactas, o cabecalho se reorganiza em duas linhas: identidade
+  e tema permanecem acima, enquanto os tres indicadores ocupam toda a faixa
+  inferior sem truncar o titulo. A largura minima segura do host foi ajustada
+  para uso em meia tela, preservando scroll controlado abaixo desse limite.
 
 A troca de tema e puramente visual: nao abre comunicacao, nao envia comando e
 mantem os comandos fisicos executados em `0`.
