@@ -10,13 +10,16 @@ internal sealed class Layout3ProfilePanelControl : UserControl
     private readonly Label _validationLabel;
     private readonly TextBox _summaryTextBox;
     private readonly Button _copyButton;
+    private readonly string _modeSummary;
 
     public Layout3ProfilePanelControl(
         HardwareCatalog hardwareCatalog,
-        Layout3ThemePalette palette)
+        Layout3ThemePalette palette,
+        string modeSummary = "PREVIEW / 0 COMANDOS")
     {
         _palette = palette;
         _catalog = hardwareCatalog;
+        _modeSummary = modeSummary;
         BackColor = _palette.Surface;
         BorderStyle = BorderStyle.FixedSingle;
 
@@ -164,7 +167,7 @@ internal sealed class Layout3ProfilePanelControl : UserControl
             $"MODULO   {Display(module?.DisplayName)}\r\n" +
             $"COM.     {Display(communication?.DisplayName)}\r\n" +
             $"TESTE    {Display(test?.DisplayName)}\r\n" +
-            "MODO     PREVIEW / 0 COMANDOS";
+            $"MODO     {_modeSummary}";
     }
 
     private Control CreateProfileField(string title, string value)
