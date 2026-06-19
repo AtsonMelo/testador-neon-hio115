@@ -35,6 +35,12 @@ internal static class Program
 
         ApplicationConfiguration.Initialize();
 
+        if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
+        {
+            Application.Run(new Layout3HostForm(LoadHardwareCatalogForApp()));
+            return;
+        }
+
         if (args.Contains("--preview-layout-3-auto", StringComparer.OrdinalIgnoreCase))
         {
             Application.Run(new Layout3PreviewForm(
