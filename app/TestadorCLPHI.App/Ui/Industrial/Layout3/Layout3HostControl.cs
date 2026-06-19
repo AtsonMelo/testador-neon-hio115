@@ -7,12 +7,18 @@ internal sealed class Layout3HostControl : UserControl
     private const int MinimumContentWidth = 1000;
     private const int MinimumContentHeight = 580;
 
-    private readonly Layout3ThemePalette _palette;
     private readonly Layout3HostState _state;
     private readonly ILayout3CommandGuard _commandGuard;
+    private readonly HardwareCatalog _hardwareCatalog;
     private readonly Panel _viewport;
-    private readonly TableLayoutPanel _content;
-    private readonly TextBox _localLogTextBox;
+
+    private Layout3ThemePalette _palette;
+    private Layout3PreviewTheme _theme;
+    private TableLayoutPanel _content;
+    private TextBox _localLogTextBox;
+
+    /// <summary>Raised when the operator switches the read-only host theme.</summary>
+    public event Action<Layout3PreviewTheme>? ThemeChanged;
 
     public Layout3HostControl(
         HardwareCatalog hardwareCatalog,
@@ -20,16 +26,18 @@ internal sealed class Layout3HostControl : UserControl
         ILayout3CommandGuard commandGuard,
         Layout3PreviewTheme theme)
     {
-        _palette = Layout3ThemePalette.For(theme);
         _state = state ?? throw new ArgumentNullException(nameof(state));
         _commandGuard = commandGuard ?? throw new ArgumentNullException(nameof(commandGuard));
+        _hardwareCatalog = hardwareCatalog ?? HardwareCatalog.Empty;
+        _theme = theme;
+        _palette = Layout3ThemePalette.For(theme);
 
         Dock = DockStyle.Fill;
         BackColor = _palette.Background;
         AutoScaleMode = AutoScaleMode.Dpi;
 
         _localLogTextBox = CreateLocalLogTextBox();
-        _content = CreateContent(hardwareCatalog ?? HardwareCatalog.Empty);
+        _content = CreateContent(_hardwareCatalog);
         _viewport = new Panel
         {
             Dock = DockStyle.Fill,
@@ -41,6 +49,43 @@ internal sealed class Layout3HostControl : UserControl
 
         Resize += (_, _) => ResizeContentToViewport();
         ResizeContentToViewport();
+    }
+
+    /// <summary>
+    /// Rebuilds the read-only host with a new theme palette. No hardware access is
+    /// performed; only colors and visual surfaces are refreshed. The local log text
+    /// is preserved across the rebuild.
+    /// </summary>
+    private void ApplyTheme(Layout3PreviewTheme theme)
+    {
+        if (theme == _theme)
+        {
+            return;
+        }
+
+        _theme = theme;
+        _palette = Layout3ThemePalette.For(theme);
+        string preservedLog = _localLogTextBox.Text;
+
+        SuspendLayout();
+        try
+        {
+            BackColor = _palette.Background;
+            _viewport.BackColor = _palette.Background;
+            _viewport.Controls.Remove(_content);
+            _content.Dispose();
+
+            _localLogTextBox = CreateLocalLogTextBox(preservedLog);
+            _content = CreateContent(_hardwareCatalog);
+            _viewport.Controls.Add(_content);
+            ResizeContentToViewport();
+        }
+        finally
+        {
+            ResumeLayout(performLayout: true);
+        }
+
+        ThemeChanged?.Invoke(theme);
     }
 
     private TableLayoutPanel CreateContent(HardwareCatalog hardwareCatalog)
@@ -67,36 +112,114 @@ internal sealed class Layout3HostControl : UserControl
     private Control CreateTopBar()
     {
         Panel panel = CreateSurfacePanel();
-        panel.Padding = new Padding(14, 8, 10, 8);
+        panel.Padding = new Padding(14, 8, 12, 8);
 
         TableLayoutPanel layout = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 4,
+            ColumnCount = 3,
             RowCount = 1,
             BackColor = _palette.Surface
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 43F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 19F));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        // Title stays on the left; the status indicators sit centered in the middle
+        // region and the theme selector is anchored to the right.
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 17F));
 
         layout.Controls.Add(CreateIdentity(), 0, 0);
-        layout.Controls.Add(CreateBadge(
-            "COMUNICACAO\r\n" + _state.CommunicationStatus.ToUpperInvariant(),
-            _palette.Text,
-            _palette.Field), 1, 0);
-        layout.Controls.Add(CreateBadge(
-            _state.Mode.DisplayName + "\r\n" + _state.Mode.SafetyMessage,
-            _palette.Warning,
-            _palette.WarningBackground), 2, 0);
-        layout.Controls.Add(CreateBadge(
-            $"{_state.PhysicalCommandsExecuted} COMANDOS FISICOS\r\nHOST LOCAL INATIVO",
-            _palette.Emergency,
-            _palette.EmergencyBackground), 3, 0);
+        layout.Controls.Add(CreateIndicatorStrip(), 1, 0);
+        layout.Controls.Add(CreateThemeSelector(), 2, 0);
 
         panel.Controls.Add(layout);
         return panel;
+    }
+
+    private Control CreateIndicatorStrip()
+    {
+        TableLayoutPanel strip = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            BackColor = _palette.Surface,
+            Margin = Padding.Empty
+        };
+        strip.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
+        strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+        strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+
+        strip.Controls.Add(CreateBadge(
+            "COMUNICACAO\r\n" + _state.CommunicationStatus.ToUpperInvariant(),
+            _palette.Text,
+            _palette.Field), 0, 0);
+        strip.Controls.Add(CreateBadge(
+            _state.Mode.DisplayName + "\r\n" + _state.Mode.SafetyMessage,
+            _palette.Warning,
+            _palette.WarningBackground), 1, 0);
+        strip.Controls.Add(CreateBadge(
+            $"{_state.PhysicalCommandsExecuted} COMANDOS FISICOS\r\nHOST LOCAL INATIVO",
+            _palette.Emergency,
+            _palette.EmergencyBackground), 2, 0);
+        return strip;
+    }
+
+    private Control CreateThemeSelector()
+    {
+        TableLayoutPanel container = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            BackColor = _palette.Surface,
+            Margin = new Padding(8, 3, 0, 3),
+            Padding = new Padding(6, 2, 4, 2)
+        };
+        container.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        container.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
+        container.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));
+
+        Label caption = CreateLabel("TEMA VISUAL", 7F, FontStyle.Bold, _palette.MutedText);
+        caption.BackColor = _palette.Surface;
+        container.Controls.Add(caption, 0, 0);
+
+        ComboBox combo = new()
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = _palette.Field,
+            ForeColor = _palette.Text,
+            Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+            Margin = new Padding(0, 2, 0, 2)
+        };
+        combo.Items.Add(new ThemeOption(Layout3PreviewTheme.Dark, "ESCURO"));
+        combo.Items.Add(new ThemeOption(Layout3PreviewTheme.Light, "CLARO"));
+        combo.Items.Add(new ThemeOption(Layout3PreviewTheme.Automatic, "AUTOMATICO"));
+        combo.SelectedIndex = _theme switch
+        {
+            Layout3PreviewTheme.Light => 1,
+            Layout3PreviewTheme.Automatic => 2,
+            _ => 0
+        };
+        combo.SelectedIndexChanged += (_, _) =>
+        {
+            // Defer the rebuild: the handler is raised from the combo that is about
+            // to be disposed while the visual surfaces are recreated for the new theme.
+            if (combo.SelectedItem is ThemeOption option && option.Theme != _theme)
+            {
+                BeginInvoke(new Action(() => ApplyTheme(option.Theme)));
+            }
+        };
+        container.Controls.Add(combo, 0, 1);
+        return container;
+    }
+
+    private sealed record ThemeOption(Layout3PreviewTheme Theme, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
     }
 
     private Control CreateIdentity()
@@ -132,7 +255,7 @@ internal sealed class Layout3HostControl : UserControl
     {
         Label badge = CreateLabel(text, 8.2F, FontStyle.Bold, color, ContentAlignment.MiddleCenter);
         badge.BackColor = background;
-        badge.Margin = new Padding(7, 3, 0, 3);
+        badge.Margin = new Padding(5, 3, 5, 3);
         return badge;
     }
 
@@ -319,9 +442,9 @@ internal sealed class Layout3HostControl : UserControl
         return panel;
     }
 
-    private TextBox CreateLocalLogTextBox()
+    private TextBox CreateLocalLogTextBox(string? preservedText = null)
     {
-        string initialLog = string.Join(
+        string initialLog = preservedText ?? string.Join(
             "\r\n",
             _state.LocalEvents.Select(message => $"[LOCAL] {message}"));
 

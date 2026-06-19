@@ -35,6 +35,21 @@ Cada confirmacao de selecao registra uma linha no log local do host, deixando
 explicito que a operacao e read-only e que os comandos fisicos executados
 permanecem em zero.
 
+## Refinamento visual do cabecalho
+
+Ajustes apenas de apresentacao, sem tocar no comportamento read-only:
+
+- o cabecalho ganha um **seletor de tema** (escuro, claro e automatico) que
+  reaproveita a paleta ja existente do Layout 3 (`Layout3ThemePalette`) e
+  reconstroi as superficies visuais preservando o log local. A troca de tema
+  tambem atualiza a barra de titulo da janela;
+- os indicadores principais do topo (comunicacao, modo e contador de comandos
+  fisicos) passam a ficar **centralizados e distribuidos de forma equilibrada**
+  na faixa central do cabecalho, com o titulo mantido a esquerda.
+
+A troca de tema e puramente visual: nao abre comunicacao, nao envia comando e
+mantem os comandos fisicos executados em `0`.
+
 ## Arquivos criados e alterados
 
 Arquivos criados em `Ui/Industrial/Layout3/`:

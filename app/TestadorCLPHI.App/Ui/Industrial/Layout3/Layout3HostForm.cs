@@ -21,11 +21,19 @@ public sealed class Layout3HostForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
 
         Layout3HostState state = Layout3HostState.CreateInitial(catalog);
-        Controls.Add(new Layout3HostControl(
+        Layout3HostControl hostControl = new(
             catalog,
             state,
             new Layout3ReadOnlyCommandGuard(),
-            Layout3PreviewTheme.Automatic));
+            Layout3PreviewTheme.Automatic);
+        hostControl.ThemeChanged += theme =>
+        {
+            Layout3ThemePalette palette = Layout3ThemePalette.For(theme);
+            BackColor = palette.Background;
+            ForeColor = palette.Text;
+            AppThemeService.ApplyTitleBar(this, darkMode: palette.UseDarkTitleBar);
+        };
+        Controls.Add(hostControl);
     }
 
     protected override void OnShown(EventArgs e)
