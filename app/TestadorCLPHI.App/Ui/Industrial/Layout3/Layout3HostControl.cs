@@ -160,14 +160,16 @@ internal sealed class Layout3HostControl : UserControl
             Margin = new Padding(2, 0, 6, 0)
         }, 1, 0);
 
-        main.Controls.Add(new Layout3ProfilePanelControl(
+        Layout3HostProfileSelectionControl profileSelection = new(
             hardwareCatalog,
             _palette,
             "READ-ONLY / 0 COMANDOS FISICOS")
         {
             Dock = DockStyle.Fill,
             Margin = new Padding(2, 0, 0, 0)
-        }, 2, 0);
+        };
+        profileSelection.SelectionLogged += AppendLocalLog;
+        main.Controls.Add(profileSelection, 2, 0);
 
         return main;
     }
