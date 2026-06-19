@@ -19,6 +19,15 @@ public static class HardwareTestPreparationReportValidator
         try
         {
             HardwareCatalog catalog = HardwareCatalogLoader.LoadDefault();
+            HardwareCatalogValidationResult catalogValidation = HardwareCatalogValidator.Validate(catalog);
+
+            if (!catalogValidation.IsValid)
+            {
+                error.WriteLine("Catalogo de hardware invalido.");
+                error.WriteLine(catalogValidation.ToDisplayText());
+                return 1;
+            }
+
             return Validate(catalog, output, error);
         }
         catch (Exception ex)
@@ -242,11 +251,14 @@ public static class HardwareTestPreparationReportValidator
             return;
         }
 
-        if (!Contains(reportText, "nenhum modulo confirmado para este modelo") &&
-            !Contains(reportText, "Modulo de I/O nao selecionado") &&
-            !Contains(reportText, "Modulo de I/O selecionado: pendente"))
+        if (!Contains(reportText, "Nenhum modulo de I/O confirmado para este modelo"))
         {
             failures.Add("Caso pendente sem modulo nao permaneceu explicito no relatorio.");
+        }
+
+        if (!Contains(reportText, "Isso nao indica falha de comunicacao"))
+        {
+            failures.Add("Relatorio nao diferencia ausencia de modulo de falha de comunicacao.");
         }
     }
 

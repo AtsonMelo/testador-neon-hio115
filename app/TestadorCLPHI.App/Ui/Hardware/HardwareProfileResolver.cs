@@ -237,18 +237,22 @@ public sealed class HardwareProfileResolver
         }
         else
         {
+            bool hasNoConfirmedModules = model.SupportedIoModules.Count == 0;
+
             if (string.IsNullOrWhiteSpace(model.ControllerCpu))
             {
                 AddUnique(pending, $"Modelo {model.DisplayName}: CPU pendente.");
             }
 
-            if (model.SupportedIoModules.Count == 0)
+            if (hasNoConfirmedModules)
             {
-                AddUnique(pending, $"Modelo {model.DisplayName}: nenhum modulo confirmado para este modelo.");
+                AddUnique(
+                    pending,
+                    $"Modelo {model.DisplayName}: Nenhum modulo de I/O confirmado para este modelo. Isso nao indica falha de comunicacao.");
             }
         }
 
-        if (module is null)
+        if (module is null && (model is null || model.SupportedIoModules.Count > 0))
         {
             AddUnique(pending, "Modulo de I/O nao selecionado.");
         }

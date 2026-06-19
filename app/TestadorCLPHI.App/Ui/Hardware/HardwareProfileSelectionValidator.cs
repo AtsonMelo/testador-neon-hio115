@@ -14,6 +14,15 @@ public static class HardwareProfileSelectionValidator
         try
         {
             HardwareCatalog catalog = HardwareCatalogLoader.LoadDefault();
+            HardwareCatalogValidationResult catalogValidation = HardwareCatalogValidator.Validate(catalog);
+
+            if (!catalogValidation.IsValid)
+            {
+                error.WriteLine("Catalogo de hardware invalido.");
+                error.WriteLine(catalogValidation.ToDisplayText());
+                return 1;
+            }
+
             return Validate(catalog, output, error);
         }
         catch (Exception ex)
@@ -89,6 +98,7 @@ public static class HardwareProfileSelectionValidator
             if (failures.Count == 0)
             {
                 output.WriteLine($"[OK] {scenario.Name}");
+                WriteOfficialReferenceSummary(output, catalog, scenario);
                 continue;
             }
 
@@ -145,6 +155,7 @@ public static class HardwareProfileSelectionValidator
         AddCompatibilityFailures(failures, scenario, resolution);
         AddPendingFailures(failures, scenario, resolution);
         AddFieldObservedFailures(failures, scenario, resolution);
+        AddOfficialReferencePendingFailures(failures, scenario, resolution);
 
         return failures;
     }
@@ -251,9 +262,90 @@ public static class HardwareProfileSelectionValidator
         }
     }
 
+    private static void AddOfficialReferencePendingFailures(
+        ICollection<string> failures,
+        Scenario scenario,
+        HardwareProfileResolution resolution)
+    {
+        if (!IsPendingOfficialReferenceModel(scenario.ModelId))
+        {
+            return;
+        }
+
+        HardwareModel? model = resolution.Model;
+
+        if (model is null)
+        {
+            return;
+        }
+
+        if (!HasId(model.SourceStatus, "official_reference"))
+        {
+            failures.Add($"{model.Id} deve manter sourceStatus official_reference.");
+        }
+
+        if (!HasId(model.ValidationStatus, "pending_manual_validation"))
+        {
+            failures.Add($"{model.Id} deve manter validationStatus pending_manual_validation.");
+        }
+
+        if (model.OfficialReferences.Count == 0)
+        {
+            failures.Add($"{model.Id} deve manter referencias oficiais.");
+        }
+
+        if (resolution.CompatibleModules.Count > 0)
+        {
+            failures.Add($"{model.Id} nao deve expor modulo como confirmado nesta milestone.");
+        }
+
+        if (!resolution.PendingItems.Any(item =>
+                item.Contains("Nenhum modulo de I/O confirmado para este modelo", StringComparison.OrdinalIgnoreCase)))
+        {
+            failures.Add("Ausencia de modulo confirmado nao ficou explicita.");
+        }
+
+        if (!resolution.PendingItems.Any(item =>
+                item.Contains("nao indica falha de comunicacao", StringComparison.OrdinalIgnoreCase)))
+        {
+            failures.Add("Ausencia de modulo nao foi diferenciada de falha de comunicacao.");
+        }
+    }
+
+    private static void WriteOfficialReferenceSummary(
+        TextWriter output,
+        HardwareCatalog catalog,
+        Scenario scenario)
+    {
+        if (!IsPendingOfficialReferenceModel(scenario.ModelId))
+        {
+            return;
+        }
+
+        HardwareModel? model = catalog.FindModel(scenario.ModelId);
+
+        if (model is null)
+        {
+            return;
+        }
+
+        string moduleStatus = model.SupportedIoModules.Count == 0
+            ? "nenhum modulo confirmado"
+            : $"{model.SupportedIoModules.Count} modulo(s) confirmado(s)";
+
+        output.WriteLine(
+            $"  Referencias oficiais: {model.OfficialReferences.Count}; modulos: {moduleStatus}; status: {model.SourceStatus} + {model.ValidationStatus}");
+    }
+
     private static bool HasId(string currentId, string requestedId)
     {
         return string.Equals(currentId, requestedId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPendingOfficialReferenceModel(string modelId)
+    {
+        return HasId(modelId, "NEON_5_CONTROLLER") ||
+            HasId(modelId, "RION_5_CONTROLLER");
     }
 
     private sealed record Scenario(

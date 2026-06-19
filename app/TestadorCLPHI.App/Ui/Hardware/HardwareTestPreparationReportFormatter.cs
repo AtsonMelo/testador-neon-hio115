@@ -115,7 +115,7 @@ public sealed class HardwareTestPreparationReportFormatter
         AppendIndentedList(
             builder,
             compatibleModules.Select(item => $"{item.DisplayName} ({item.Id})"),
-            "Nenhum modulo confirmado para este modelo.");
+            "Nenhum modulo de I/O confirmado para este modelo. Isso nao indica falha de comunicacao.");
         builder.AppendLine("- Perfis de comunicacao possiveis:");
         AppendIndentedList(
             builder,
