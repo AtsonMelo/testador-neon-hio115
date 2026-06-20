@@ -29,6 +29,12 @@ internal sealed class Layout3HostProfileSelectionControl : UserControl
     /// </summary>
     public event Action<string>? SelectionLogged;
 
+    /// <summary>
+    /// Disparado quando familia, modelo, modulo ou teste altera a selecao local.
+    /// O evento apenas publica dados ja carregados do catalogo em memoria.
+    /// </summary>
+    public event Action<Layout3ProfileSelection>? SelectionChanged;
+
     public Layout3ProfileSelection CurrentSelection { get; private set; } = Layout3ProfileSelection.Empty;
 
     public Layout3HostProfileSelectionControl(
@@ -297,6 +303,7 @@ internal sealed class Layout3HostProfileSelectionControl : UserControl
 
         CurrentSelection = selection;
         UpdateDisplay(selection);
+        SelectionChanged?.Invoke(selection);
         SelectionLogged?.Invoke(BuildLogLine(selection));
     }
 
