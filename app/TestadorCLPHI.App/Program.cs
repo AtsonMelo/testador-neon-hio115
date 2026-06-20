@@ -33,6 +33,14 @@ internal static class Program
             return;
         }
 
+        if (args.Contains("--validate-layout-3-host-readonly-safety", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = Layout3HostReadOnlySafetyValidator.ValidateDefaultCatalog(
+                Console.Out,
+                Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
