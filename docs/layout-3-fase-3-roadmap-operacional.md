@@ -117,7 +117,7 @@ permanecer bloqueado e a contagem de leituras reais deve continuar em zero.
 
 ## Limite operacional explícito
 
-Nada de Serial, TCP, Socket, Modbus, PLC, mapas ou registradores deve ser criado,
+Nada de Serial, TCP, Modbus, PLC, mapas ou registradores deve ser criado,
 aberto, consultado ou alterado sem milestone futura específica e aprovação
 explícita. Este roadmap não autoriza leitura real, escrita, comando físico nem
 qualquer conexão com bancada.
