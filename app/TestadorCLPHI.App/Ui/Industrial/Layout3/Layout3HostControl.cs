@@ -5,21 +5,24 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 internal sealed class Layout3HostControl : UserControl
 {
     private const int MinimumContentWidth = 860;
-    private const int MinimumContentHeight = 680;
+    private const int MinimumContentHeight = 800;
     private const int CompactHeaderBreakpoint = 1080;
 
     private readonly Layout3HostState _state;
     private readonly ILayout3CommandGuard _commandGuard;
+    private readonly ILayout3ReadBridge _readBridge;
     private readonly HardwareCatalog _hardwareCatalog;
     private readonly Panel _viewport;
 
     private Layout3ThemePalette _palette;
     private Layout3PreviewTheme _theme;
     private Layout3CommunicationState _communicationState;
+    private Layout3ReadBridgeSnapshot _readBridgeSnapshot;
     private TableLayoutPanel _content;
     private TextBox _localLogTextBox;
     private Label? _communicationBadge;
     private Layout3HostCommunicationPanelControl? _communicationPanel;
+    private Layout3ReadBridgePanelControl? _readBridgePanel;
 
     /// <summary>Raised when the operator switches the read-only host theme.</summary>
     public event Action<Layout3PreviewTheme>? ThemeChanged;
@@ -36,6 +39,8 @@ internal sealed class Layout3HostControl : UserControl
         _theme = theme;
         _palette = Layout3ThemePalette.For(theme);
         _communicationState = state.Communication;
+        _readBridge = new Layout3DisabledReadBridge();
+        _readBridgeSnapshot = _readBridge.CreateSnapshot(state.Profile);
 
         Dock = DockStyle.Fill;
         BackColor = _palette.Background;
@@ -98,7 +103,7 @@ internal sealed class Layout3HostControl : UserControl
         TableLayoutPanel content = new()
         {
             ColumnCount = 1,
-            RowCount = 3,
+            RowCount = 4,
             BackColor = _palette.Background,
             Padding = new Padding(12),
             Margin = Padding.Empty
@@ -106,11 +111,13 @@ internal sealed class Layout3HostControl : UserControl
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 104F));
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 162F));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 136F));
 
         content.Controls.Add(CreateTopBar(), 0, 0);
         content.Controls.Add(CreateMainArea(hardwareCatalog), 0, 1);
-        content.Controls.Add(CreateTerminalArea(), 0, 2);
+        content.Controls.Add(CreateReadBridgeArea(), 0, 2);
+        content.Controls.Add(CreateTerminalArea(), 0, 3);
         return content;
     }
 
@@ -373,6 +380,16 @@ internal sealed class Layout3HostControl : UserControl
         return main;
     }
 
+    private Control CreateReadBridgeArea()
+    {
+        _readBridgePanel = new Layout3ReadBridgePanelControl(_palette, _readBridgeSnapshot)
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        return _readBridgePanel;
+    }
+
     private Control CreateTerminalArea()
     {
         Panel panel = CreateSurfacePanel();
@@ -462,6 +479,9 @@ internal sealed class Layout3HostControl : UserControl
     private void SynchronizeCommunicationState(Layout3ProfileSelection selection, bool writeLog)
     {
         _communicationState = Layout3CommunicationState.FromSelection(selection);
+        // O bridge permanece um no-op: o snapshot apenas recebe o perfil como
+        // contexto local; nenhuma conexao e aberta e nenhuma leitura e feita.
+        _readBridgeSnapshot = _readBridge.CreateSnapshot(selection);
         RefreshCommunicationDisplay();
         if (writeLog)
         {
@@ -469,12 +489,18 @@ internal sealed class Layout3HostControl : UserControl
                 $"Estado de comunicacao recalculado: {_communicationState.StatusDisplayName}; " +
                 $"origem {_communicationState.Origin}; perfil {_communicationState.ProfileProtocol}. " +
                 "Nenhuma conexao fisica foi criada; tentativas reais: 0; comandos fisicos: 0.");
+            AppendLocalLog(
+                $"Bridge de leitura: {_readBridgeSnapshot.StatusDisplayName} " +
+                $"({_readBridgeSnapshot.Mode}); conexao ativa: {_readBridgeSnapshot.ConnectionActiveDisplay}; " +
+                $"leituras reais: {_readBridgeSnapshot.RealReads}; escritas reais: {_readBridgeSnapshot.RealWrites}; " +
+                $"comandos fisicos: {_readBridgeSnapshot.PhysicalCommands}.");
         }
     }
 
     private void RefreshCommunicationDisplay()
     {
         _communicationPanel?.UpdateState(_communicationState);
+        _readBridgePanel?.UpdateSnapshot(_readBridgeSnapshot);
         if (_communicationBadge is not null)
         {
             _communicationBadge.Text =
