@@ -5,12 +5,13 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 internal sealed class Layout3HostControl : UserControl
 {
     private const int MinimumContentWidth = 860;
-    private const int MinimumContentHeight = 800;
+    private const int MinimumContentHeight = 930;
     private const int CompactHeaderBreakpoint = 1080;
 
     private readonly Layout3HostState _state;
     private readonly ILayout3CommandGuard _commandGuard;
     private readonly ILayout3ReadBridge _readBridge;
+    private readonly ILayout3ReadBridgeActivationGate _activationGate;
     private readonly HardwareCatalog _hardwareCatalog;
     private readonly Panel _viewport;
 
@@ -18,11 +19,13 @@ internal sealed class Layout3HostControl : UserControl
     private Layout3PreviewTheme _theme;
     private Layout3CommunicationState _communicationState;
     private Layout3ReadBridgeSnapshot _readBridgeSnapshot;
+    private Layout3ReadBridgeActivationDecision _activationDecision;
     private TableLayoutPanel _content;
     private TextBox _localLogTextBox;
     private Label? _communicationBadge;
     private Layout3HostCommunicationPanelControl? _communicationPanel;
     private Layout3ReadBridgePanelControl? _readBridgePanel;
+    private Layout3ReadBridgeActivationGatePanelControl? _activationPanel;
 
     /// <summary>Raised when the operator switches the read-only host theme.</summary>
     public event Action<Layout3PreviewTheme>? ThemeChanged;
@@ -41,6 +44,8 @@ internal sealed class Layout3HostControl : UserControl
         _communicationState = state.Communication;
         _readBridge = new Layout3DisabledReadBridge();
         _readBridgeSnapshot = _readBridge.CreateSnapshot(state.Profile);
+        _activationGate = new Layout3BlockedReadBridgeActivationGate();
+        _activationDecision = _activationGate.Evaluate(state.Profile);
 
         Dock = DockStyle.Fill;
         BackColor = _palette.Background;
@@ -103,7 +108,7 @@ internal sealed class Layout3HostControl : UserControl
         TableLayoutPanel content = new()
         {
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 5,
             BackColor = _palette.Background,
             Padding = new Padding(12),
             Margin = Padding.Empty
@@ -112,12 +117,14 @@ internal sealed class Layout3HostControl : UserControl
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 104F));
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 162F));
+        content.RowStyles.Add(new RowStyle(SizeType.Absolute, 122F));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 136F));
 
         content.Controls.Add(CreateTopBar(), 0, 0);
         content.Controls.Add(CreateMainArea(hardwareCatalog), 0, 1);
         content.Controls.Add(CreateReadBridgeArea(), 0, 2);
-        content.Controls.Add(CreateTerminalArea(), 0, 3);
+        content.Controls.Add(CreateActivationGateArea(), 0, 3);
+        content.Controls.Add(CreateTerminalArea(), 0, 4);
         return content;
     }
 
@@ -390,6 +397,16 @@ internal sealed class Layout3HostControl : UserControl
         return _readBridgePanel;
     }
 
+    private Control CreateActivationGateArea()
+    {
+        _activationPanel = new Layout3ReadBridgeActivationGatePanelControl(_palette, _activationDecision)
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        return _activationPanel;
+    }
+
     private Control CreateTerminalArea()
     {
         Panel panel = CreateSurfacePanel();
@@ -482,6 +499,9 @@ internal sealed class Layout3HostControl : UserControl
         // O bridge permanece um no-op: o snapshot apenas recebe o perfil como
         // contexto local; nenhuma conexao e aberta e nenhuma leitura e feita.
         _readBridgeSnapshot = _readBridge.CreateSnapshot(selection);
+        // O gate permanece bloqueado: a decisao apenas recebe o perfil como
+        // contexto local; nenhum perfil libera ativacao, conexao ou leitura.
+        _activationDecision = _activationGate.Evaluate(selection);
         RefreshCommunicationDisplay();
         if (writeLog)
         {
@@ -494,6 +514,12 @@ internal sealed class Layout3HostControl : UserControl
                 $"({_readBridgeSnapshot.Mode}); conexao ativa: {_readBridgeSnapshot.ConnectionActiveDisplay}; " +
                 $"leituras reais: {_readBridgeSnapshot.RealReads}; escritas reais: {_readBridgeSnapshot.RealWrites}; " +
                 $"comandos fisicos: {_readBridgeSnapshot.PhysicalCommands}.");
+            AppendLocalLog(
+                $"Gate de ativacao: {_activationDecision.StatusDisplayName}; " +
+                $"ativacao liberada: {_activationDecision.ActivationAllowedDisplay}; " +
+                $"conexao ativa: {_activationDecision.ConnectionActiveDisplay}; " +
+                $"requisitos pendentes: {_activationDecision.PendingRequirements}; " +
+                $"requisitos atendidos: {_activationDecision.SatisfiedRequirements}.");
         }
     }
 
@@ -501,6 +527,7 @@ internal sealed class Layout3HostControl : UserControl
     {
         _communicationPanel?.UpdateState(_communicationState);
         _readBridgePanel?.UpdateSnapshot(_readBridgeSnapshot);
+        _activationPanel?.UpdateDecision(_activationDecision);
         if (_communicationBadge is not null)
         {
             _communicationBadge.Text =
