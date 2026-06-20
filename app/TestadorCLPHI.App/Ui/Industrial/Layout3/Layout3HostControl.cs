@@ -5,7 +5,7 @@ namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 internal sealed class Layout3HostControl : UserControl
 {
     private const int MinimumContentWidth = 860;
-    private const int MinimumContentHeight = 580;
+    private const int MinimumContentHeight = 680;
     private const int CompactHeaderBreakpoint = 1080;
 
     private readonly Layout3HostState _state;
@@ -15,8 +15,11 @@ internal sealed class Layout3HostControl : UserControl
 
     private Layout3ThemePalette _palette;
     private Layout3PreviewTheme _theme;
+    private Layout3CommunicationState _communicationState;
     private TableLayoutPanel _content;
     private TextBox _localLogTextBox;
+    private Label? _communicationBadge;
+    private Layout3HostCommunicationPanelControl? _communicationPanel;
 
     /// <summary>Raised when the operator switches the read-only host theme.</summary>
     public event Action<Layout3PreviewTheme>? ThemeChanged;
@@ -32,6 +35,7 @@ internal sealed class Layout3HostControl : UserControl
         _hardwareCatalog = hardwareCatalog ?? HardwareCatalog.Empty;
         _theme = theme;
         _palette = Layout3ThemePalette.For(theme);
+        _communicationState = state.Communication;
 
         Dock = DockStyle.Fill;
         BackColor = _palette.Background;
@@ -213,10 +217,11 @@ internal sealed class Layout3HostControl : UserControl
         strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
         strip.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
 
-        strip.Controls.Add(CreateBadge(
-            "COMUNICACAO\r\n" + _state.CommunicationStatus.ToUpperInvariant(),
+        _communicationBadge = CreateBadge(
+            "COMUNICACAO\r\n" + _communicationState.StatusDisplayName.ToUpperInvariant(),
             _palette.Text,
-            _palette.Field), 0, 0);
+            _palette.Field);
+        strip.Controls.Add(_communicationBadge, 0, 0);
         strip.Controls.Add(CreateBadge(
             _state.Mode.DisplayName + "\r\n" + _state.Mode.SafetyMessage,
             _palette.Warning,
@@ -315,7 +320,7 @@ internal sealed class Layout3HostControl : UserControl
         return identity;
     }
 
-    private Control CreateBadge(string text, Color color, Color background)
+    private Label CreateBadge(string text, Color color, Color background)
     {
         Label badge = CreateLabel(text, 8.2F, FontStyle.Bold, color, ContentAlignment.MiddleCenter);
         badge.BackColor = background;
@@ -337,7 +342,12 @@ internal sealed class Layout3HostControl : UserControl
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 44F));
         main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
 
-        Control connection = CreateConnectionArea();
+        _communicationPanel = new Layout3HostCommunicationPanelControl(_palette, _communicationState)
+        {
+            Dock = DockStyle.Fill
+        };
+        _communicationPanel.BlockedIntentRequested += RegisterBlockedIntent;
+        Control connection = _communicationPanel;
         connection.Margin = new Padding(0, 0, 6, 0);
         main.Controls.Add(connection, 0, 0);
 
@@ -355,112 +365,12 @@ internal sealed class Layout3HostControl : UserControl
             Dock = DockStyle.Fill,
             Margin = new Padding(2, 0, 0, 0)
         };
+        profileSelection.SelectionChanged += RecalculateCommunicationState;
         profileSelection.SelectionLogged += AppendLocalLog;
+        SynchronizeCommunicationState(profileSelection.CurrentSelection, writeLog: false);
         main.Controls.Add(profileSelection, 2, 0);
 
         return main;
-    }
-
-    private Control CreateConnectionArea()
-    {
-        Panel panel = CreateSurfacePanel();
-        panel.Padding = new Padding(14);
-
-        TableLayoutPanel layout = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 8,
-            BackColor = _palette.Surface
-        };
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
-
-        layout.Controls.Add(CreateSectionHeader(), 0, 0);
-        layout.Controls.Add(CreateStatusField("COMUNICACAO", _state.CommunicationStatus), 0, 1);
-        layout.Controls.Add(CreateStatusField("ENTRADAS", _state.Io.InputStatus), 0, 2);
-        layout.Controls.Add(CreateStatusField("SAIDAS", _state.Io.OutputStatus), 0, 3);
-        layout.Controls.Add(CreateStatusField(
-            "CATALOGO",
-            _state.Hardware.LocalCatalogAvailable ? "Local carregado" : "Indisponivel"), 0, 4);
-
-        Label note = CreateLabel(
-            "Este host nao abre canais de comunicacao. O estado inicial e local, desconectado e inativo.",
-            8.5F,
-            FontStyle.Regular,
-            _palette.MutedText,
-            ContentAlignment.MiddleLeft);
-        note.Padding = new Padding(3, 8, 3, 8);
-        layout.Controls.Add(note, 0, 5);
-
-        Button intentButton = CreateLocalButton("REGISTRAR INTENCAO BLOQUEADA");
-        intentButton.Click += (_, _) => RegisterBlockedIntent();
-        layout.Controls.Add(intentButton, 0, 6);
-
-        Label guard = CreateLabel(
-            "GUARDA READ-ONLY ATIVA",
-            8F,
-            FontStyle.Bold,
-            _palette.Warning,
-            ContentAlignment.MiddleCenter);
-        guard.BackColor = _palette.WarningBackground;
-        guard.Margin = new Padding(0, 5, 0, 0);
-        layout.Controls.Add(guard, 0, 7);
-
-        panel.Controls.Add(layout);
-        return panel;
-    }
-
-    private Control CreateSectionHeader()
-    {
-        TableLayoutPanel header = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 2,
-            BackColor = _palette.Surface
-        };
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        header.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
-        header.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
-
-        Label index = CreateLabel("01", 8F, FontStyle.Bold, _palette.AccentBlue, ContentAlignment.MiddleCenter);
-        index.BackColor = _palette.Field;
-        index.Margin = new Padding(0, 4, 7, 4);
-        header.Controls.Add(index, 0, 0);
-        header.SetRowSpan(index, 2);
-        header.Controls.Add(CreateLabel("HOST / ESTADO LOCAL", 10F, FontStyle.Bold, _palette.Text), 1, 0);
-        header.Controls.Add(CreateLabel("Inicio seguro sem hardware", 8F, FontStyle.Regular, _palette.MutedText), 1, 1);
-        return header;
-    }
-
-    private Control CreateStatusField(string title, string value)
-    {
-        TableLayoutPanel field = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2,
-            BackColor = _palette.Field,
-            Margin = new Padding(0, 3, 0, 3),
-            Padding = new Padding(10, 2, 10, 2)
-        };
-        field.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
-        field.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
-        Label titleLabel = CreateLabel(title, 7F, FontStyle.Bold, _palette.MutedText);
-        Label valueLabel = CreateLabel(value.ToUpperInvariant(), 8.5F, FontStyle.Bold, _palette.Text);
-        titleLabel.BackColor = _palette.Field;
-        valueLabel.BackColor = _palette.Field;
-        field.Controls.Add(titleLabel, 0, 0);
-        field.Controls.Add(valueLabel, 0, 1);
-        return field;
     }
 
     private Control CreateTerminalArea()
@@ -537,8 +447,39 @@ internal sealed class Layout3HostControl : UserControl
         string result = decision.Allowed
             ? "Decisao inesperada da guarda ignorada; este host nao possui executor fisico."
             : decision.Message;
+        _communicationState = _communicationState.AsBlocked(
+            "Intencao bloqueada pela guarda; nenhuma conexao criada.");
+        RefreshCommunicationDisplay();
         AppendLocalLog(
             $"[INTENCAO {intent.CorrelationId:N}] {intent.Action} / {intent.Target}. {result}");
+    }
+
+    private void RecalculateCommunicationState(Layout3ProfileSelection selection)
+    {
+        SynchronizeCommunicationState(selection, writeLog: true);
+    }
+
+    private void SynchronizeCommunicationState(Layout3ProfileSelection selection, bool writeLog)
+    {
+        _communicationState = Layout3CommunicationState.FromSelection(selection);
+        RefreshCommunicationDisplay();
+        if (writeLog)
+        {
+            AppendLocalLog(
+                $"Estado de comunicacao recalculado: {_communicationState.StatusDisplayName}; " +
+                $"origem {_communicationState.Origin}; perfil {_communicationState.ProfileProtocol}. " +
+                "Nenhuma conexao fisica foi criada; tentativas reais: 0; comandos fisicos: 0.");
+        }
+    }
+
+    private void RefreshCommunicationDisplay()
+    {
+        _communicationPanel?.UpdateState(_communicationState);
+        if (_communicationBadge is not null)
+        {
+            _communicationBadge.Text =
+                "COMUNICACAO\r\n" + _communicationState.StatusDisplayName.ToUpperInvariant();
+        }
     }
 
     private void AppendLocalLog(string message)

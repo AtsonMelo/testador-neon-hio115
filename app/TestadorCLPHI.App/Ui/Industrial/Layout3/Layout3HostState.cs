@@ -7,7 +7,7 @@ internal sealed record Layout3HostState(
     Layout3HardwareState Hardware,
     Layout3IoState Io,
     Layout3ProfileSelection Profile,
-    string CommunicationStatus,
+    Layout3CommunicationState Communication,
     int PhysicalCommandsExecuted,
     IReadOnlyList<string> LocalEvents)
 {
@@ -15,6 +15,7 @@ internal sealed record Layout3HostState(
     {
         Layout3HardwareState hardware = Layout3HardwareState.FromLocalCatalog(catalog);
         Layout3ProfileSelection profile = Layout3ProfileSelection.CreateDefault(catalog);
+        Layout3CommunicationState communication = Layout3CommunicationState.FromSelection(profile);
         string catalogEvent = hardware.LocalCatalogAvailable
             ? $"Catalogo local carregado: {hardware.FamilyCount} familia(s), {hardware.ModelCount} modelo(s)."
             : "Catalogo local indisponivel; host mantido em estado seguro.";
@@ -27,14 +28,16 @@ internal sealed record Layout3HostState(
             Hardware: hardware,
             Io: Layout3IoState.Disconnected,
             Profile: profile,
-            CommunicationStatus: "Nao conectada",
+            Communication: communication,
             PhysicalCommandsExecuted: 0,
             LocalEvents:
             [
                 "Host Layout 3 iniciado em modo read-only.",
                 catalogEvent,
                 profileEvent,
-                "Nenhuma comunicacao fisica foi criada.",
+                $"Comunicacao local: {communication.StatusDisplayName}; origem {communication.Origin}; " +
+                    $"perfil {communication.ProfileProtocol}.",
+                "Nenhuma conexao fisica foi criada; tentativas reais: 0.",
                 "Comandos fisicos executados: 0."
             ]);
     }
