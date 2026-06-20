@@ -13,8 +13,8 @@ public sealed class Layout3HostForm : Form
 
         Text = "Layout 3 - Host read-only | Testador CLP HI";
         StartPosition = FormStartPosition.CenterScreen;
-        Size = new Size(1280, 860);
-        MinimumSize = new Size(900, 640);
+        Size = new Size(1280, 980);
+        MinimumSize = new Size(900, 720);
         BackColor = _palette.Background;
         ForeColor = _palette.Text;
         Font = new Font("Segoe UI", 9F);

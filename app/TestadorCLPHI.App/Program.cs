@@ -49,6 +49,14 @@ internal static class Program
             return;
         }
 
+        if (args.Contains("--validate-layout-3-read-bridge-activation-gate", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = Layout3ReadBridgeActivationGateValidator.ValidateDefaultCatalog(
+                Console.Out,
+                Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
