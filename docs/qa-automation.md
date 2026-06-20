@@ -62,10 +62,29 @@ registradores e mapas. A busca de conteúdo também alerta para termos operacion
 fortes. O próprio script é excluído dessa busca porque contém a declaração dos
 termos pesquisados.
 
-Depois dessas verificações, o script executa os três validadores de hardware com
-`dotnet run -- --validate-*`, seguidos por `dotnet build` e `git diff --check`.
-Os comandos `dotnet` recebem explicitamente o caminho do projeto. Nenhuma flag
-da aplicação que inicialize comunicação física é usada.
+Depois dessas verificações, o script sempre executa os três validadores de
+hardware:
+
+- `--validate-hardware-catalog`;
+- `--validate-hardware-profile-selection`;
+- `--validate-hardware-test-report`.
+
+O script também detecta em `Program.cs` e executa, quando disponíveis, os
+validadores locais e não visuais do Layout 3:
+
+- `--validate-layout-3-host-readonly-safety` (Fase 3.4);
+- `--validate-layout-3-read-bridge-disabled` (Fase 3.5);
+- `--validate-layout-3-read-bridge-activation-gate` (Fase 3.6).
+
+Uma flag nova ausente na branch é registrada como `NÃO DISPONÍVEL` e ignorada
+com segurança. Isso permite validar branches base que ainda não contêm todas as
+fases sem abrir a aplicação no fluxo normal nem tratar ausência de flag como
+falha. Uma flag disponível que retorna código diferente de zero continua sendo
+falha crítica.
+
+Após os validadores, são executados `dotnet build` e `git diff --check`. Os
+comandos `dotnet` recebem explicitamente o caminho do projeto. Nenhuma flag da
+aplicação que inicialize comunicação física é usada.
 
 ## Smoke GUI
 

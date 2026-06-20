@@ -120,6 +120,17 @@ function Find-StrongTermHits {
     return @($hits)
 }
 
+function Test-ValidatorFlagAvailable {
+    param([Parameter(Mandatory = $true)][string]$Flag)
+
+    $programPath = Join-Path (Split-Path -Parent $script:ProjectPath) 'Program.cs'
+    if (-not (Test-Path -LiteralPath $programPath -PathType Leaf)) {
+        throw "Não foi possível localizar Program.cs para detectar a flag $Flag."
+    }
+
+    return [bool](Select-String -LiteralPath $programPath -Pattern $Flag -SimpleMatch -Quiet)
+}
+
 function Invoke-GuiSmoke {
     param(
         [Parameter(Mandatory = $true)][string]$Flag,
@@ -337,19 +348,30 @@ try {
         }
     }
 
-    $validators = [ordered]@{
-        'hardware-catalog' = '--validate-hardware-catalog'
-        'hardware-profile-selection' = '--validate-hardware-profile-selection'
-        'hardware-test-report' = '--validate-hardware-test-report'
-    }
+    $validators = @(
+        [pscustomobject]@{ Name = 'hardware-catalog'; Flag = '--validate-hardware-catalog'; DetectAvailability = $false },
+        [pscustomobject]@{ Name = 'hardware-profile-selection'; Flag = '--validate-hardware-profile-selection'; DetectAvailability = $false },
+        [pscustomobject]@{ Name = 'hardware-test-report'; Flag = '--validate-hardware-test-report'; DetectAvailability = $false },
+        [pscustomobject]@{ Name = 'layout-3-host-readonly-safety'; Flag = '--validate-layout-3-host-readonly-safety'; DetectAvailability = $true },
+        [pscustomobject]@{ Name = 'layout-3-read-bridge-disabled'; Flag = '--validate-layout-3-read-bridge-disabled'; DetectAvailability = $true },
+        [pscustomobject]@{ Name = 'layout-3-read-bridge-activation-gate'; Flag = '--validate-layout-3-read-bridge-activation-gate'; DetectAvailability = $true }
+    )
 
-    foreach ($validator in $validators.GetEnumerator()) {
-        $result = Invoke-QaCommand -FilePath 'dotnet' -Arguments @('run', '--project', $script:ProjectPath, '--', $validator.Value) -Label ("validador {0}" -f $validator.Key)
+    foreach ($validator in $validators) {
+        if ($validator.DetectAvailability -and -not (Test-ValidatorFlagAvailable -Flag $validator.Flag)) {
+            Write-QaLine ''
+            Write-QaLine ("## validador {0}" -f $validator.Name)
+            Write-QaLine ("NÃO DISPONÍVEL: flag {0} ausente nesta branch; execução ignorada com segurança." -f $validator.Flag)
+            $validatorResults[$validator.Name] = 'NÃO DISPONÍVEL'
+            continue
+        }
+
+        $result = Invoke-QaCommand -FilePath 'dotnet' -Arguments @('run', '--project', $script:ProjectPath, '--', $validator.Flag) -Label ("validador {0}" -f $validator.Name)
         if ($result.ExitCode -eq 0) {
-            $validatorResults[$validator.Key] = 'OK'
+            $validatorResults[$validator.Name] = 'OK'
         }
         else {
-            $validatorResults[$validator.Key] = 'FALHOU'
+            $validatorResults[$validator.Name] = 'FALHOU'
             $criticalFailure = $true
         }
     }
