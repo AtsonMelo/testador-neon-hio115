@@ -147,3 +147,47 @@ Continuar a Issue #24 com foco visual, agora com a MainForm mais organizada. Pr�
 - Decisão técnica mantida: não aumentar novamente a MainForm.cs.
 - Próximo foco: criar componente separado para o painel I/O industrial aprovado no Layout Alvo 2.
 - Stash mantido como backup: ajuste antigo de STOP do layout atual.
+
+## 21/06/2026 - Consolidação documental e QA do Layout 3
+
+### Contexto
+
+- Branch: `review/layout-3-escopo-completo-hi-docs`.
+- Base operacional: `ui/issue-24-liga-io-industrial-host`.
+- HEAD validado: `cf075d5`.
+- Objetivo: corrigir o reconhecimento do checkout pelo AgentGate sem bypass,
+  registrar o estado consolidado e preparar um PR Draft somente documental.
+
+### AgentGate
+
+- O perfil atual e o backup de `20260621-180647` foram comparados.
+- O perfil atual aponta para
+  `C:\Users\atson\Documents\testador-neon-hio115`, exatamente o `cwd` ativo.
+- O backup aponta para `C:\Atson\testador`.
+- A reversão não foi aplicada porque quebraria o match do checkout atual.
+- Nenhum bypass foi usado.
+
+### Resultado do QA
+
+- Modo: `PostMerge`, com smoke GUI e cópia do resultado para o clipboard.
+- Validadores locais: OK.
+- Build: OK, 0 erros e 0 avisos.
+- `git diff --check`: OK.
+- Smoke GUI: OK, 4/4.
+- Leituras reais: 0.
+- Escritas reais: 0.
+- Comandos físicos executados: 0.
+
+### Escopo preservado
+
+- `MainForm.cs` não alterado.
+- Artefatos HIstudio e `TESTADOR_NEON_HIO115_1_1` não alterados.
+- Nenhuma comunicação real implementada.
+- Nenhuma conexão física aberta.
+- Nenhum registrador lido ou escrito.
+
+### Documentação
+
+- Estado atual reescrito para refletir a base consolidada do Layout 3.
+- Diário e registro de produtividade atualizados.
+- Roadmap corrigido para registrar a integração da Fase 3.6 e de seu validador.
