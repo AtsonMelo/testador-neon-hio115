@@ -89,7 +89,7 @@ internal sealed class Layout3ReadBridgeActivationGatePanelControl : UserControl
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F));
 
         Label title = CreateLabel(
-            "03  GATE DE ATIVACAO  -  BLOQUEADO",
+            "05  GATE DE ATIVACAO  -  BLOQUEADO",
             9F,
             FontStyle.Bold,
             _palette.Text);
