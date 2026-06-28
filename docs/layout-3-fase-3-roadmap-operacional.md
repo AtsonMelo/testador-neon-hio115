@@ -7,9 +7,10 @@ Este documento consolida a evolução controlada do Host Layout 3 entre as Fases
 real ainda não está ativa, nenhuma conexão física é aberta e os contadores de
 leituras reais, escritas reais e comandos físicos permanecem em zero.
 
-A base operacional é `ui/issue-24-liga-io-industrial-host`. A Fase 3.6 está na
-branch `ui/layout-3-read-bridge-activation-gate`, em revisão no PR Draft #48, e
-não deve ser tratada como parte já integrada da base.
+A base operacional é `ui/issue-24-liga-io-industrial-host`, no commit
+`cf075d5`. A Fase 3.6, os validadores do bridge e os documentos operacionais já
+estão consolidados nessa base. A branch original da Fase 3.6 permanece apenas
+como referência histórica de revisão e não define mais o estado de integração.
 
 ## Resumo das Fases 3.1 a 3.6
 
@@ -20,7 +21,7 @@ não deve ser tratada como parte já integrada da base.
 | 3.3 | Snapshot visual do estado de comunicação derivado da seleção local. | Estado read-only, sem conexão, polling ou leitura real. |
 | 3.4 | Validador não visual das invariantes do host read-only e da guarda de comandos. | Seis cenários locais; tentativas reais e comandos físicos iguais a zero. |
 | 3.5 | Contrato do bridge de leitura, implementação disabled/no-op e painel compacto. | Bridge desligado; conexão, leituras, escritas e comandos físicos iguais a zero. |
-| 3.6 | Gate de ativação e requisitos futuros, com implementação sempre bloqueada. | Em PR Draft #48; ativação não liberada e todos os requisitos pendentes. |
+| 3.6 | Gate de ativação e requisitos futuros, com implementação sempre bloqueada. | Integrada na base; ativação não liberada e todos os requisitos pendentes. |
 
 ## Checkpoints existentes
 
@@ -33,7 +34,14 @@ Os checkpoints observados no histórico da base são:
 - commit `8d76d41` — estado de comunicação read-only da Fase 3.3;
 - `layout-3-fase-3-4-readonly-safety-ok-20260620` — validador de segurança da Fase 3.4;
 - `layout-3-fase-3-5-read-bridge-disabled-ok-20260620` — bridge disabled da Fase 3.5;
-- commit `af14cae`, branch `ui/layout-3-read-bridge-activation-gate` — Fase 3.6 em PR Draft, ainda fora da base.
+- `layout-3-fase-3-6-read-bridge-activation-gate-ok-20260620` — Fase 3.6
+  consolidada no commit `55fdb1f`;
+- `layout-3-qa-read-bridge-validators-ok-20260620` — validadores consolidados
+  no commit `87c392c`;
+- `layout-3-fase-3-roadmap-operacional-ok-20260620` — roadmap consolidado no
+  commit `98cfdd9`;
+- `layout-3-operational-cleanup-plan-ok-20260620` — plano documental
+  consolidado no commit `cf075d5`.
 
 Tags registram checkpoints técnicos; não substituem revisão, aprovação ou
 autorização de bancada.
@@ -53,11 +61,23 @@ Validadores disponíveis na base:
 - `--validate-hardware-profile-selection`;
 - `--validate-hardware-test-report`;
 - `--validate-layout-3-host-readonly-safety`;
-- `--validate-layout-3-read-bridge-disabled`.
+- `--validate-layout-3-read-bridge-disabled`;
+- `--validate-layout-3-read-bridge-activation-gate`.
 
-O validador `--validate-layout-3-read-bridge-activation-gate` pertence à Fase
-3.6 e, enquanto o PR Draft #48 não for integrado, existe apenas na branch dessa
-milestone. Todos esses validadores são locais e não visuais.
+Todos esses validadores estão disponíveis na base, são locais e não visuais.
+
+## Evidência de consolidação
+
+O QA `PostMerge` executado em 21 de junho de 2026 no commit `cf075d5` confirmou:
+
+- validadores locais: OK;
+- build: OK, 0 erros e 0 avisos;
+- `git diff --check`: OK;
+- smoke GUI: OK, 4/4;
+- comandos físicos executados: 0.
+
+Essa evidência valida o estado local e read-only; ela não autoriza comunicação
+real nem operação de bancada.
 
 ## Controles de segurança vigentes
 

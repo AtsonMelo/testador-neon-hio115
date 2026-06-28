@@ -8,6 +8,7 @@
 | 2026-05-17 | refactor/revisao-mainform | Centralizar aplicação de tema no AppThemeService | refactor | - | - | Sim | Sim | Não identificado | Commit 0cd18eb criado e enviado; MainForm.cs reduziu de 705 para 652 linhas |
 | 2026-05-17 | refactor/revisao-mainform | Extrair painel de comandos do testador | refactor | - | - | Sim | Sim | Não identificado | Commit bf3a69e criado e enviado; MainForm.cs reduziu de 652 para 626 linhas |
 | 2026-05-17 | refactor/revisao-mainform | Extrair seletor de tema do MainForm | refactor | - | - | Sim | Sim | Não identificado | Commit ce7dde8 criado e enviado; MainForm.cs reduziu de 626 para 576 linhas; meta abaixo de 600 atingida |
+| 2026-06-21 | review/layout-3-escopo-completo-hi-docs | Consolidar estado documental do Layout 3 | docs | - | - | Sim | Sim, smoke GUI 4/4 | Wrapper elevado ficou preso em uma tentativa; evidência completa preservada no log | QA PostMerge sem bypass, validadores OK e comandos físicos 0 |
 
 ## Métricas atuais
 
@@ -18,6 +19,19 @@
 | Build atual | OK |
 | Erros atuais | 0 |
 | Avisos atuais | 0 |
+
+## Estado validado em 2026-06-21
+
+- Base operacional: `ui/issue-24-liga-io-industrial-host` em `cf075d5`.
+- QA `PostMerge`: OK.
+- Validadores locais: OK.
+- Build: 0 erros e 0 avisos.
+- Smoke GUI: 4/4.
+- `git diff --check`: OK.
+- Leituras reais, escritas reais e comandos físicos: 0.
+- AgentGate reconhecido pelo caminho exato do checkout, sem bypass.
+- Entrega limitada a documentação; `MainForm.cs`, HIstudio e comunicação real
+  permaneceram fora do escopo.
 
 ## Perfil de trabalho
 
