@@ -95,7 +95,7 @@ internal sealed class Layout3ReadBridgePanelControl : UserControl
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 240F));
 
         Label title = CreateLabel(
-            "02  BRIDGE DE LEITURA  -  PREPARADO / DESLIGADO",
+            "04  BRIDGE DE LEITURA  -  PREPARADO / DESLIGADO",
             9F,
             FontStyle.Bold,
             _palette.Text);
