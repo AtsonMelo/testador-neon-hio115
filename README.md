@@ -117,7 +117,13 @@ testador-neon-hio115/
 
 ---
 
-## Security & Privacy
+## Security and privacy
+
+- No real credentials, tokens, client data or production environment details should be committed.
+- Examples use placeholders or simulated data.
+- Sensitive values must stay in local environment variables or ignored files.
+
+### Additional repository notes
 
 ⚠️ **Important:**
 - Do not commit credentials, API keys, or authentication tokens
@@ -140,8 +146,7 @@ This is a personal portfolio project. For improvements, suggestions, or bug repo
 
 ## License
 
-**License:** Pending decision  
-Currently no explicit license. If you plan to use this code, please ask for clarification on licensing terms.
+License: pending decision.
 
 ---
 
