@@ -241,7 +241,7 @@ internal sealed class Layout3HostControl : UserControl
             _palette.Warning,
             _palette.WarningBackground), 1, 0);
         strip.Controls.Add(CreateBadge(
-            $"{_state.PhysicalCommandsExecuted} COMANDOS FISICOS\r\nHOST LOCAL INATIVO",
+            $"{_state.PhysicalCommandsExecuted} COMANDOS FISICOS\r\nSEM CONEXAO FISICA",
             _palette.Emergency,
             _palette.EmergencyBackground), 2, 0);
         return strip;
@@ -429,10 +429,10 @@ internal sealed class Layout3HostControl : UserControl
             RowCount = 1,
             BackColor = _palette.Surface
         };
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 176F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100F));
-        header.Controls.Add(CreateLabel("LOG LOCAL DO HOST", 9F, FontStyle.Bold, _palette.Text), 0, 0);
+        header.Controls.Add(CreateLabel("06  LOG LOCAL DO HOST", 9F, FontStyle.Bold, _palette.Text), 0, 0);
         header.Controls.Add(CreateLabel(
             "MODO READ-ONLY  |  SEM ESCRITA FISICA  |  0 COMANDOS FISICOS",
             8.5F,

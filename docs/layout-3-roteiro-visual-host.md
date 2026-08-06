@@ -51,6 +51,28 @@ Verificar visualmente, sem acionar nada:
   futuros pendentes e nenhuma ativação concedida;
 - fechar a janela não executa leitura, escrita, conexão ou desconexão física.
 
+## Hierarquia visual e numeração dos painéis
+
+O host read-only organiza os blocos em uma sequência numerada coerente, de cima
+para baixo, sempre em estado seguro:
+
+- **01 — HOST / COMUNICACAO**: diagnóstico local read-only do estado de
+  comunicação; sempre desconectado, sem conexão física criada;
+- **02 — I/O MANUAL**: painel industrial em estado seguro, apenas visual;
+- **03 — PERFIL / SELECAO LOCAL**: seleção de família/modelo/módulo/teste a partir
+  do catálogo local; 0 comandos físicos;
+- **04 — BRIDGE DE LEITURA — PREPARADO / DESLIGADO**: bridge no-op, sem leitura
+  real, sem conexão ativa e com todos os contadores em zero;
+- **05 — GATE DE ATIVACAO — BLOQUEADO**: nenhuma ativação concedida, requisitos
+  futuros pendentes;
+- **06 — LOG LOCAL DO HOST**: registro local read-only, sem escrita física e com
+  0 comandos físicos.
+
+O topo do host reforça as garantias em três indicadores: estado de comunicação,
+**MODO READ-ONLY / SEM ESCRITA FISICA** e **0 COMANDOS FISICOS / SEM CONEXAO
+FISICA**. Nenhum botão da tela executa acionamento físico real; o bridge
+permanece desligado/no-op e o gate permanece bloqueado.
+
 ## Roteiro visual dos previews isolados
 
 Paleta dark aprovada:

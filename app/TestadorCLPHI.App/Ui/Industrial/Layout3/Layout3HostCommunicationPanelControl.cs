@@ -121,8 +121,8 @@ internal sealed class Layout3HostCommunicationPanelControl : UserControl
         index.Margin = new Padding(0, 4, 7, 4);
         header.Controls.Add(index, 0, 0);
         header.SetRowSpan(index, 2);
-        header.Controls.Add(CreateLabel("HOST / COMUNICACAO", 9F, FontStyle.Bold, _palette.Text), 1, 0);
-        header.Controls.Add(CreateLabel("Diagnostico local read-only", 7.5F, FontStyle.Regular, _palette.MutedText), 1, 1);
+        header.Controls.Add(CreateLabel("HOST / COMUNICACAO", 10F, FontStyle.Bold, _palette.Text), 1, 0);
+        header.Controls.Add(CreateLabel("Diagnostico local read-only", 8F, FontStyle.Regular, _palette.MutedText), 1, 1);
         return header;
     }
 
