@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "equipment": {
+    "plcModel": "",
+    "moduleModel": "",
+    "firmware": "",
+    "labelPhotoEvidence": ""
+  },
+  "connection": {
+    "protocol": "",
+    "transport": "",
+    "topology": "",
+    "equipmentIpAddress": "",
+    "pcIpAddress": "",
+    "tcpPort": null,
+    "serialPortName": "",
+    "baudRate": null,
+    "dataBits": null,
+    "parity": "",
+    "stopBits": "",
+    "deviceAddress": null
+  },
+  "readPolicy": {
+    "registerMapReference": "",
+    "timeoutMilliseconds": 0,
+    "maximumReads": 0,
+    "allowedRegisters": []
+  },
+  "safety": {
+    "featureEnabled": false,
+    "realCommunicationEnabled": false,
+    "writesEnabled": false,
+    "pollingEnabled": false,
+    "automaticReconnectEnabled": false,
+    "singleShotOnly": true
+  },
+  "bench": {
+    "backupReference": "",
+    "supplyVoltage": "",
+    "responsible": "",
+    "machineState": "",
+    "groundingConfirmed": null,
+    "networkIsolated": null,
+    "outputsDeenergizedOrIsolated": null,
+    "machinePreventedFromOperating": null,
+    "emergencyStopIdentified": null,
+    "quickDisconnectDefined": null
+  },
+  "approvalStatuses": {
+    "equipmentIdentity": "CONFLITANTE",
+    "moduleIdentity": "PENDENTE",
+    "protocol": "PENDENTE",
+    "connectionParameters": "CONFLITANTE",
+    "registerMap": "CONFLITANTE",
+    "registerAllowList": "NÃO DISPONÍVEL",
+    "electricalSafety": "PENDENTE",
+    "benchSafety": "PENDENTE"
+  }
+}

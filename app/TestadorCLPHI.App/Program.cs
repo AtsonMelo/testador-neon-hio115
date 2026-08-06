@@ -57,6 +57,22 @@ internal static class Program
             return;
         }
 
+        if (args.Contains("--validate-layout-3-bench-readiness-self-tests", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = Layout3BenchReadinessScenarioValidator.Validate(
+                Console.Out,
+                Console.Error);
+            return;
+        }
+
+        if (args.Contains("--validate-layout-3-bench-readiness", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = Layout3BenchReadinessValidator.ValidateDefaultConfiguration(
+                Console.Out,
+                Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
