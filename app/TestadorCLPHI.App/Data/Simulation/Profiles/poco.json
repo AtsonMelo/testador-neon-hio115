@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "poco",
+  "displayName": "Poço",
+  "initialState": "Parado",
+  "signals": [
+    { "id": "NivelMinimo", "label": "Nível mínimo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "NivelMaximo", "label": "Nível máximo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "FaltaFase", "label": "Falta de fase", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Pressostato", "label": "Pressostato", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Emergencia", "label": "Emergência", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "SensorInvalido", "label": "Sensor inválido", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Nivel", "label": "Nível", "kind": "analogInput", "defaultValue": 60, "minimum": 0, "maximum": 100, "unit": "%" },
+    { "id": "Pressao", "label": "Pressão", "kind": "analogInput", "defaultValue": 4, "minimum": 0, "maximum": 10, "unit": "bar (simulado)" },
+    { "id": "Corrente", "label": "Corrente", "kind": "analogInput", "defaultValue": 12, "minimum": 0, "maximum": 100, "unit": "A (simulado)" },
+    { "id": "Bomba", "label": "Bomba", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Valvula", "label": "Válvula", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" }
+  ],
+  "rules": [
+    { "id": "emergency", "priority": 100, "conditions": [{ "signalId": "Emergencia", "comparison": "equals", "expectedValue": 1 }], "resultState": "Emergencia", "alarmId": "Emergency", "blockAllOutputs": true },
+    { "id": "phase-loss", "priority": 95, "conditions": [{ "signalId": "FaltaFase", "comparison": "equals", "expectedValue": 1 }], "resultState": "Falha", "alarmId": "PhaseLoss", "blockAllOutputs": true },
+    { "id": "invalid-sensor", "priority": 90, "conditions": [{ "signalId": "SensorInvalido", "comparison": "equals", "expectedValue": 1 }], "resultState": "Falha", "alarmId": "InvalidSensor", "blockAllOutputs": true },
+    { "id": "low-level", "priority": 80, "conditions": [{ "signalId": "Nivel", "comparison": "lessThan", "expectedValue": 20 }], "resultState": "NivelBaixo", "alarmId": "LowLevel", "blockAllOutputs": true },
+    { "id": "over-current", "priority": 75, "conditions": [{ "signalId": "Corrente", "comparison": "greaterThan", "expectedValue": 30 }], "resultState": "Falha", "alarmId": "OverCurrent", "blockAllOutputs": true },
+    { "id": "pressure-low", "priority": 70, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }, { "signalId": "Pressao", "comparison": "lessThan", "expectedValue": 2 }], "resultState": "Falha", "alarmId": "PressureLow", "blockAllOutputs": true },
+    { "id": "pumping", "priority": 30, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }], "resultState": "Bombeando", "alarmId": "", "blockAllOutputs": false }
+  ],
+  "exclusiveOutputGroups": [],
+  "scenarios": [
+    { "id": "normal", "displayName": "Normal", "values": {} },
+    { "id": "falta-agua", "displayName": "Falta d'água", "values": { "Nivel": 5, "NivelMinimo": 1 } },
+    { "id": "pressao-baixa", "displayName": "Pressão baixa", "values": { "Bomba": 1, "Pressao": 1 } },
+    { "id": "sobrecorrente", "displayName": "Sobrecorrente", "values": { "Corrente": 45 } },
+    { "id": "falta-fase", "displayName": "Falta de fase", "values": { "FaltaFase": 1 } },
+    { "id": "sensor-invalido", "displayName": "Sensor inválido", "values": { "SensorInvalido": 1 } }
+  ]
+}

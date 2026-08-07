@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
+using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
@@ -77,6 +78,12 @@ internal static class Program
         if (args.Contains("--validate-layout-3-rtu-offline", StringComparer.OrdinalIgnoreCase))
         {
             Environment.ExitCode = RtuOfflineValidator.Validate(Console.Out, Console.Error);
+            return;
+        }
+
+        if (args.Contains("--validate-layout-3-simulation-engine", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = SimulationEngineValidator.Validate(Console.Out, Console.Error);
             return;
         }
 
