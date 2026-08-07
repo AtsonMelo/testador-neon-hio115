@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
+using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -26,6 +27,7 @@ internal sealed class IndustrialTesterControl : UserControl
     private readonly CheckBox _enableOutputs = new() { Text = "MODO SUPERVISIONADO SIMULADO", AutoSize = true };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
     private readonly TextBox _log = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, Dock = DockStyle.Fill };
+    private IndustrialIoMapControl? _ioMap;
     private CancellationTokenSource? _operation;
     private bool _identified;
 
@@ -43,6 +45,16 @@ internal sealed class IndustrialTesterControl : UserControl
 
     internal bool UsesOnlyInMemoryTransport => true;
     internal bool RealCommunicationEnabled => false;
+    internal bool HasIoMappingTab => Controls.Find("ioMappingTab", searchAllChildren: true).Length == 1;
+    internal int IoMappingRowCount => _ioMap?.BindingRowCount ?? 0;
+    internal bool IoMappingDeclaresSimulationEvidence => _ioMap?.DeclaresSimulationEvidence == true;
+
+    internal bool ShowsProcessAlias(string registerAlias, string expectedLabel)
+    {
+        Control[] controls = Controls.Find($"tester{registerAlias}Alias", searchAllChildren: true);
+        return controls.FirstOrDefault() is Label label
+            && string.Equals(label.Text, expectedLabel, StringComparison.Ordinal);
+    }
 
     protected override void Dispose(bool disposing)
     {
@@ -153,6 +165,7 @@ internal sealed class IndustrialTesterControl : UserControl
         tabs.TabPages.Add(BuildDigitalInputsTab());
         tabs.TabPages.Add(BuildAnalogInputsTab());
         tabs.TabPages.Add(BuildOutputsTab());
+        tabs.TabPages.Add(BuildIoMappingTab());
         tabs.TabPages.Add(BuildDiagnosticsTab());
         tabs.TabPages.Add(BuildLogTab());
         return tabs;
@@ -164,7 +177,12 @@ internal sealed class IndustrialTesterControl : UserControl
         FlowLayoutPanel list = SignalList();
         for (int index = 0; index < _digitalValues.Length; index++)
         {
-            list.Controls.Add(SignalRow($"DI{index:00}", _digitalValues[index]));
+            string registerAlias = $"DI{index:00}";
+            list.Controls.Add(SignalRow(
+                registerAlias,
+                GetProcessAlias(SimulationIoDirection.Input, SimulationIoType.Digital, index),
+                _digitalValues[index],
+                $"tester{registerAlias}Alias"));
         }
 
         Button read = PlatformUi.Button("Ler entradas simuladas", "readInputsButton", primary: true);
@@ -181,7 +199,12 @@ internal sealed class IndustrialTesterControl : UserControl
         FlowLayoutPanel list = SignalList();
         for (int index = 0; index < _analogValues.Length; index++)
         {
-            list.Controls.Add(SignalRow($"AI{index:00} raw", _analogValues[index]));
+            string registerAlias = $"AI{index:00}";
+            list.Controls.Add(SignalRow(
+                registerAlias,
+                GetProcessAlias(SimulationIoDirection.Input, SimulationIoType.Analog, index),
+                _analogValues[index],
+                $"tester{registerAlias}Alias"));
         }
 
         page.Controls.Add(list);
@@ -207,13 +230,28 @@ internal sealed class IndustrialTesterControl : UserControl
             turnOff.Width = 110;
             activate.Click += async (_, _) => await ActivateOutputAsync(channel);
             turnOff.Click += async (_, _) => await TurnOutputOffAsync(channel);
-            FlowLayoutPanel row = SignalRow(channel.ToString(), _outputValues[index]);
+            string registerAlias = channel.ToString();
+            FlowLayoutPanel row = SignalRow(
+                registerAlias,
+                GetProcessAlias(SimulationIoDirection.Output, SimulationIoType.Digital, index),
+                _outputValues[index],
+                $"tester{registerAlias}Alias");
             row.Controls.Add(activate);
             row.Controls.Add(turnOff);
             list.Controls.Add(row);
         }
 
         page.Controls.Add(list);
+        return page;
+    }
+
+    private TabPage BuildIoMappingTab()
+    {
+        TabPage page = Page("Mapa de I/O");
+        page.Name = "ioMappingTab";
+        page.AccessibleName = "Mapa de I/O do perfil de simulação";
+        _ioMap = new IndustrialIoMapControl(_session);
+        page.Controls.Add(_ioMap);
         return page;
     }
 
@@ -424,32 +462,77 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private static TabPage Page(string text) => new(text) { BackColor = PlatformUi.Background, ForeColor = PlatformUi.Text, Padding = new Padding(10) };
 
-    private static FlowLayoutPanel SignalList() => new()
+    private string GetProcessAlias(
+        SimulationIoDirection direction,
+        SimulationIoType ioType,
+        int channel)
     {
-        Dock = DockStyle.Fill,
-        AutoScroll = true,
-        FlowDirection = FlowDirection.TopDown,
-        WrapContents = false,
-        BackColor = PlatformUi.Background,
-        Padding = new Padding(8)
-    };
+        SimulationIoBinding? binding = _session.FindBinding(direction, ioType, channel);
+        SimulationSignalDefinition? signal = _session.FindSignal(binding?.SignalId);
+        return signal?.Label ?? binding?.SignalLabel ?? "Sem binding no perfil";
+    }
 
-    private static FlowLayoutPanel SignalRow(string alias, Label value)
+    private static FlowLayoutPanel SignalList()
+    {
+        FlowLayoutPanel list = new()
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = PlatformUi.Background,
+            Padding = new Padding(8)
+        };
+        list.ClientSizeChanged += (_, _) => ResizeSignalRows(list);
+        return list;
+    }
+
+    private static void ResizeSignalRows(FlowLayoutPanel list)
+    {
+        int width = Math.Max(680, list.ClientSize.Width - list.Padding.Horizontal - 28);
+        foreach (Control control in list.Controls)
+        {
+            if (Equals(control.Tag, "signal-row"))
+            {
+                control.Width = width;
+            }
+        }
+    }
+
+    private static FlowLayoutPanel SignalRow(
+        string registerAlias,
+        string processAlias,
+        Label value,
+        string processAliasControlName)
     {
         FlowLayoutPanel row = new()
         {
-            Width = 820,
-            Height = 46,
+            Width = 900,
+            Height = 50,
             BackColor = PlatformUi.Surface,
             Margin = new Padding(3, 3, 3, 6),
             Padding = new Padding(10, 5, 10, 5),
-            WrapContents = false
+            WrapContents = false,
+            Tag = "signal-row"
         };
-        Label name = PlatformUi.Label(alias, heading: true);
-        name.Width = 180;
+        Label name = PlatformUi.Label(registerAlias, heading: true);
+        name.Width = 100;
+        name.Height = 34;
+        name.AutoSize = false;
+        name.TextAlign = ContentAlignment.MiddleLeft;
+        Label process = PlatformUi.Label(processAlias);
+        process.Name = processAliasControlName;
+        process.Width = 270;
+        process.Height = 34;
+        process.AutoSize = false;
+        process.TextAlign = ContentAlignment.MiddleLeft;
         value.Width = 150;
+        value.Height = 34;
+        value.AutoSize = false;
+        value.TextAlign = ContentAlignment.MiddleLeft;
         value.ForeColor = PlatformUi.Success;
         row.Controls.Add(name);
+        row.Controls.Add(process);
         row.Controls.Add(value);
         return row;
     }

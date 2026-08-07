@@ -16,6 +16,8 @@ internal static class IndustrialPlatformUiValidator
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
             ("modo Simulador carrega sob demanda", SimulatorLoadsLazily),
+            ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
+            ("Mapa de I/O e aliases acompanham o perfil Poco", WellAliasesAndIoMapAreVisible),
             ("sessao padrao usa endereco fake 1", SessionUsesFakeAddressOne),
             ("perfil Pivo pode ser manipulado offline", PivotProfileIsInteractive),
             ("perfil Poco pode ser carregado offline", WellProfileLoads),
@@ -86,6 +88,28 @@ internal static class IndustrialPlatformUiValidator
         using IndustrialPlatformForm form = new();
         form.ShowSimulator();
         return Find<IndustrialSimulatorControl>(form) is { HasPhysicalTransport: false };
+    }
+
+    private static bool PivotAliasesAndIoMapAreVisible()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialTesterControl tester = new(session);
+        return tester.HasIoMappingTab
+            && tester.IoMappingRowCount == session.Profile.IoBindings.Count
+            && tester.IoMappingDeclaresSimulationEvidence
+            && tester.ShowsProcessAlias("DI00", "Emergência")
+            && tester.ShowsProcessAlias("AI00", "Pressão")
+            && tester.ShowsProcessAlias("DO00", "Bomba");
+    }
+
+    private static bool WellAliasesAndIoMapAreVisible()
+    {
+        using IndustrialPlatformSession session = new("poco");
+        using IndustrialTesterControl tester = new(session);
+        return tester.IoMappingRowCount == session.Profile.IoBindings.Count
+            && tester.ShowsProcessAlias("DI00", "Nível mínimo")
+            && tester.ShowsProcessAlias("AI00", "Nível")
+            && tester.ShowsProcessAlias("DO01", "Válvula");
     }
 
     private static bool SessionUsesFakeAddressOne()
