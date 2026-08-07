@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 3,
+  "equipment": {
+    "plcModel": "NEON5-1S",
+    "controllerCpu": "CPU450",
+    "cpuSlot": 0,
+    "maximumModules": 2,
+    "detectedModules": 2,
+    "availableInterfaces": [
+      { "name": "ITF-A1", "physicalLayer": "RS232-C" },
+      { "name": "ITF-A2", "physicalLayer": "RS232-C" },
+      { "name": "ITF-B", "physicalLayer": "RS485" }
+    ],
+    "controllerStatus": {
+      "hardwareRevisionDisplayed": 1,
+      "firmwareRevisionDisplayed": 0,
+      "functionalStatus": "operacional",
+      "startupStatus": "sem falhas",
+      "operationStatus": "sem falhas",
+      "intermittentStatus": "sem falhas",
+      "configurationStatus": "sem falhas"
+    },
+    "moduleModel": "HIO115",
+    "moduleSlot": 1,
+    "moduleStatus": {
+      "hardwareRevisionDisplayed": 0,
+      "firmwareRevisionDisplayed": 0,
+      "functionalStatus": "operacional",
+      "digitalInputs": { "count": 8, "range": "I00-I07" },
+      "digitalOutputs": { "count": 4, "range": "O00-O03" },
+      "analogInputs": { "count": 3, "range": "AI00-AI02" },
+      "fastCounters": { "count": 3, "range": "FCT0-FCT2" },
+      "pwm": { "count": 1, "range": "PWM00" },
+      "analogInputPresentation": "4-20 mA"
+    },
+    "firmware": "",
+    "probableFirmware": "G5PLC.C950.ST [3.3.11]",
+    "firmwareEvidenceStatus": "PROVÁVEL",
+    "labelPhotoEvidence": "",
+    "hiStudioVersion": "2.4.03",
+    "observedProgram": {
+      "condition": "Programa rodando",
+      "name": "MOTOR_HIDRO:PROD_NEON5_HIO115",
+      "version": 3220,
+      "identifier": 31134,
+      "crc": 23248,
+      "startupMode": "Cold restart"
+    },
+    "liveDataEvidence": {
+      "remoteEquipmentCondition": "offline",
+      "hardwareBaseCondition": "Não existe base de hardware definida no ambiente",
+      "digitalInputStateConfirmed": false,
+      "digitalOutputStateConfirmed": false,
+      "analogValuesConfirmed": false,
+      "counterValuesConfirmed": false,
+      "pwmStateConfirmed": false
+    },
+    "physicalIdentification": {
+      "frontIdentification": "PIVODRIP",
+      "displayedManufacturer": "OMNICONTROL",
+      "frontModel": "OMNI-PLC2",
+      "serialNumber": "111.20023",
+      "partNumber": "300.111.622.801",
+      "additionalIdentification": "Slot 1-115",
+      "additionalIdentificationAssessment": "COMPATÍVEL COM HIO115; NÃO É PROVA DEFINITIVA",
+      "nominalSupplyIndication": "10-30 VDC",
+      "currentConnector": "DB9 Serial",
+      "rs485Terminals": "D+ / D-",
+      "rs485TerminationSwitchPresent": true,
+      "observationStatus": "OBSERVADO",
+      "hiStudioIdentity": "NEON5-1S / CPU450 / HIO115",
+      "physicalFrontIdentity": "OMNI-PLC2",
+      "identityComparisonStatus": "CONFLITANTE",
+      "identityRelationshipStatus": "NÃO CONFIRMADA"
+    }
+  },
+  "connection": {
+    "selectedTransport": "RTU",
+    "activeProtocolConfirmed": false,
+    "observedTransport": "serial",
+    "rtu": {
+      "driver": "SERIAL_DRIVER",
+      "channel": "Channel_01",
+      "serialPortName": "COM8",
+      "physicalLayer": "RS232",
+      "controllerInterface": "ITF-A1_OR_ITF-A2",
+      "controllerInterfaceExact": "UNKNOWN",
+      "physicalConnector": "DB9 Serial",
+      "baudRate": 38400,
+      "dataBits": 8,
+      "parity": "None",
+      "stopBits": "One",
+      "interCharacterTimeoutMilliseconds": 50,
+      "transmissionDelayMilliseconds": 2,
+      "carrierRemovalDelayMilliseconds": 0,
+      "maximumFrameSize": 256,
+      "addressRemappingEnabled": false,
+      "manualAddress": 1,
+      "timeoutMilliseconds": 500,
+      "maximumAttempts": 1,
+      "attemptIntervalMilliseconds": 100
+    },
+    "addressing": {
+      "broadcastAddress": 0,
+      "standardMinimum": 1,
+      "standardMaximum": 247,
+      "reservedMinimum": 248,
+      "reservedMaximum": 255,
+      "historicalObservedAddress": 10,
+      "reservedAddressesEnabled": false
+    },
+    "discovery": {
+      "enabled": false,
+      "explicitStartRequired": true,
+      "startAddress": 1,
+      "endAddress": 247,
+      "maximumAttempts": 247,
+      "maximumAttemptsPerAddress": 1,
+      "attemptIntervalMilliseconds": 100,
+      "sequentialAscending": true,
+      "continuousRepeatEnabled": false,
+      "automaticReconnectEnabled": false,
+      "immediateCancellationEnabled": true,
+      "stopOnValidSignature": true,
+      "functionCode": 3,
+      "writesAllowed": false,
+      "coilsAllowed": false,
+      "useHioIoForDiscovery": false
+    }
+  },
+  "identification": {
+    "expectedFirmwareFamily": "G5PLC.C950.ST",
+    "expectedFirmwareVersion": "3.3.11",
+    "expectedProgramId": 31134,
+    "expectedProgramCrc": 23248,
+    "expectedController": "NEON5-1S",
+    "expectedCpu": "CPU450",
+    "expectedModule": "HIO115",
+    "expectedModuleSlot": 1,
+    "registers": [
+      {
+        "name": "FIRMWARE_FAMILY",
+        "symbolicReference": "F10",
+        "documentedReference": null,
+        "protocolDataAddress": null,
+        "access": "R",
+        "status": "PENDENTE"
+      },
+      {
+        "name": "FIRMWARE_VERSION",
+        "symbolicReference": "F11",
+        "documentedReference": null,
+        "protocolDataAddress": null,
+        "access": "R",
+        "status": "PENDENTE"
+      },
+      {
+        "name": "PROG_ID",
+        "symbolicReference": "F12",
+        "documentedReference": 30012,
+        "protocolDataAddress": null,
+        "access": "R",
+        "status": "CONFIRMADO"
+      },
+      {
+        "name": "PROG_CRC",
+        "symbolicReference": "F13",
+        "documentedReference": 30013,
+        "protocolDataAddress": null,
+        "access": "R",
+        "status": "CONFIRMADO"
+      },
+      {
+        "name": "DEV_GFAIL_STS",
+        "symbolicReference": "F21",
+        "documentedReference": 30021,
+        "protocolDataAddress": null,
+        "access": "R",
+        "status": "CONFIRMADO"
+      }
+    ],
+    "criticalF21Bits": [
+      { "bit": 0, "name": "GFS_BLOCK_FAIL", "critical": true },
+      { "bit": 1, "name": "GFS_NBLOCK_FAIL", "critical": true },
+      { "bit": 2, "name": "GFS_FS_FAIL", "critical": true },
+      { "bit": 3, "name": "GFS_ETH_FAIL", "critical": true },
+      { "bit": 8, "name": "GFS_INIT_FAIL", "critical": true },
+      { "bit": 9, "name": "GFS_IDENT_FAIL", "critical": true },
+      { "bit": 10, "name": "GFS_OPER_FAIL", "critical": true },
+      { "bit": 11, "name": "GFS_UNMATCH", "critical": true },
+      { "bit": 12, "name": "GFS_INV_PROG", "critical": true },
+      { "bit": 13, "name": "GFS_INV_FIRM", "critical": true },
+      { "bit": 14, "name": "GFS_NVR_FAIL", "critical": true }
+    ]
+  },
+  "readPolicy": {
+    "registerMapReference": "docs/layout-3-ficha-parametros-conexao.md#mapa-hio115-confirmado-documentalmente",
+    "maximumReads": 14,
+    "allowedRegisters": [
+      { "name": "PROG_ID", "symbolicReference": "F12", "documentedReference": 30012, "mode": "identification", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#assinatura" },
+      { "name": "PROG_CRC", "symbolicReference": "F13", "documentedReference": 30013, "mode": "identification", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#assinatura" },
+      { "name": "DEV_GFAIL_STS", "symbolicReference": "F21", "documentedReference": 30021, "mode": "identification", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#diagnostico-f21" },
+      { "name": "DI00", "symbolicReference": "F1120", "documentedReference": 31120, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI01", "symbolicReference": "F1121", "documentedReference": 31121, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI02", "symbolicReference": "F1122", "documentedReference": 31122, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI03", "symbolicReference": "F1123", "documentedReference": 31123, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI04", "symbolicReference": "F1124", "documentedReference": 31124, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI05", "symbolicReference": "F1125", "documentedReference": 31125, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI06", "symbolicReference": "F1126", "documentedReference": 31126, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "DI07", "symbolicReference": "F1127", "documentedReference": 31127, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-digitais" },
+      { "name": "AI00", "symbolicReference": "F1132", "documentedReference": 31132, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-analogicas" },
+      { "name": "AI01", "symbolicReference": "F1133", "documentedReference": 31133, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-analogicas" },
+      { "name": "AI02", "symbolicReference": "F1134", "documentedReference": 31134, "mode": "input_test", "access": "R", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#entradas-analogicas" }
+    ]
+  },
+  "outputPolicy": {
+    "enabled": false,
+    "genericAddressApiExposed": false,
+    "oneOutputAtATime": true,
+    "explicitCommandRequired": true,
+    "momentaryModeRequired": true,
+    "maximumActivationDurationMilliseconds": 1000,
+    "cancellationRequired": true,
+    "turnOffAtEndRequired": true,
+    "validateReturnRequired": true,
+    "pwmBlocked": true,
+    "reservedRegistersBlocked": true,
+    "arbitraryRegistersBlocked": true,
+    "allowedOutputs": [
+      { "channel": "DO00", "symbolicReference": "F1128", "documentedReference": 31128, "access": "R/W", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#saidas-digitais-supervisionadas" },
+      { "channel": "DO01", "symbolicReference": "F1129", "documentedReference": 31129, "access": "R/W", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#saidas-digitais-supervisionadas" },
+      { "channel": "DO02", "symbolicReference": "F1130", "documentedReference": 31130, "access": "R/W", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#saidas-digitais-supervisionadas" },
+      { "channel": "DO03", "symbolicReference": "F1131", "documentedReference": 31131, "access": "R/W", "approvalEvidence": "docs/layout-3-ficha-parametros-conexao.md#saidas-digitais-supervisionadas" }
+    ],
+    "blockedRegisters": [
+      { "name": "RESERVED_31137", "symbolicReference": "F1137", "documentedReference": 31137, "reason": "reserved" },
+      { "name": "RESERVED_31140", "symbolicReference": "F1140", "documentedReference": 31140, "reason": "reserved" },
+      { "name": "RESERVED_31143", "symbolicReference": "F1143", "documentedReference": 31143, "reason": "reserved" },
+      { "name": "PWM_FREQUENCY", "symbolicReference": "F1144", "documentedReference": 31144, "reason": "pwm" },
+      { "name": "PWM_DUTY", "symbolicReference": "F1145", "documentedReference": 31145, "reason": "pwm" }
+    ]
+  },
+  "safety": {
+    "featureEnabled": false,
+    "realCommunicationEnabled": false,
+    "writesEnabled": false,
+    "outputModeEnabled": false,
+    "pollingEnabled": false,
+    "automaticReconnectEnabled": false,
+    "singleShotOnly": true,
+    "offlineGateDAuthorized": true,
+    "physicalTransportAuthorized": false,
+    "physicalOutputGateAuthorized": false
+  },
+  "bench": {
+    "backupReference": "",
+    "backupSha256": "",
+    "supplyVoltage": "",
+    "measuredVoltageEvidence": "",
+    "responsible": "Atson Melo",
+    "machineState": "",
+    "groundingConfirmed": null,
+    "channelIsolated": null,
+    "outputsDeenergizedOrIsolated": null,
+    "machinePreventedFromOperating": null,
+    "emergencyStopIdentified": null,
+    "quickDisconnectDefined": null,
+    "responsibleDeclarations": {
+      "declaredBy": "Atson Melo",
+      "evidenceStatus": "DECLARADO PELO RESPONSÁVEL",
+      "evidenceReference": "",
+      "responsiblePresent": true,
+      "groundingOk": true,
+      "outputsDeenergizedOrIsolatedOk": true,
+      "machinePreventedFromOperatingOk": true,
+      "machineSafeStateOk": true,
+      "emergencyStopOk": true,
+      "quickDisconnectOk": true,
+      "programBackupOk": true
+    }
+  },
+  "approvalStatuses": {
+    "equipmentIdentity": "CONFLITANTE",
+    "moduleIdentity": "CONFIRMADO",
+    "protocol": "PENDENTE",
+    "connectionParameters": "PENDENTE",
+    "identificationMap": "PENDENTE",
+    "registerMap": "CONFIRMADO",
+    "registerAllowList": "CONFIRMADO",
+    "outputAllowList": "CONFIRMADO",
+    "electricalSafety": "PENDENTE",
+    "benchSafety": "PENDENTE"
+  }
+}
