@@ -1,28 +1,175 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "equipment": {
-    "plcModel": "",
-    "moduleModel": "",
+    "plcModel": "NEON5-1S",
+    "controllerCpu": "CPU450",
+    "cpuSlot": 0,
+    "maximumModules": 2,
+    "detectedModules": 2,
+    "availableInterfaces": [
+      {
+        "name": "ITF-A1",
+        "physicalLayer": "RS232-C"
+      },
+      {
+        "name": "ITF-A2",
+        "physicalLayer": "RS232-C"
+      },
+      {
+        "name": "ITF-B",
+        "physicalLayer": "RS485"
+      }
+    ],
+    "controllerStatus": {
+      "hardwareRevisionDisplayed": 1,
+      "firmwareRevisionDisplayed": 0,
+      "functionalStatus": "operacional",
+      "startupStatus": "sem falhas",
+      "operationStatus": "sem falhas",
+      "intermittentStatus": "sem falhas",
+      "configurationStatus": "sem falhas"
+    },
+    "moduleModel": "HIO115",
+    "moduleSlot": 1,
+    "moduleStatus": {
+      "hardwareRevisionDisplayed": 0,
+      "firmwareRevisionDisplayed": 0,
+      "functionalStatus": "operacional",
+      "digitalInputs": {
+        "count": 8,
+        "range": "I00-I07"
+      },
+      "digitalOutputs": {
+        "count": 4,
+        "range": "O00-O03"
+      },
+      "analogInputs": {
+        "count": 3,
+        "range": "AI00-AI02"
+      },
+      "fastCounters": {
+        "count": 3,
+        "range": "FCT0-FCT2"
+      },
+      "pwm": {
+        "count": 1,
+        "range": "PWM00"
+      },
+      "analogInputPresentation": "4-20 mA"
+    },
     "firmware": "",
-    "labelPhotoEvidence": ""
+    "probableFirmware": "3.3.11",
+    "firmwareEvidenceStatus": "PROVÁVEL",
+    "labelPhotoEvidence": "",
+    "hiStudioVersion": "2.4.03",
+    "observedProgram": {
+      "condition": "Programa rodando",
+      "name": "MOTOR_HIDRO:PROD_NEON5_HIO115",
+      "version": 3220,
+      "identifier": 31134,
+      "crc": 23248,
+      "startupMode": "Cold restart"
+    },
+    "liveDataEvidence": {
+      "remoteEquipmentCondition": "offline",
+      "hardwareBaseCondition": "Não existe base de hardware definida no ambiente",
+      "digitalInputStateConfirmed": false,
+      "digitalOutputStateConfirmed": false,
+      "analogValuesConfirmed": false,
+      "counterValuesConfirmed": false,
+      "pwmStateConfirmed": false
+    }
   },
   "connection": {
-    "protocol": "",
-    "transport": "",
-    "topology": "",
-    "equipmentIpAddress": "",
-    "pcIpAddress": "",
-    "tcpPort": null,
-    "serialPortName": "",
-    "baudRate": null,
-    "dataBits": null,
-    "parity": "",
-    "stopBits": "",
-    "deviceAddress": null
+    "selectedProfile": "RTU",
+    "supportedProfiles": [
+      "RTU",
+      "TCP"
+    ],
+    "activeProtocolConfirmed": false,
+    "observedTransport": "serial",
+    "rtu": {
+      "driver": "SERIAL_DRIVER",
+      "channel": "Channel_01",
+      "serialPortName": "COM8",
+      "physicalLayer": "RS232",
+      "controllerInterface": "ITF-A1_OR_ITF-A2",
+      "controllerInterfaceStatus": "NÃO IDENTIFICADA",
+      "baudRate": 38400,
+      "dataBits": 8,
+      "parity": "None",
+      "stopBits": "One",
+      "interCharacterTimeoutMilliseconds": 50,
+      "transmissionDelayMilliseconds": 2,
+      "carrierRemovalDelayMilliseconds": 0,
+      "maximumFrameSize": 256,
+      "addressRemappingEnabled": false,
+      "deviceAddress": 10,
+      "timeoutMilliseconds": null,
+      "maximumAttempts": 1,
+      "attemptIntervalMilliseconds": null
+    },
+    "tcp": {
+      "equipmentIpAddress": "",
+      "tcpPort": null,
+      "deviceAddress": 10,
+      "timeoutMilliseconds": null,
+      "maximumAttempts": 1
+    },
+    "addressing": {
+      "representableMinimum": 1,
+      "representableMaximum": 255,
+      "standardDiscoveryMinimum": 1,
+      "standardDiscoveryMaximum": 247,
+      "reservedMinimum": 248,
+      "reservedMaximum": 255,
+      "broadcastAddress": 0,
+      "neverAutomaticallyProbeAddress": 255,
+      "currentKnownAddress": 10,
+      "advancedReservedAccess": {
+        "enabled": false,
+        "manualSingleAddress": null,
+        "warningAcknowledged": false,
+        "explicitApprovalReference": ""
+      }
+    },
+    "discovery": {
+      "enabled": false,
+      "explicitStartRequired": true,
+      "rangeStart": 10,
+      "rangeEnd": 10,
+      "addressAllowList": [
+        10
+      ],
+      "maximumAttemptsPerAddress": 1,
+      "attemptIntervalMilliseconds": null,
+      "continuousRepeatEnabled": false,
+      "immediateCancellationEnabled": true,
+      "functionCode": 3,
+      "writesAllowed": false,
+      "coilsAllowed": false,
+      "requireAllIdentificationValues": true,
+      "useHioIoForDiscovery": false,
+      "identificationCandidates": [
+        {
+          "name": "F12",
+          "displayReference": "30012",
+          "protocolDataAddress": null,
+          "access": "R",
+          "expectedValue": 31134
+        },
+        {
+          "name": "F13",
+          "displayReference": "30013",
+          "protocolDataAddress": null,
+          "access": "R",
+          "expectedValue": 23248
+        }
+      ]
+    }
   },
   "readPolicy": {
     "registerMapReference": "",
-    "timeoutMilliseconds": 0,
     "maximumReads": 0,
     "allowedRegisters": []
   },
@@ -32,7 +179,8 @@
     "writesEnabled": false,
     "pollingEnabled": false,
     "automaticReconnectEnabled": false,
-    "singleShotOnly": true
+    "singleShotOnly": true,
+    "gateDAuthorized": false
   },
   "bench": {
     "backupReference": "",
@@ -47,10 +195,10 @@
     "quickDisconnectDefined": null
   },
   "approvalStatuses": {
-    "equipmentIdentity": "CONFLITANTE",
-    "moduleIdentity": "PENDENTE",
+    "equipmentIdentity": "CONFIRMADO",
+    "moduleIdentity": "CONFIRMADO",
     "protocol": "PENDENTE",
-    "connectionParameters": "CONFLITANTE",
+    "connectionParameters": "PENDENTE",
     "registerMap": "CONFLITANTE",
     "registerAllowList": "NÃO DISPONÍVEL",
     "electricalSafety": "PENDENTE",

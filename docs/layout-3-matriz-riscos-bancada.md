@@ -12,8 +12,13 @@
 | Equipamento errado | Media | Critico | Etiqueta difere da ficha ou foto | Dupla conferencia de modelo, CPU, modulo e slot | Nao conectar; corrigir ficha e aprovacao | Qualquer divergencia de identidade |
 | IP errado | Media | Alto | IP nao coincide com ficha aprovada | Copia controlada, revisao por duas pessoas e rede isolada | Cancelar e restaurar rede do PC | Resposta de host inesperado ou divergencia de IP |
 | Porta errada | Media | Alto | Porta difere da ficha/mapa | Valor fechado na configuracao aprovada | Cancelar sem testar portas alternativas | Tentativa em porta nao aprovada |
+| Perfil RTU/TCP errado | Media | Alto | Seletor diverge da ficha ou exige campos do outro perfil | Selecao explicita, validacao local e nenhuma conexao automatica | Cancelar; nao alternar perfil durante a tentativa | Perfil selecionado diferente do aprovado |
+| Camada/interface fisica errada | Media | Critico | RS232/RS485 ou cabo diverge da ficha | Validar camada, cabo e interface separadamente; selecao nao altera hardware | Nao conectar; corrigir identificacao fisica | Qualquer divergencia de camada ou interface |
 | Protocolo errado | Media | Alto | Resposta invalida ou perfil divergente | Confirmar manual/programa e bloquear protocolos nao aprovados | Retirar cabo e revisar documentacao | Primeiro frame/resposta incompativel |
-| Unit ID errado | Media | Alto | Endereco difere da ficha ou resposta vem de outra unidade | Unit ID fechado, sem varredura automatica | Cancelar; nao tentar IDs adjacentes | Resposta de unidade nao aprovada |
+| Unit ID errado | Media | Alto | Endereco difere da ficha ou resposta vem de outra unidade | Unit ID fechado; descoberta OFF e allow-list explicita | Cancelar; nao tentar IDs adjacentes manualmente | Resposta de unidade nao aprovada |
+| Broadcast ou endereco reservado | Baixa | Critico | Configuracao contem 0 ou 248..255 sem aprovacao | 0 proibido; automatico limitado a 1..247; 255 nunca sondado | Bloquear preflight e registrar incidente | Qualquer tentativa em 0 ou endereco reservado nao aprovado |
+| Faixa de descoberta excessiva | Media | Alto | Range excede allow-list ou mais de uma tentativa aparece | Default 10..10, maximo uma tentativa por endereco e cancelamento | Cancelar e revisar lista/intervalo | Endereco fora da allow-list ou segunda tentativa automatica |
+| Identificacao por evidencia parcial | Media | Alto | Apenas ID ou CRC coincide | Exigir F12/30012 = 31134 e F13/30013 = 23248 em conjunto | Classificar como nao identificado e encerrar | Declaracao de identidade com apenas um valor |
 | Mapa incompativel | Alta | Critico | Endereco, tipo ou semantica divergem da evidencia | Mapa vinculado a firmware/programa e revisado por duas pessoas | Bloquear allow-list e retornar ao Gate C | Qualquer duvida sobre endereco ou significado |
 | Firmware diferente | Media | Alto | Versao observada difere da ficha | Registrar firmware antes da conexao | Cancelar e revalidar mapa/protocolo | Divergencia de firmware |
 | Leitura em area sensivel | Media | Critico | Endereco fora da allow-list ou classificado como comando | Allow-list minima, finalidade e evidencia por item | Cancelamento imediato e incidente | Qualquer acesso fora da allow-list |
@@ -35,6 +40,8 @@
 | Fontes conflitantes para modelo/CPU/modulo | Alta | Critico | Inventario mostra combinacoes NEON/RION diferentes | Exigir foto da etiqueta e selecao explicita do conjunto | Manter configuracao bloqueada | Identidade ainda conflitante no preflight |
 | Default de software tratado como dado real | Alta | Alto | Valor existe apenas no codigo/catalogo pendente | Marcar defaults como nao confirmados | Limpar campo e solicitar evidencia | Parametro sem fonte da unidade real |
 | Mapa legado contendo comandos | Alta | Critico | `%MW` inclui habilitacao, reset e watchdog | Proibir copia automatica para allow-list | Criar allow-list nova e revisada | Inclusao de comando, coil ou endereco sem finalidade read-only |
+| Referencia 30012/30013 convertida por suposicao | Alta | Critico | Endereco de dados foi preenchido sem fonte do mapa | Manter `protocolDataAddress` vazio ate revisao do mapa | Remover traducao inferida e bloquear descoberta | Qualquer offset deduzido sem evidencia aprovada |
+| Tela offline tratada como leitura fisica | Alta | Alto | Captura indica equipamento remoto offline/sem base de hardware | Separar capacidade declarada de estado atual | Descartar valores/estados e solicitar evidencia valida | Uso de I/O, analogico, contador ou PWM como estado real |
 
 ## Aceitacao de risco
 

@@ -18,7 +18,8 @@ Sem essas evidencias, o teste deve ser cancelado antes da conexao.
 
 ## Cancelamento normal da aplicacao
 
-1. Solicitar cancelamento pelo mecanismo previsto no futuro transporte.
+1. Acionar `Cancelar` no futuro fluxo; o comando deve cancelar tanto uma
+   operacao manual quanto uma descoberta, sem iniciar nova tentativa.
 2. Aguardar somente o tempo de encerramento aprovado.
 3. Confirmar que nao ha operacao pendente.
 4. Encerrar o processo pelo fluxo normal da aplicacao ou `Ctrl+C` quando a
@@ -33,6 +34,20 @@ Sem essas evidencias, o teste deve ser cancelado antes da conexao.
 3. Se o cancelamento nao concluir no limite aprovado, declarar incidente.
 4. O responsavel designado deve retirar o cabo pelo ponto de desconexao rapida.
 5. Nao repetir a tentativa ate revisar logs, parametros e estado da bancada.
+6. Nao trocar RTU por TCP, RS232 por RS485, COM, IP, porta ou endereco como
+   tentativa de recuperacao.
+
+## Interromper descoberta futura
+
+1. Acionar cancelamento imediato uma unica vez.
+2. Confirmar que o contador de tentativas parou e nao ultrapassou uma tentativa
+   no endereco corrente.
+3. Confirmar que nenhum endereco fora da allow-list foi tentado.
+4. Confirmar que 0 e 255 nao foram sondados e que 248..255 permaneceram
+   bloqueados sem aprovacao avancada.
+5. Preservar ID/CRC parciais sem declarar equipamento identificado.
+6. Retirar o cabo conforme o procedimento se o cancelamento nao concluir no
+   limite aprovado.
 
 ## Retirada do cabo
 
@@ -51,6 +66,11 @@ Sem essas evidencias, o teste deve ser cancelado antes da conexao.
 4. Conferir interface, endereco, mascara, gateway e DNS contra o registro
    anterior.
 5. Registrar a verificacao final; nao testar conectividade contra o CLP.
+
+Para perfil RTU, tambem restaurar apenas ajustes locais de porta/conversor que
+tenham sido previamente registrados. Nao abrir COM8 para confirmar a
+restauracao e nao alternar fisicamente ITF-A1/ITF-A2/ITF-B sem procedimento da
+bancada.
 
 ## Confirmar zero escritas
 

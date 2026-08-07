@@ -28,8 +28,48 @@ espaco disponivel.
 6. Saida de `--validate-layout-3-bench-readiness-self-tests`.
 7. Saida de `--validate-layout-3-bench-readiness`.
 8. Varredura dos novos arquivos por APIs de rede/serial/protocolo proibidas.
-9. Hash SHA-256 da configuracao e dos seis documentos.
+9. Hash SHA-256 da configuracao e dos sete documentos obrigatorios.
 10. Contadores zero no inicio e no fim.
+11. Revisao do desenho arquitetural offline RTU/TCP e da varredura de APIs
+    proibidas.
+
+Evidencia parcial ja registrada no JSON/ficha:
+
+- `NEON5-1S / CPU450 slot 0 / HIO115 slot 1`;
+- maximo de 2 modulos e 2 modulos detectados;
+- interfaces disponiveis `ITF-A1 RS232-C`, `ITF-A2 RS232-C` e `ITF-B RS485`,
+  com perfil atual RS232 em `ITF-A1_OR_ITF-A2`; falta diferenciar A1 de A2 e
+  identificar fisicamente o cabo;
+- CPU com revisao de hardware exibida 1, revisao de firmware exibida 0,
+  operacional e sem falhas nos diagnosticos apresentados;
+- HIO115 com revisoes exibidas 0/0, operacional, 8 DI `I00-I07`, 4 DO
+  `O00-O03`, 3 AI `AI00-AI02`, 3 FCT `FCT0-FCT2`, 1 PWM `PWM00` e
+  apresentacao analogica 4-20 mA;
+- HIstudio `2.4.03`;
+- canal `SERIAL_DRIVER / Channel_01 / COM8 / 38400 / 8N1` e temporizacoes;
+- perfil fisico atual RS232, interface `ITF-A1_OR_ITF-A2` com identificacao
+  exata pendente e endereco atual 10;
+- programa `MOTOR_HIDRO:PROD_NEON5_HIO115`, versao 3220, identificador 31134,
+  CRC 23248, observado rodando com `Cold restart`.
+
+O valor `3.3.11` deve ser preservado como `PROVÁVEL`, sem promover firmware da
+CPU a confirmado. A evidencia nao inclui protocolo realmente ativado, timeout,
+intervalo entre tentativas, mapa, allow-list ou condicoes seguras de bancada.
+
+As capturas registram `Equipamento remoto offline` e ausencia de base de
+hardware definida no ambiente. Os canais acima sao capacidades exibidas, nao
+leituras fisicas. Nao registrar como evidencia de teste estados de entradas,
+saidas, valores analogicos, contadores ou PWM dessas telas.
+
+Decisoes arquiteturais registradas, sem transporte:
+
+- perfis selecionaveis RTU/TCP e nenhuma conexao automatica;
+- TCP sem IP/porta default;
+- 1..255 representavel, 1..247 automatico, 248..255 reservado, 0 proibido e
+  255 nunca sondado automaticamente;
+- descoberta OFF, default `10..10`, allow-list `[10]`, uma tentativa e FC03;
+- candidatos F12/30012 = 31134 e F13/30013 = 23248, exigidos em conjunto;
+- `protocolDataAddress` vazio ate aprovacao do mapa; nenhum offset inferido.
 
 ## Comando de preflight
 
@@ -72,6 +112,10 @@ Somente apos o Gate D:
 - dado invalido;
 - tentativa fora da allow-list;
 - prova de que escrita/coil nao compila ou nao e acessivel;
+- cenarios separados para selecao RTU e TCP;
+- endereco 0 rejeitado e 248..255 rejeitados sem aprovacao avancada;
+- descoberta limitada a allow-list 1..247, cancelamento e uma tentativa;
+- identificacao somente quando ID e CRC coincidirem;
 - contadores de tentativas, conexoes e leituras;
 - escritas e comandos fisicos fixados em zero.
 
