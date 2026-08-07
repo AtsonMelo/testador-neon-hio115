@@ -83,15 +83,42 @@ internal static class Layout3BenchReadinessScenarioValidator
                 configuration.Connection!.Rtu!.ControllerInterface = "ITF-A1_OR_ITF-A2";
                 configuration.Connection.Rtu.ControllerInterfaceStatus = "NÃO IDENTIFICADA";
             }),
+            new("perfil RTU ignora TCP incompleto", true, static (configuration, _) =>
+                configuration.Connection!.Tcp = new Layout3ModbusTcpProfileConfiguration()),
             new("perfil TCP completo", true, static (configuration, _) =>
                 SelectTcpProfile(configuration)),
+            new("perfil TCP ignora RTU incompleto", true, static (configuration, _) =>
+            {
+                SelectTcpProfile(configuration);
+                configuration.Connection!.Rtu = null;
+            }),
             new("IP TCP ausente", false, static (configuration, _) =>
             {
                 SelectTcpProfile(configuration);
                 configuration.Connection!.Tcp!.EquipmentIpAddress = string.Empty;
             }),
+            new("porta TCP ausente", false, static (configuration, _) =>
+            {
+                SelectTcpProfile(configuration);
+                configuration.Connection!.Tcp!.TcpPort = null;
+            }),
+            new("topologia TCP nao isolada", false, static (configuration, _) =>
+            {
+                SelectTcpProfile(configuration);
+                configuration.Connection!.Tcp!.Topology = string.Empty;
+            }),
             new("protocolo ativo nao confirmado", false, static (configuration, _) =>
                 configuration.Connection!.ActiveProtocolConfirmed = false),
+            new("identidade fisica conflitante", false, static (configuration, _) =>
+            {
+                configuration.Equipment!.PhysicalIdentification!.IdentityComparisonStatus = "CONFLITANTE";
+                configuration.Equipment.PhysicalIdentification.IdentityRelationshipStatus = "NÃO CONFIRMADA";
+            }),
+            new("declaracao do responsavel sem evidencia", false, static (configuration, _) =>
+            {
+                configuration.Bench!.ResponsibleDeclarations!.EvidenceStatus = "DECLARADO PELO RESPONSÁVEL";
+                configuration.Bench.ResponsibleDeclarations.EvidenceReference = string.Empty;
+            }),
             new("mapa ausente", false, static (configuration, _) =>
                 configuration.ReadPolicy!.RegisterMapReference = string.Empty),
             new("allow-list vazia", false, static (configuration, _) =>
@@ -211,6 +238,25 @@ internal static class Layout3BenchReadinessScenarioValidator
                     AnalogValuesConfirmed = false,
                     CounterValuesConfirmed = false,
                     PwmStateConfirmed = false
+                },
+                PhysicalIdentification = new Layout3PhysicalIdentificationEvidence
+                {
+                    FrontIdentification = "TEST-FRONT",
+                    DisplayedManufacturer = "TEST-MANUFACTURER",
+                    FrontModel = "TEST-PHYSICAL-MODEL",
+                    SerialNumber = "TEST-SERIAL",
+                    PartNumber = "TEST-PART",
+                    AdditionalIdentification = "TEST-ADDITIONAL",
+                    AdditionalIdentificationAssessment = "TEST-COMPATIBLE",
+                    NominalSupplyIndication = "TEST-NOMINAL-SUPPLY",
+                    CurrentConnector = "TEST-CONNECTOR",
+                    Rs485Terminals = "TEST-D+ / TEST-D-",
+                    Rs485TerminationSwitchPresent = true,
+                    ObservationStatus = "OBSERVADO",
+                    HiStudioIdentity = "TEST-HISTUDIO-IDENTITY",
+                    PhysicalFrontIdentity = "TEST-PHYSICAL-IDENTITY",
+                    IdentityComparisonStatus = "CONFIRMADO",
+                    IdentityRelationshipStatus = "CONFIRMADA"
                 }
             },
             Connection = new Layout3BenchConnectionConfiguration
@@ -227,6 +273,7 @@ internal static class Layout3BenchReadinessScenarioValidator
                     PhysicalLayer = "RS232",
                     ControllerInterface = "TEST-ITF-A",
                     ControllerInterfaceStatus = "TEST-IDENTIFIED",
+                    PhysicalConnector = "TEST-DB9",
                     BaudRate = 38400,
                     DataBits = 8,
                     Parity = "None",
@@ -245,6 +292,7 @@ internal static class Layout3BenchReadinessScenarioValidator
                 {
                     EquipmentIpAddress = "192.0.2.10",
                     TcpPort = 1502,
+                    Topology = "isolated",
                     DeviceAddress = 10,
                     TimeoutMilliseconds = 500,
                     MaximumAttempts = 1
@@ -350,7 +398,21 @@ internal static class Layout3BenchReadinessScenarioValidator
                 OutputsDeenergizedOrIsolated = true,
                 MachinePreventedFromOperating = true,
                 EmergencyStopIdentified = true,
-                QuickDisconnectDefined = true
+                QuickDisconnectDefined = true,
+                ResponsibleDeclarations = new Layout3ResponsibleDeclarations
+                {
+                    DeclaredBy = "TEST-RESPONSIBLE",
+                    EvidenceStatus = "CONFIRMADO",
+                    EvidenceReference = "evidence/test-responsible-declarations.txt",
+                    ResponsiblePresent = true,
+                    GroundingOk = true,
+                    OutputsDeenergizedOrIsolatedOk = true,
+                    MachinePreventedFromOperatingOk = true,
+                    MachineSafeStateOk = true,
+                    EmergencyStopOk = true,
+                    QuickDisconnectOk = true,
+                    ProgramBackupOk = true
+                }
             },
             ApprovalStatuses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {

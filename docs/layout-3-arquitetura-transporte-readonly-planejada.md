@@ -42,14 +42,32 @@ intervalo entre tentativas.
 Perfil inicial registrado: COM8, RS232, `38400 / 8-N-1`, endereco 10. A
 interface e `ITF-A1_OR_ITF-A2` com status `NÃO IDENTIFICADA`; isso nao bloqueia
 o perfil de software porque ambas sao RS232-C, mas permanece pendencia fisica
-documental. Selecionar RS485 nao muda esse campo automaticamente: exige cabo,
+documental. O conector atual e DB9 identificado como `Serial`. Os bornes RS-485
+`D+ / D-` e a chave de terminacao existem separadamente e nao indicam uso atual
+de RS-485. Selecionar RS485 nao muda o hardware automaticamente: exige cabo,
 conversor e interface fisica confirmados separadamente.
 
 ### Perfil TCP
 
-Campos: IP do controlador, porta TCP, Unit ID/endereco, timeout e maximo de
-tentativas. IP e porta permanecem vazios. O endereco inicial 10 e editavel.
-O perfil TCP so e exigido quando selecionado.
+Campos: IP do controlador, porta TCP, Unit ID/endereco, topologia isolada,
+timeout e maximo de tentativas. IP, porta e topologia permanecem vazios. O
+endereco inicial 10 e editavel. O perfil TCP so e exigido quando selecionado.
+
+O preflight valida exclusivamente o perfil selecionado. RTU nao exige dados
+TCP; TCP nao exige dados RTU. Trocar o seletor nao abre nem reconfigura qualquer
+interface.
+
+## Identidade e evidencia fisica
+
+O HIstudio apresenta `NEON5-1S / CPU450 / HIO115`, enquanto o frontal apresenta
+`PIVODRIP / OMNICONTROL / OMNI-PLC2`. A relacao e `NÃO CONFIRMADA`; o Gate C
+permanece bloqueado. `Slot 1115` e apenas compativel com HIO115, sem provar a
+equivalencia.
+
+O texto nominal `1030 VDC` e preservado literalmente, sem conversao para faixa
+e sem equivaler a tensao medida. Declaracoes do responsavel sobre aterramento,
+isolamento, estado seguro, emergencia, desconexao e backup nao satisfazem os
+gates enquanto faltarem evidencias verificaveis.
 
 ## Enderecamento
 

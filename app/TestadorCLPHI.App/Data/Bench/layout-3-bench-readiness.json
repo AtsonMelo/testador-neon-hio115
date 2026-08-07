@@ -78,6 +78,24 @@
       "analogValuesConfirmed": false,
       "counterValuesConfirmed": false,
       "pwmStateConfirmed": false
+    },
+    "physicalIdentification": {
+      "frontIdentification": "PIVODRIP",
+      "displayedManufacturer": "OMNICONTROL",
+      "frontModel": "OMNI-PLC2",
+      "serialNumber": "111.20023",
+      "partNumber": "300.111.622.801",
+      "additionalIdentification": "Slot 1115",
+      "additionalIdentificationAssessment": "COMPATÍVEL COM HIO115; NÃO É PROVA DEFINITIVA",
+      "nominalSupplyIndication": "1030 VDC",
+      "currentConnector": "DB9 Serial",
+      "rs485Terminals": "D+ / D-",
+      "rs485TerminationSwitchPresent": true,
+      "observationStatus": "OBSERVADO",
+      "hiStudioIdentity": "NEON5-1S / CPU450 / HIO115",
+      "physicalFrontIdentity": "OMNI-PLC2",
+      "identityComparisonStatus": "CONFLITANTE",
+      "identityRelationshipStatus": "NÃO CONFIRMADA"
     }
   },
   "connection": {
@@ -95,6 +113,7 @@
       "physicalLayer": "RS232",
       "controllerInterface": "ITF-A1_OR_ITF-A2",
       "controllerInterfaceStatus": "NÃO IDENTIFICADA",
+      "physicalConnector": "DB9 Serial",
       "baudRate": 38400,
       "dataBits": 8,
       "parity": "None",
@@ -112,6 +131,7 @@
     "tcp": {
       "equipmentIpAddress": "",
       "tcpPort": null,
+      "topology": "",
       "deviceAddress": 10,
       "timeoutMilliseconds": null,
       "maximumAttempts": 1
@@ -185,17 +205,30 @@
   "bench": {
     "backupReference": "",
     "supplyVoltage": "",
-    "responsible": "",
+    "responsible": "Atson Melo",
     "machineState": "",
     "groundingConfirmed": null,
     "networkIsolated": null,
     "outputsDeenergizedOrIsolated": null,
     "machinePreventedFromOperating": null,
     "emergencyStopIdentified": null,
-    "quickDisconnectDefined": null
+    "quickDisconnectDefined": null,
+    "responsibleDeclarations": {
+      "declaredBy": "Atson Melo",
+      "evidenceStatus": "DECLARADO PELO RESPONSÁVEL",
+      "evidenceReference": "",
+      "responsiblePresent": true,
+      "groundingOk": true,
+      "outputsDeenergizedOrIsolatedOk": true,
+      "machinePreventedFromOperatingOk": true,
+      "machineSafeStateOk": true,
+      "emergencyStopOk": true,
+      "quickDisconnectOk": true,
+      "programBackupOk": true
+    }
   },
   "approvalStatuses": {
-    "equipmentIdentity": "CONFIRMADO",
+    "equipmentIdentity": "CONFLITANTE",
     "moduleIdentity": "CONFIRMADO",
     "protocol": "PENDENTE",
     "connectionParameters": "PENDENTE",

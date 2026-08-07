@@ -14,7 +14,15 @@ e nunca satisfaz um campo que exige confirmacao.
 
 | Campo | Valor | Status atual | Fonte/evidencia | Revisor |
 |---|---|---|---|---|
-| Modelo exato do CLP | `NEON5-1S` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
+| Identidade no HIstudio | `NEON5-1S / CPU450 / HIO115` | `CONFIRMADO` nessa fonte | Evidencia direta do HIstudio conectado |  |
+| Identificacao frontal | `PIVODRIP` | `OBSERVADO` | Inspecao fisica frontal |  |
+| Fabricante/marca frontal | `OMNICONTROL` | `OBSERVADO` | Inspecao fisica frontal |  |
+| Modelo frontal | `OMNI-PLC2` | `OBSERVADO` | Inspecao fisica frontal |  |
+| Numero de serie | `111.20023` | `OBSERVADO` | Inspecao fisica frontal |  |
+| Part number | `300.111.622.801` | `OBSERVADO` | Inspecao fisica frontal |  |
+| Identificacao adicional | `Slot 1115` | `OBSERVADO` | Compativel com HIO115; nao e prova definitiva |  |
+| Relacao OMNI-PLC2 / NEON5-1S |  | `NÃO CONFIRMADA` | Exige comprovacao documental |  |
+| Resultado da identidade | `OMNI-PLC2 versus NEON5-1S` | `CONFLITANTE` | Nao deduzir equivalencia |  |
 | CPU | `CPU450` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
 | Slot da CPU | `0` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
 | Maximo de modulos | `2` | `CONFIRMADO` | Valor exibido no HIstudio |  |
@@ -34,15 +42,17 @@ e nunca satisfaz um campo que exige confirmacao.
 | Identificador do programa | `31134` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
 | CRC do programa | `23248` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
 | Modo de inicializacao observado | `Cold restart` | `CONFIRMADO` | Evidencia direta do HIstudio conectado |  |
-| Backup/hash do programa |  | `PENDENTE` |  |  |
+| Backup do programa | `OK` | `DECLARADO PELO RESPONSÁVEL` | Atson Melo; caminho/nome ainda ausentes |  |
+| Algoritmo e hash do backup |  | `PENDENTE` |  |  |
 
 ## Interfaces e capacidades observadas
 
 | Campo | Valor | Status atual | Fonte/evidencia | Revisor |
 |---|---|---|---|---|
 | Interfaces disponiveis | `ITF-A1 RS232-C; ITF-A2 RS232-C; ITF-B RS485` | `CONFIRMADO` | Inventario exibido no HIstudio; nao identifica a interface ativa |  |
-| Interface efetivamente utilizada |  | `PENDENTE` | Confirmar entre ITF-A1, ITF-A2 e ITF-B |  |
-| Padrao fisico do cabo real |  | `PENDENTE` | Confirmar RS232 ou RS485 na bancada |  |
+| Interface efetivamente utilizada | `ITF-A1_OR_ITF-A2` | `NÃO IDENTIFICADA` | Ambas sao RS232-C; diferenciar fisicamente |  |
+| Conector/cabo atual | `DB9 Serial / RS-232` | `CONFIRMADO` | Observacao fisica e informacao do responsavel |  |
+| RS-485 disponivel | `Bornes D+ / D-; chave de terminacao presente` | `OBSERVADO` | Nao indica uso atual de RS-485 |  |
 | Entradas digitais disponiveis | `8: I00-I07` | `CONFIRMADO` | Capacidade exibida do HIO115; estado atual nao confirmado |  |
 | Saidas digitais disponiveis | `4: O00-O03` | `CONFIRMADO` | Capacidade exibida do HIO115; estado atual nao confirmado |  |
 | Entradas analogicas disponiveis | `3: AI00-AI02; apresentacao 4-20 mA` | `CONFIRMADO` | Capacidade/apresentacao exibidas; valores atuais nao confirmados |  |
@@ -70,6 +80,7 @@ e nunca satisfaz um campo que exige confirmacao.
 |---|---|---|---|---|
 | IP do CLP |  | `NÃO DISPONÍVEL` |  |  |
 | Porta TCP |  | `NÃO DISPONÍVEL` | Nao preencher por default |  |
+| Topologia TCP isolada |  | `PENDENTE` | Obrigatoria somente quando TCP for selecionado |  |
 | Unit ID/endereco inicial TCP | `10` | `CONFIRMADO` | Endereco atual conhecido; campo editavel |  |
 | Timeout TCP |  | `PENDENTE` | Exigido somente quando TCP for selecionado |  |
 | Maximo de tentativas TCP | `1` | `CONFIRMADO` | Politica de uma tentativa por operacao/endereco |  |
@@ -87,6 +98,7 @@ e nunca satisfaz um campo que exige confirmacao.
 | Porta serial | `COM8` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
 | Camada fisica selecionada | `RS232` | `CONFIRMADO` | Perfil atual; opcoes futuras RS232 ou RS485 |  |
 | Interface do controlador | `ITF-A1_OR_ITF-A2` | `NÃO IDENTIFICADA` | Nao bloqueia o perfil de software; confirmar fisicamente |  |
+| Conector fisico atual | `DB9 Serial` | `CONFIRMADO` | Identificacao frontal observada |  |
 | Baud rate | `38400` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
 | Data bits | `8` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
 | Paridade | `None` | `CONFIRMADO` | Nenhuma, conforme HIstudio |  |
@@ -96,7 +108,8 @@ e nunca satisfaz um campo que exige confirmacao.
 | Atraso para remover portadora | `0 ms` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
 | Tamanho maximo do frame | `256` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
 | Remapeamento de endereco | `Nao` | `CONFIRMADO` | Configuracao observada no HIstudio |  |
-| Terminacao/polaridade RS-485 |  | `NÃO DISPONÍVEL` |  |  |
+| Bornes RS-485 disponiveis | `D+ / D-` | `OBSERVADO` | Nao usados pelo cabo atual |  |
+| Chave de terminacao RS-485 | `Presente` | `OBSERVADO` | Posicao/estado nao confirmados |  |
 | Endereco RTU | `10` | `CONFIRMADO` | Endereco atual conhecido |  |
 | Timeout RTU |  | `PENDENTE` | Deve ficar entre 100 e 5000 ms |  |
 | Maximo de tentativas RTU | `1` | `CONFIRMADO` | Politica de uma tentativa por operacao/endereco |  |
@@ -159,14 +172,16 @@ Nao usar I/O do HIO115 para descoberta.
 
 | Campo | Valor | Status atual | Fonte/evidencia | Revisor |
 |---|---|---|---|---|
-| Tensao/alimentacao |  | `PENDENTE` |  |  |
-| Aterramento confirmado |  | `NÃO DISPONÍVEL` |  |  |
-| Saidas desenergizadas/isoladas |  | `PENDENTE` |  |  |
-| Maquina impedida de operar |  | `NÃO DISPONÍVEL` |  |  |
-| Estado seguro da maquina |  | `NÃO DISPONÍVEL` |  |  |
-| Responsavel presente |  | `NÃO DISPONÍVEL` |  |  |
-| Emergencia identificada |  | `NÃO DISPONÍVEL` |  |  |
-| Desconexao rapida definida |  | `NÃO DISPONÍVEL` |  |  |
+| Indicacao nominal frontal | `1030 VDC` | `OBSERVADO` | Texto registrado literalmente; nao e medicao nem faixa deduzida |  |
+| Tensao efetivamente medida |  | `PENDENTE` | Exige valor, instrumento e evidencia |  |
+| Aterramento | `OK` | `DECLARADO PELO RESPONSÁVEL` | Atson Melo; falta evidencia |  |
+| Saidas desenergizadas/isoladas | `OK` | `DECLARADO PELO RESPONSÁVEL` | Atson Melo; falta evidencia |  |
+| Maquina impedida de operar | `OK` | `DECLARADO PELO RESPONSÁVEL` | Atson Melo; falta evidencia |  |
+| Estado seguro da maquina | `OK` | `DECLARADO PELO RESPONSÁVEL` | Atson Melo; falta evidencia |  |
+| Responsavel presente | `Atson Melo` | `DECLARADO PELO RESPONSÁVEL` | Falta registro/assinatura de evidencia |  |
+| Emergencia identificada | `OK` | `DECLARADO PELO RESPONSÁVEL` | Falta foto/identificacao |  |
+| Desconexao rapida definida | `OK` | `DECLARADO PELO RESPONSÁVEL` | Falta meio e evidencia |  |
+| Configuracao original de rede do PC |  | `PENDENTE` | Exige evidencia antes de qualquer ajuste |  |
 
 ## Aprovacoes
 

@@ -52,6 +52,43 @@ internal sealed class Layout3BenchEquipmentConfiguration
     public Layout3ObservedProgramConfiguration? ObservedProgram { get; set; }
 
     public Layout3LiveDataEvidence? LiveDataEvidence { get; set; }
+
+    public Layout3PhysicalIdentificationEvidence? PhysicalIdentification { get; set; }
+}
+
+internal sealed class Layout3PhysicalIdentificationEvidence
+{
+    public string? FrontIdentification { get; set; }
+
+    public string? DisplayedManufacturer { get; set; }
+
+    public string? FrontModel { get; set; }
+
+    public string? SerialNumber { get; set; }
+
+    public string? PartNumber { get; set; }
+
+    public string? AdditionalIdentification { get; set; }
+
+    public string? AdditionalIdentificationAssessment { get; set; }
+
+    public string? NominalSupplyIndication { get; set; }
+
+    public string? CurrentConnector { get; set; }
+
+    public string? Rs485Terminals { get; set; }
+
+    public bool? Rs485TerminationSwitchPresent { get; set; }
+
+    public string? ObservationStatus { get; set; }
+
+    public string? HiStudioIdentity { get; set; }
+
+    public string? PhysicalFrontIdentity { get; set; }
+
+    public string? IdentityComparisonStatus { get; set; }
+
+    public string? IdentityRelationshipStatus { get; set; }
 }
 
 internal sealed class Layout3AvailableInterfaceEvidence
@@ -171,6 +208,8 @@ internal sealed class Layout3ModbusRtuProfileConfiguration
 
     public string? ControllerInterfaceStatus { get; set; }
 
+    public string? PhysicalConnector { get; set; }
+
     public int? BaudRate { get; set; }
 
     public int? DataBits { get; set; }
@@ -203,6 +242,8 @@ internal sealed class Layout3ModbusTcpProfileConfiguration
     public string? EquipmentIpAddress { get; set; }
 
     public int? TcpPort { get; set; }
+
+    public string? Topology { get; set; }
 
     public int? DeviceAddress { get; set; }
 
@@ -351,6 +392,33 @@ internal sealed class Layout3BenchConditionsConfiguration
     public bool? EmergencyStopIdentified { get; set; }
 
     public bool? QuickDisconnectDefined { get; set; }
+
+    public Layout3ResponsibleDeclarations? ResponsibleDeclarations { get; set; }
+}
+
+internal sealed class Layout3ResponsibleDeclarations
+{
+    public string? DeclaredBy { get; set; }
+
+    public string? EvidenceStatus { get; set; }
+
+    public string? EvidenceReference { get; set; }
+
+    public bool? ResponsiblePresent { get; set; }
+
+    public bool? GroundingOk { get; set; }
+
+    public bool? OutputsDeenergizedOrIsolatedOk { get; set; }
+
+    public bool? MachinePreventedFromOperatingOk { get; set; }
+
+    public bool? MachineSafeStateOk { get; set; }
+
+    public bool? EmergencyStopOk { get; set; }
+
+    public bool? QuickDisconnectOk { get; set; }
+
+    public bool? ProgramBackupOk { get; set; }
 }
 
 internal sealed record Layout3BenchReadinessEvaluationResult(IReadOnlyList<string> Failures)

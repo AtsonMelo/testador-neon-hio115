@@ -41,8 +41,12 @@ Em evidencias posteriores, o operador forneceu dados observados diretamente no
 HIstudio. Esses dados confirmam identidade parcial, inventario das interfaces,
 capacidades declaradas dos modulos, configuracao do canal serial e programa
 observado, mas nao confirmam a interface fisica efetivamente usada, protocolo,
-endereco, firmware especifico da CPU, mapa, allow-list ou condicoes seguras de
-bancada.
+firmware especifico da CPU, mapa, allow-list ou condicoes seguras de bancada.
+
+Uma inspecao frontal posterior identificou `OMNI-PLC2` da `OMNICONTROL`, em
+conflito com `NEON5-1S / CPU450 / HIO115` no HIstudio. A relacao entre essas
+identidades nao foi confirmada documentalmente e nenhuma equivalencia foi
+deduzida.
 
 As capturas mais recentes tambem mostram `Equipamento remoto offline` e
 `Nao existe base de hardware definida no ambiente`. Portanto, estados atuais
@@ -53,10 +57,11 @@ a evidencia fisica.
 
 | Item | Status | Evidencia e decisao |
 |---|---|---|
-| Modelo exato do CLP | `CONFIRMADO` | Evidencia direta do HIstudio: `NEON5-1S`, CPU `CPU450` no slot 0. A foto da etiqueta continua ausente. |
+| Identidade do equipamento | `CONFLITANTE` | HIstudio: `NEON5-1S / CPU450 / HIO115`; frontal: `OMNICONTROL OMNI-PLC2`. A relacao entre as identidades e `NÃO CONFIRMADA`. |
+| Identificacao frontal | `OBSERVADO` | `PIVODRIP`; fabricante/marca `OMNICONTROL`; modelo `OMNI-PLC2`; serie `111.20023`; part number `300.111.622.801`. |
 | Quantidade de modulos | `CONFIRMADO` | Maximo exibido: 2; modulos detectados: 2. |
-| Modelo do modulo | `CONFIRMADO` | Evidencia direta do HIstudio: `HIO115` no slot 1. |
-| NEON/RION/HIO115 | `CONFIRMADO` | O conjunto alvo observado e `NEON5-1S / CPU450 / HIO115`. Outros conjuntos do catalogo nao se aplicam automaticamente. |
+| Modelo do modulo no HIstudio | `CONFIRMADO` | Evidencia direta do HIstudio: `HIO115` no slot 1. A identificacao frontal `Slot 1115` e compativel, mas nao e prova definitiva. |
+| NEON/RION/HIO115 | `CONFLITANTE` | O conjunto `NEON5-1S / CPU450 / HIO115` foi observado no HIstudio, mas ainda nao foi documentalmente relacionado ao frontal `OMNI-PLC2`. |
 | Interfaces disponiveis | `CONFIRMADO` | `ITF-A1` e `ITF-A2`: RS232-C; `ITF-B`: RS485. O perfil atual usa RS232 em A1 ou A2; falta diferenciar fisicamente qual delas e registrar o cabo. |
 | Estado observado da CPU | `CONFIRMADO` | Revisao de hardware exibida 1, revisao de firmware do modulo exibida 0, funcional operacional e sem falhas de inicializacao, operacao, intermitencia ou configuracao. Nao confirma o firmware da CPU. |
 | Capacidades observadas do HIO115 | `CONFIRMADO` | Revisoes de hardware/firmware exibidas 0/0, funcional operacional, 8 DI `I00-I07`, 4 DO `O00-O03`, 3 AI `AI00-AI02`, 3 FCT `FCT0-FCT2`, 1 PWM `PWM00`; apresentacao analogica 4-20 mA. |
@@ -65,6 +70,7 @@ a evidencia fisica.
 | Protocolos previstos pelo testador | `CONFIRMADO` | Selecao explicita entre Modbus RTU e Modbus TCP; nenhuma opcao conecta automaticamente. |
 | Protocolo ativo no canal atual | `PENDENTE` | O transporte observado e serial, mas ainda falta confirmar que Modbus RTU esta realmente ativado no canal. |
 | Perfil fisico atual | `CONFIRMADO` | Serial RS-232 por `ITF-A1` ou `ITF-A2`; ambas sao RS232-C. A interface exata nao foi identificada e permanece pendencia documental, sem bloquear o perfil de software. |
+| Conector atual | `CONFIRMADO` | DB9 frontal identificado como `Serial`. Bornes RS-485 `D+ / D-` e chave de terminacao existem separadamente, mas nao descrevem o cabo atual. |
 | IP | `NÃO DISPONÍVEL` | Nenhum IP aprovado do CLP ou do PC esta registrado. |
 | Porta TCP | `NÃO DISPONÍVEL` | Nenhuma porta foi confirmada. Nao preencher por default. |
 | Driver/canal serial | `CONFIRMADO` | `SERIAL_DRIVER` / `Channel_01`. |
@@ -79,13 +85,15 @@ a evidencia fisica.
 | Firmware | `PROVÁVEL` | `3.3.11` aparece na barra de status, mas nao ha evidencia especifica da CPU. O campo confirmado permanece vazio. |
 | Mapa de registradores | `CONFLITANTE` | O fluxo legado usa `%MW10..74`; o perfil HIO115 tambem registra SysVars `1120..1134`. Falta mapa aprovado para o conjunto e programa reais. |
 | Registradores somente leitura | `NÃO DISPONÍVEL` | Nenhuma allow-list foi aprovada. Enderecos de comando/escrita do fluxo legado sao proibidos nesta fase. |
-| Tensao | `PENDENTE` | A documentacao cita cuidados com 24 V, mas nao confirma a alimentacao da bancada alvo. |
+| Indicacao nominal de alimentacao | `OBSERVADO` | Texto frontal registrado literalmente como `1030 VDC`; nao reinterpretar como faixa e nao tratar como medicao. |
+| Tensao efetivamente medida | `PENDENTE` | Nenhuma medicao e evidencia correspondente foram registradas. |
 | Alimentacao | `PENDENTE` | Confirmar fonte, polaridade, protecao e grupos de alimentacao no equipamento real. |
-| Aterramento | `NÃO DISPONÍVEL` | Sem evidencia registrada para a bancada alvo. |
-| Isolamento das saidas | `PENDENTE` | Deve ser confirmado fisicamente antes de qualquer conexao. |
-| Estado da maquina | `NÃO DISPONÍVEL` | Sem registro de bloqueio/impedimento de operacao. |
-| Responsavel da bancada | `NÃO DISPONÍVEL` | Nome e funcao ainda nao informados. |
-| Desconexao rapida | `NÃO DISPONÍVEL` | Meio, responsavel e tempo de retirada ainda nao definidos. |
+| Aterramento | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou `OK`; falta evidencia verificavel. |
+| Isolamento das saidas | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou saidas desenergizadas ou isoladas; falta evidencia verificavel. |
+| Estado da maquina | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou maquina impedida e em estado seguro; falta evidencia verificavel. |
+| Responsavel da bancada | `DECLARADO PELO RESPONSÁVEL` | Atson Melo informou estar presente; falta registro de evidencia/assinatura. |
+| Emergencia/desconexao rapida | `DECLARADO PELO RESPONSÁVEL` | Declaradas `OK`; faltam identificacao e evidencia registradas. |
+| Backup do programa | `DECLARADO PELO RESPONSÁVEL` | Declarado `OK`; caminho, nome, algoritmo e hash permanecem pendentes. |
 
 As faixas `I00-I07`, `O00-O03`, `AI00-AI02`, `FCT0-FCT2` e `PWM00` descrevem
 recursos exibidos para o modulo. Elas nao constituem mapa de registradores,
@@ -127,7 +135,7 @@ dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -c Release
 dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -c Release -- --validate-layout-3-bench-readiness
 ```
 
-A primeira flag valida onze cenarios sinteticos. A segunda tambem avalia a
+A primeira flag valida cenarios sinteticos. A segunda tambem avalia a
 configuracao versionada e retorna codigo diferente de zero enquanto qualquer
 dado estiver ausente, pendente ou conflitante.
 
@@ -140,7 +148,11 @@ dado estiver ausente, pendente ou conflitante.
 - protocolo ativo nao confirmado bloqueia;
 - perfil RTU exige COM, RS232/RS485, serial, timeout, endereco 1..247, uma
   tentativa e intervalo;
-- perfil TCP exige IP, porta, timeout, endereco 1..247 e uma tentativa;
+- perfil TCP exige IP, porta, topologia isolada, timeout, endereco 1..247 e uma
+  tentativa;
+- somente o perfil selecionado e validado; o outro pode permanecer incompleto;
+- identidade fisica conflitante bloqueia ate existir relacao documental;
+- declaracao do responsavel nao substitui foto, medicao, caminho ou hash;
 - endereco 0 e proibido; 248..255 exigem aprovacao avancada manual;
 - descoberta permanece OFF, limitada a 1..247 e a uma tentativa por endereco;
 - somente FC03 e os pares F12/30012 e F13/30013 podem constar no desenho de
@@ -161,17 +173,19 @@ reais do equipamento.
 
 ## Estado atual
 
-`STATUS: NOT READY - GATE C BLOQUEADO`
+`STATUS: NOT READY - GATE C E GATE D BLOQUEADOS`
 
 Motivos principais:
 
-- etiqueta e firmware especifico da CPU ainda nao confirmados;
+- identidade `OMNI-PLC2` versus `NEON5-1S` conflitante e sem relacao documental;
+- foto/etiqueta e firmware especifico da CPU ainda nao confirmados;
 - protocolo realmente ativo no canal ainda nao confirmado;
 - timeout RTU e intervalo entre tentativas ainda nao confirmados;
 - IP/porta TCP permanecem vazios e so serao exigidos quando TCP for selecionado;
 - mapa sem aprovacao para o conjunto real;
 - allow-list read-only vazia;
-- dados eletricos e responsavel ausentes.
+- seguranca e backup apenas declarados, sem evidencias verificaveis;
+- tensao medida e configuracao original de rede do PC ausentes;
 - Gate D nao autorizado.
 
 ## Invariantes desta fase

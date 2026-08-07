@@ -142,6 +142,7 @@ internal static class Layout3BenchReadinessEvaluator
 
         ValidateObservedProgram(equipment.ObservedProgram, failures);
         ValidateLiveDataEvidence(equipment.LiveDataEvidence, failures);
+        ValidatePhysicalIdentification(equipment.PhysicalIdentification, failures);
     }
 
     private static void ValidateConnection(
@@ -290,6 +291,7 @@ internal static class Layout3BenchReadinessEvaluator
         RequireTrue(bench.MachinePreventedFromOperating, "Maquina nao confirmada como impedida de operar.", failures);
         RequireTrue(bench.EmergencyStopIdentified, "Botao de emergencia nao identificado.", failures);
         RequireTrue(bench.QuickDisconnectDefined, "Desconexao rapida nao definida.", failures);
+        ValidateResponsibleDeclarations(bench.ResponsibleDeclarations, failures);
     }
 
     private static void ValidateApprovals(
@@ -361,6 +363,7 @@ internal static class Layout3BenchReadinessEvaluator
         RequireText(profile.SerialPortName, "Porta COM ausente no perfil RTU.", failures);
         RequireText(profile.ControllerInterface, "Interface do controlador ausente no perfil RTU.", failures);
         RequireText(profile.ControllerInterfaceStatus, "Status da interface do controlador ausente.", failures);
+        RequireText(profile.PhysicalConnector, "Conector fisico atual ausente no perfil RTU.", failures);
 
         if (!AllowedPhysicalLayers.Contains(profile.PhysicalLayer, StringComparer.OrdinalIgnoreCase))
         {
@@ -444,6 +447,11 @@ internal static class Layout3BenchReadinessEvaluator
         if (profile.TcpPort is null or < 1 or > 65535)
         {
             failures.Add("Porta TCP ausente ou fora do intervalo 1..65535.");
+        }
+
+        if (!string.Equals(profile.Topology, "isolated", StringComparison.OrdinalIgnoreCase))
+        {
+            failures.Add("Perfil TCP exige topologia isolada explicitamente confirmada.");
         }
 
         ValidateOperationAddress(profile.DeviceAddress, addressing, "TCP", failures);
@@ -668,6 +676,91 @@ internal static class Layout3BenchReadinessEvaluator
         if (candidate.ProtocolDataAddress is not null)
         {
             failures.Add($"Endereco de dados de protocolo de {name}/{displayReference} deve permanecer vazio ate aprovacao do mapa.");
+        }
+    }
+
+    private static void ValidatePhysicalIdentification(
+        Layout3PhysicalIdentificationEvidence? identification,
+        ICollection<string> failures)
+    {
+        if (identification is null)
+        {
+            failures.Add("Identificacao fisica frontal ausente.");
+            return;
+        }
+
+        RequireText(identification.FrontIdentification, "Identificacao frontal ausente.", failures);
+        RequireText(identification.DisplayedManufacturer, "Fabricante/marca frontal ausente.", failures);
+        RequireText(identification.FrontModel, "Modelo frontal ausente.", failures);
+        RequireText(identification.SerialNumber, "Numero de serie frontal ausente.", failures);
+        RequireText(identification.PartNumber, "Part number frontal ausente.", failures);
+        RequireText(identification.AdditionalIdentification, "Identificacao fisica adicional ausente.", failures);
+        RequireText(
+            identification.AdditionalIdentificationAssessment,
+            "Avaliacao da identificacao fisica adicional ausente.",
+            failures);
+        RequireText(identification.NominalSupplyIndication, "Indicacao nominal de alimentacao ausente.", failures);
+        RequireText(identification.CurrentConnector, "Conector fisico atual ausente.", failures);
+        RequireText(identification.Rs485Terminals, "Evidencia dos bornes RS-485 ausente.", failures);
+        RequireText(identification.ObservationStatus, "Status da observacao fisica ausente.", failures);
+        RequireText(identification.HiStudioIdentity, "Identidade observada no HIstudio ausente.", failures);
+        RequireText(identification.PhysicalFrontIdentity, "Identidade fisica frontal comparada ausente.", failures);
+
+        if (identification.Rs485TerminationSwitchPresent is null)
+        {
+            failures.Add("Presenca da chave de terminacao RS-485 nao registrada.");
+        }
+
+        bool identityConfirmed = string.Equals(
+                identification.IdentityComparisonStatus,
+                "CONFIRMADO",
+                StringComparison.OrdinalIgnoreCase)
+            && string.Equals(
+                identification.IdentityRelationshipStatus,
+                "CONFIRMADA",
+                StringComparison.OrdinalIgnoreCase);
+        if (!identityConfirmed)
+        {
+            failures.Add("Relacao documental entre identidade fisica e identidade HIstudio nao confirmada.");
+        }
+    }
+
+    private static void ValidateResponsibleDeclarations(
+        Layout3ResponsibleDeclarations? declarations,
+        ICollection<string> failures)
+    {
+        if (declarations is null)
+        {
+            failures.Add("Declaracoes do responsavel ausentes.");
+            return;
+        }
+
+        RequireText(declarations.DeclaredBy, "Nome do responsavel declarante ausente.", failures);
+        RequireTrue(declarations.ResponsiblePresent, "Presenca do responsavel nao declarada.", failures);
+        RequireTrue(declarations.GroundingOk, "Aterramento nao declarado como OK.", failures);
+        RequireTrue(
+            declarations.OutputsDeenergizedOrIsolatedOk,
+            "Isolamento/desenergizacao das saidas nao declarado como OK.",
+            failures);
+        RequireTrue(
+            declarations.MachinePreventedFromOperatingOk,
+            "Impedimento de operacao da maquina nao declarado como OK.",
+            failures);
+        RequireTrue(declarations.MachineSafeStateOk, "Estado seguro da maquina nao declarado como OK.", failures);
+        RequireTrue(declarations.EmergencyStopOk, "Emergencia nao declarada como OK.", failures);
+        RequireTrue(declarations.QuickDisconnectOk, "Desconexao rapida nao declarada como OK.", failures);
+        RequireTrue(declarations.ProgramBackupOk, "Backup do programa nao declarado como OK.", failures);
+
+        if (!string.Equals(declarations.EvidenceStatus, "CONFIRMADO", StringComparison.OrdinalIgnoreCase))
+        {
+            failures.Add("Declaracoes do responsavel ainda nao possuem evidencia confirmada.");
+        }
+        else
+        {
+            RequireText(
+                declarations.EvidenceReference,
+                "Referencia da evidencia confirmada das declaracoes ausente.",
+                failures);
         }
     }
 

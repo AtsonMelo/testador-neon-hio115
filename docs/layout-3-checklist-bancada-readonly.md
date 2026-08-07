@@ -38,6 +38,16 @@ indisponivel bloqueia o ensaio.
 - [x] Interface registrada como `ITF-A1_OR_ITF-A2`; ambas sao RS232-C.
 - [x] Perfis futuros definidos como Modbus RTU e Modbus TCP, com selecao
       explicita e sem conexao automatica.
+- [x] Frontal observado: `PIVODRIP / OMNICONTROL / OMNI-PLC2`, serie
+      `111.20023`, part number `300.111.622.801`.
+- [x] Identificacao adicional `Slot 1115` registrada apenas como compativel com
+      HIO115, sem prova definitiva.
+- [x] Conector atual observado como DB9 `Serial`; camada atual informada RS-232.
+- [x] Bornes RS-485 `D+ / D-` e chave de terminacao observados separadamente;
+      nao caracterizam o cabo atual.
+- [x] Indicacao nominal frontal registrada literalmente como `1030 VDC`, sem
+      tratar como tensao medida ou deduzir faixa.
+- [ ] Relacao documental entre `OMNI-PLC2` e `NEON5-1S` confirmada.
 - [ ] Foto/etiqueta da unidade recebida.
 - [ ] Firmware da CPU confirmado. `3.3.11` permanece apenas `PROVÁVEL`.
 - [ ] Interface fisica exata confirmada entre ITF-A1 e ITF-A2. Esta pendencia e
@@ -52,14 +62,15 @@ contador ou PWM foi confirmado.
 
 ## Equipamento e programa
 
-- [ ] Equipamento identificado visualmente.
+- [x] Equipamento identificado visualmente como `OMNI-PLC2` no frontal.
 - [ ] Foto legivel da etiqueta anexada.
-- [ ] Modelo exato do CLP conferido na etiqueta.
+- [ ] Modelo exato reconciliado entre frontal e HIstudio.
 - [ ] CPU e slot conferidos.
 - [ ] Modelo do modulo e slot conferidos.
 - [ ] Firmware conferido no equipamento ou ferramenta oficial.
 - [ ] Programa HIstudio carregado identificado por nome, versao e hash/backup.
-- [ ] Backup do projeto realizado e testado quanto a recuperacao.
+- [x] Backup declarado `OK` por Atson Melo.
+- [ ] Caminho/nome do backup, algoritmo e hash registrados e verificados.
 - [ ] Nenhum artefato HIstudio sera alterado pelo teste.
 
 ## Protocolo e mapa
@@ -67,10 +78,12 @@ contador ou PWM foi confirmado.
 - [ ] Protocolo confirmado para a unidade real.
 - [x] Perfil atual RTU selecionado explicitamente no JSON offline.
 - [x] Camada fisica atual RS232 confirmada.
+- [x] Conector atual DB9 `Serial` registrado.
 - [ ] Interface fisica exata A1/A2 documentada.
 - [ ] IP do PC registrado, quando aplicavel.
 - [ ] IP do CLP registrado, quando aplicavel.
 - [ ] Porta TCP registrada, quando aplicavel.
+- [ ] Topologia isolada confirmada, quando TCP estiver selecionado.
 - [ ] Porta serial registrada, quando aplicavel.
 - [ ] Baud rate, data bits, paridade e stop bits registrados, quando aplicavel.
 - [x] Unit ID/endereco atual confirmado como 10.
@@ -82,17 +95,25 @@ contador ou PWM foi confirmado.
 
 ## Seguranca eletrica e operacional
 
-- [ ] Tensao nominal confirmada na documentacao/etiqueta.
+- [x] Indicacao nominal frontal `1030 VDC` registrada sem interpretacao.
+- [ ] Tensao efetivamente medida e instrumento/evidencia registrados.
 - [ ] Fonte e polaridade confirmadas.
-- [ ] Aterramento verificado.
+- [x] Declaracao de aterramento `OK` recebida de Atson Melo.
+- [ ] Aterramento verificado por evidencia.
 - [ ] Rede ou canal de comunicacao isolado para a bancada.
 - [ ] Nenhum outro mestre ou software disputa o canal.
-- [ ] Saidas desenergizadas ou eletricamente isoladas.
-- [ ] Maquina impedida de operar.
+- [x] Saidas desenergizadas/isoladas declaradas `OK` por Atson Melo.
+- [ ] Saidas desenergizadas ou eletricamente isoladas verificadas.
+- [x] Maquina impedida de operar declarada `OK` por Atson Melo.
+- [ ] Maquina impedida de operar verificada.
+- [x] Estado seguro da maquina declarado `OK` por Atson Melo.
+- [ ] Estado seguro da maquina verificado.
 - [ ] Cargas reais removidas ou isoladas conforme procedimento aprovado.
-- [ ] Responsavel tecnico presente durante todo o teste.
-- [ ] Botao de emergencia identificado e acessivel.
-- [ ] Desconexao rapida identificada, acessivel e atribuida a uma pessoa.
+- [x] Presenca de Atson Melo declarada.
+- [ ] Presenca do responsavel registrada por evidencia/assinatura.
+- [x] Emergencia e desconexao rapida declaradas `OK` por Atson Melo.
+- [ ] Botao de emergencia identificado e acessivel por evidencia.
+- [ ] Desconexao rapida identificada, acessivel e atribuida por evidencia.
 - [ ] Cabo pode ser retirado sem contato com parte energizada.
 
 ## Controles do software
@@ -133,6 +154,7 @@ contador ou PWM foi confirmado.
 - [ ] `git diff --check`: OK.
 - [ ] Branch limpa e PR revisavel.
 - [ ] Evidencias armazenadas no diretorio aprovado.
+- [ ] Configuracao original de rede do PC registrada.
 
 ## Rollback e logs
 

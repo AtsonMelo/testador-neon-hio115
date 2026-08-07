@@ -11,7 +11,8 @@ conexao existe.
 - registrar configuracao de rede/serial atual do PC antes de qualquer ajuste;
 - registrar cabos, conversores, fonte e estado visual das saidas;
 - identificar quem pode retirar o cabo e desenergizar a bancada;
-- preservar backup do projeto HIstudio e referencia do checkpoint Git;
+- preservar backup do projeto HIstudio, caminho/hash e referencia do checkpoint
+  Git; a declaracao `backup OK` nao substitui esses dados;
 - definir o diretorio imutavel de logs e o identificador do ensaio.
 
 Sem essas evidencias, o teste deve ser cancelado antes da conexao.
@@ -53,9 +54,12 @@ Sem essas evidencias, o teste deve ser cancelado antes da conexao.
 
 1. Confirmar que a pessoa designada esta em posicao segura.
 2. Retirar somente o cabo de comunicacao identificado na ficha.
-3. Nao manipular bornes energizados nem cabos de I/O como forma de rollback.
-4. Confirmar visualmente que o canal ficou desconectado.
-5. Registrar horario e responsavel pela retirada.
+3. No perfil atual, o ponto de retirada e o DB9 identificado como `Serial`.
+   Nao usar os bornes RS-485 `D+ / D-` nem a chave de terminacao como ponto de
+   rollback do cabo RS-232.
+4. Nao manipular bornes energizados nem cabos de I/O como forma de rollback.
+5. Confirmar visualmente que o canal ficou desconectado.
+6. Registrar horario e responsavel pela retirada.
 
 ## Restaurar a configuracao do PC
 
@@ -66,6 +70,9 @@ Sem essas evidencias, o teste deve ser cancelado antes da conexao.
 4. Conferir interface, endereco, mascara, gateway e DNS contra o registro
    anterior.
 5. Registrar a verificacao final; nao testar conectividade contra o CLP.
+
+Sem evidencia da configuracao original de rede do PC, o rollback de rede nao e
+considerado preparado e o teste permanece bloqueado.
 
 Para perfil RTU, tambem restaurar apenas ajustes locais de porta/conversor que
 tenham sido previamente registrados. Nao abrir COM8 para confirmar a
@@ -115,6 +122,7 @@ Registrar no minimo:
 
 - identificador, data/hora e participantes;
 - equipamento e etiqueta;
+- identidades HIstudio e frontal, incluindo o conflito `NEON5-1S / OMNI-PLC2`;
 - commit, configuracao e comando executado;
 - ultimo passo concluido;
 - sintoma e criterio de aborto acionado;

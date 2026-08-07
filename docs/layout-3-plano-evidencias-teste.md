@@ -49,6 +49,13 @@ Evidencia parcial ja registrada no JSON/ficha:
 - canal `SERIAL_DRIVER / Channel_01 / COM8 / 38400 / 8N1` e temporizacoes;
 - perfil fisico atual RS232, interface `ITF-A1_OR_ITF-A2` com identificacao
   exata pendente e endereco atual 10;
+- conector atual DB9 `Serial`; bornes RS-485 `D+ / D-` e chave de terminacao
+  disponiveis, sem inferir uso atual de RS-485;
+- frontal `PIVODRIP / OMNICONTROL / OMNI-PLC2`, serie `111.20023`, part number
+  `300.111.622.801` e `Slot 1115`;
+- identidade HIstudio versus frontal classificada como `CONFLITANTE`, com
+  relacao `NÃO CONFIRMADA`;
+- indicacao nominal `1030 VDC` registrada literalmente, sem medicao;
 - programa `MOTOR_HIDRO:PROD_NEON5_HIO115`, versao 3220, identificador 31134,
   CRC 23248, observado rodando com `Cold restart`.
 
@@ -70,6 +77,20 @@ Decisoes arquiteturais registradas, sem transporte:
 - descoberta OFF, default `10..10`, allow-list `[10]`, uma tentativa e FC03;
 - candidatos F12/30012 = 31134 e F13/30013 = 23248, exigidos em conjunto;
 - `protocolDataAddress` vazio ate aprovacao do mapa; nenhum offset inferido.
+
+Declaracoes recebidas de Atson Melo, ainda sem evidencia confirmatoria:
+
+- responsavel presente;
+- aterramento OK;
+- saidas desenergizadas/isoladas OK;
+- maquina impedida e em estado seguro;
+- emergencia e desconexao rapida OK;
+- backup do programa OK.
+
+Para promover qualquer item, registrar a evidencia correspondente. Backup
+exige caminho/nome, algoritmo e hash; tensao exige medicao; seguranca exige
+foto, medicao ou registro aprovado. A configuracao original de rede do PC
+tambem permanece pendente.
 
 ## Comando de preflight
 
@@ -129,6 +150,7 @@ Antes:
 - ficha de parametros assinada;
 - backup e hash do programa;
 - captura da configuracao do PC;
+- comprovacao documental da relacao `OMNI-PLC2 / NEON5-1S`;
 - foto/registro do isolamento de saidas e estado da maquina;
 - responsavel, emergencia e desconexao rapida;
 - preflight com exit code 0;
