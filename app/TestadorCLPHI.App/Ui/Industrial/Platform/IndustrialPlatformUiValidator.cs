@@ -10,6 +10,7 @@ internal static class IndustrialPlatformUiValidator
 {
     internal static int Validate(TextWriter output, TextWriter error)
     {
+        CanonicalCounters? canonicalCounters = null;
         List<(string Name, Func<bool> Validate)> scenarios =
         [
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
@@ -21,6 +22,11 @@ internal static class IndustrialPlatformUiValidator
             ("Testador identifica fake sem transporte fisico", TesterIdentifiesFake),
             ("saida simulada usa contrato fechado e retorna OFF", SimulatedOutputIsMomentary),
             ("novas camadas nao dependem de API serial ou TCP", NewLayersHaveNoPhysicalTransportTypes),
+            ("contadores simulados do ciclo canonico sao deterministicos", () =>
+            {
+                canonicalCounters = CaptureCanonicalCounters();
+                return canonicalCounters == new CanonicalCounters(1, 5, 2, 2, 2, 2);
+            }),
             ("contadores fisicos permanecem zero", PhysicalCountersRemainZero)
         ];
 
@@ -45,6 +51,17 @@ internal static class IndustrialPlatformUiValidator
         }
 
         output.WriteLine($"Industrial platform UI: {passed}/{scenarios.Count}");
+        if (canonicalCounters is not null)
+        {
+            output.WriteLine(
+                $"SimulatedConnections={canonicalCounters.RtuConnections} "
+                + $"SimulatedReads={canonicalCounters.RtuReads} "
+                + $"SimulatedWrites={canonicalCounters.RtuWrites} "
+                + $"SimulatedCommands={canonicalCounters.RtuCommands} "
+                + $"SimulationOperations={canonicalCounters.SimulationOperations} "
+                + $"SimulationCommands={canonicalCounters.SimulationCommands}");
+        }
+
         output.WriteLine("PhysicalConnections=0 PhysicalReads=0 PhysicalWrites=0 PhysicalCommands=0");
         return passed == scenarios.Count ? 0 : 1;
     }
@@ -155,6 +172,26 @@ internal static class IndustrialPlatformUiValidator
         }).GetAwaiter().GetResult();
     }
 
+    private static CanonicalCounters CaptureCanonicalCounters() => Task.Run(async () =>
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        await session.DiscoverAsync(1, 1, TimeSpan.Zero, progress: null, CancellationToken.None);
+        await session.ReadInputsAsync(1, CancellationToken.None);
+        await session.ActivateOutputAsync(
+            1,
+            Layout3OutputChannel.DO00,
+            TimeSpan.FromMilliseconds(2),
+            operatorExplicitlyEnabled: true,
+            CancellationToken.None);
+        return new CanonicalCounters(
+            session.Counters.SimulatedConnections,
+            session.Counters.SimulatedReads,
+            session.Counters.SimulatedWrites,
+            session.Counters.SimulatedCommands,
+            session.Simulation.Counters.SimulatedOperations,
+            session.Simulation.Counters.SimulatedCommands);
+    }).GetAwaiter().GetResult();
+
     private static T? Find<T>(Control root)
         where T : Control
     {
@@ -174,4 +211,12 @@ internal static class IndustrialPlatformUiValidator
 
         return null;
     }
+
+    private sealed record CanonicalCounters(
+        int RtuConnections,
+        int RtuReads,
+        int RtuWrites,
+        int RtuCommands,
+        int SimulationOperations,
+        int SimulationCommands);
 }
