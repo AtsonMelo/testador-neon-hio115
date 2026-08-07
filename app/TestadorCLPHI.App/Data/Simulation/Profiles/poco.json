@@ -3,18 +3,42 @@
   "id": "poco",
   "displayName": "Poço",
   "initialState": "Parado",
+  "visualization": {
+    "type": "well",
+    "signalRoles": {
+      "level": "Nivel",
+      "pressure": "Pressao",
+      "current": "Corrente",
+      "pump": "Bomba",
+      "valve": "Valvula",
+      "emergency": "Emergencia"
+    }
+  },
   "signals": [
-    { "id": "NivelMinimo", "label": "Nível mínimo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "NivelMaximo", "label": "Nível máximo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "FaltaFase", "label": "Falta de fase", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "Pressostato", "label": "Pressostato", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "Emergencia", "label": "Emergência", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "SensorInvalido", "label": "Sensor inválido", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "Nivel", "label": "Nível", "kind": "analogInput", "defaultValue": 60, "minimum": 0, "maximum": 100, "unit": "%" },
-    { "id": "Pressao", "label": "Pressão", "kind": "analogInput", "defaultValue": 4, "minimum": 0, "maximum": 10, "unit": "bar (simulado)" },
-    { "id": "Corrente", "label": "Corrente", "kind": "analogInput", "defaultValue": 12, "minimum": 0, "maximum": 100, "unit": "A (simulado)" },
-    { "id": "Bomba", "label": "Bomba", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
-    { "id": "Valvula", "label": "Válvula", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" }
+    { "id": "NivelMinimo", "label": "Nível mínimo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Processo" },
+    { "id": "NivelMaximo", "label": "Nível máximo", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Processo" },
+    { "id": "FaltaFase", "label": "Falta de fase", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Pressostato", "label": "Pressostato", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Processo" },
+    { "id": "Emergencia", "label": "Emergência", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "SensorInvalido", "label": "Sensor inválido", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Nivel", "label": "Nível", "kind": "analogInput", "defaultValue": 60, "minimum": 0, "maximum": 100, "unit": "%", "group": "Processo" },
+    { "id": "Pressao", "label": "Pressão", "kind": "analogInput", "defaultValue": 4, "minimum": 0, "maximum": 10, "unit": "bar (simulado)", "group": "Processo" },
+    { "id": "Corrente", "label": "Corrente", "kind": "analogInput", "defaultValue": 12, "minimum": 0, "maximum": 100, "unit": "A (simulado)", "group": "Processo" },
+    { "id": "Bomba", "label": "Bomba", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Saídas" },
+    { "id": "Valvula", "label": "Válvula", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Saídas" }
+  ],
+  "ioBindings": [
+    { "signalId": "NivelMinimo", "signalLabel": "Nível mínimo", "direction": "input", "ioType": "digital", "channel": 0, "register": 31120, "registerAlias": "DI00", "description": "Nível mínimo do processo simulado", "evidenceStatus": "simulationProfile" },
+    { "signalId": "NivelMaximo", "signalLabel": "Nível máximo", "direction": "input", "ioType": "digital", "channel": 1, "register": 31121, "registerAlias": "DI01", "description": "Nível máximo do processo simulado", "evidenceStatus": "simulationProfile" },
+    { "signalId": "FaltaFase", "signalLabel": "Falta de fase", "direction": "input", "ioType": "digital", "channel": 2, "register": 31122, "registerAlias": "DI02", "description": "Falta de fase simulada", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Pressostato", "signalLabel": "Pressostato", "direction": "input", "ioType": "digital", "channel": 3, "register": 31123, "registerAlias": "DI03", "description": "Pressostato do processo simulado", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Emergencia", "signalLabel": "Emergência", "direction": "input", "ioType": "digital", "channel": 4, "register": 31124, "registerAlias": "DI04", "description": "Emergência do processo simulado", "evidenceStatus": "simulationProfile" },
+    { "signalId": "SensorInvalido", "signalLabel": "Sensor inválido", "direction": "input", "ioType": "digital", "channel": 5, "register": 31125, "registerAlias": "DI05", "description": "Sensor inválido simulado", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Nivel", "signalLabel": "Nível", "direction": "input", "ioType": "analog", "channel": 0, "register": 31132, "registerAlias": "AI00", "description": "Nível raw do perfil", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Pressao", "signalLabel": "Pressão", "direction": "input", "ioType": "analog", "channel": 1, "register": 31133, "registerAlias": "AI01", "description": "Pressão raw do perfil", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Corrente", "signalLabel": "Corrente", "direction": "input", "ioType": "analog", "channel": 2, "register": 31134, "registerAlias": "AI02", "description": "Corrente raw do perfil", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Bomba", "signalLabel": "Bomba", "direction": "output", "ioType": "digital", "channel": 0, "register": 31128, "registerAlias": "DO00", "description": "Comando virtual da bomba", "evidenceStatus": "simulationProfile" },
+    { "signalId": "Valvula", "signalLabel": "Válvula", "direction": "output", "ioType": "digital", "channel": 1, "register": 31129, "registerAlias": "DO01", "description": "Comando virtual da válvula", "evidenceStatus": "simulationProfile" }
   ],
   "rules": [
     { "id": "emergency", "priority": 100, "conditions": [{ "signalId": "Emergencia", "comparison": "equals", "expectedValue": 1 }], "resultState": "Emergencia", "alarmId": "Emergency", "blockAllOutputs": true },
@@ -28,6 +52,7 @@
   "exclusiveOutputGroups": [],
   "scenarios": [
     { "id": "normal", "displayName": "Normal", "values": {} },
+    { "id": "bombeando", "displayName": "Bombeando", "values": { "Bomba": 1 } },
     { "id": "falta-agua", "displayName": "Falta d'água", "values": { "Nivel": 5, "NivelMinimo": 1 } },
     { "id": "pressao-baixa", "displayName": "Pressão baixa", "values": { "Bomba": 1, "Pressao": 1 } },
     { "id": "sobrecorrente", "displayName": "Sobrecorrente", "values": { "Corrente": 45 } },

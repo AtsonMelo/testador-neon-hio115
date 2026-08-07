@@ -259,6 +259,9 @@ internal static class SimulationProfileValidator
             }
         }
 
+        ValidateVisualization(profile.Visualization, signalIds, failures);
+        ValidateIoBindings(profile, signalIds, failures);
+
         foreach (SimulationRule rule in profile.Rules)
         {
             RequireText(rule.Id, "Regra sem id.", failures);
@@ -312,6 +315,120 @@ internal static class SimulationProfileValidator
 
         return new(failures);
     }
+
+    private static void ValidateVisualization(
+        SimulationVisualizationDefinition? visualization,
+        IReadOnlySet<string> signalIds,
+        ICollection<string> failures)
+    {
+        if (visualization is null)
+        {
+            failures.Add("Definicao de visualizacao ausente.");
+            return;
+        }
+
+        if (visualization.Type == SimulationVisualizationType.Pivot)
+        {
+            if (visualization.TowerCount is null or < 1 or > 16)
+            {
+                failures.Add("Visualizacao de pivo exige towerCount em 1..16.");
+            }
+
+            if (visualization.FaultTowerIndex is not null
+                && (visualization.TowerCount is null
+                    || visualization.FaultTowerIndex < 1
+                    || visualization.FaultTowerIndex > visualization.TowerCount))
+            {
+                failures.Add("faultTowerIndex deve apontar para uma torre configurada.");
+            }
+        }
+        else if (visualization.TowerCount is not null || visualization.FaultTowerIndex is not null)
+        {
+            failures.Add("Torres somente podem ser configuradas na visualizacao de pivo.");
+        }
+
+        HashSet<string> roleIds = new(StringComparer.OrdinalIgnoreCase);
+        foreach ((string role, string signalId) in visualization.SignalRoles)
+        {
+            if (string.IsNullOrWhiteSpace(role) || !roleIds.Add(role))
+            {
+                failures.Add($"Papel visual invalido ou duplicado: {role}.");
+            }
+
+            if (string.IsNullOrWhiteSpace(signalId) || !signalIds.Contains(signalId))
+            {
+                failures.Add($"Papel visual {role}: sinal inexistente {signalId}.");
+            }
+        }
+    }
+
+    private static void ValidateIoBindings(
+        SimulationProfile profile,
+        IReadOnlySet<string> signalIds,
+        ICollection<string> failures)
+    {
+        HashSet<string> boundSignals = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> channels = new(StringComparer.OrdinalIgnoreCase);
+        foreach (SimulationIoBinding binding in profile.IoBindings)
+        {
+            RequireText(binding.SignalId, "Binding sem SignalId.", failures);
+            RequireText(binding.RegisterAlias, $"Binding {binding.SignalId}: alias ausente.", failures);
+            RequireText(binding.Description, $"Binding {binding.SignalId}: descricao ausente.", failures);
+            if (string.IsNullOrWhiteSpace(binding.SignalId) || !signalIds.Contains(binding.SignalId))
+            {
+                failures.Add($"Binding referencia sinal inexistente: {binding.SignalId ?? "AUSENTE"}.");
+                continue;
+            }
+
+            if (!boundSignals.Add(binding.SignalId))
+            {
+                failures.Add($"Sinal com mais de um binding: {binding.SignalId}.");
+            }
+
+            SimulationSignalDefinition definition = profile.Signals.First(signal =>
+                string.Equals(signal.Id, binding.SignalId, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(binding.SignalLabel)
+                && !string.Equals(binding.SignalLabel, definition.Label, StringComparison.Ordinal))
+            {
+                failures.Add($"Binding {binding.SignalId}: SignalLabel diverge do perfil.");
+            }
+
+            if (!IsCompatible(definition.Kind, binding.Direction, binding.IoType))
+            {
+                failures.Add($"Binding {binding.SignalId}: direcao/tipo incompativel com {definition.Kind}.");
+            }
+
+            if (binding.Channel < 0 || binding.Register <= 0)
+            {
+                failures.Add($"Binding {binding.SignalId}: canal ou registro invalido.");
+            }
+
+            if (binding.Direction == SimulationIoDirection.Unspecified
+                || binding.IoType == SimulationIoType.Unspecified
+                || binding.EvidenceStatus == SimulationIoEvidenceStatus.Unspecified)
+            {
+                failures.Add($"Binding {binding.SignalId}: metadados obrigatorios ausentes.");
+            }
+
+            string channelKey = $"{binding.Direction}:{binding.IoType}:{binding.Channel}";
+            if (!channels.Add(channelKey))
+            {
+                failures.Add($"Canal duplicado no perfil: {channelKey}.");
+            }
+        }
+    }
+
+    private static bool IsCompatible(
+        SimulationSignalKind signalKind,
+        SimulationIoDirection direction,
+        SimulationIoType ioType) =>
+        (signalKind, direction, ioType) switch
+        {
+            (SimulationSignalKind.DigitalInput, SimulationIoDirection.Input, SimulationIoType.Digital) => true,
+            (SimulationSignalKind.AnalogInput, SimulationIoDirection.Input, SimulationIoType.Analog) => true,
+            (SimulationSignalKind.VirtualOutput, SimulationIoDirection.Output, SimulationIoType.Digital) => true,
+            _ => false
+        };
 
     private static void RequireText(string? value, string failure, ICollection<string> failures)
     {

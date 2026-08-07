@@ -19,10 +19,11 @@ internal sealed class IndustrialPlatformSession : IDisposable
         Profile = SimulationProfileLoader.Load(profileId);
         Simulation = new SimulationEngine(Profile);
         Device = new NeonHio115FakeDevice(SimulatedDeviceAddress);
+        IoMapping = SimulationHio115Mappings.FromProfile(Profile);
         _adapter = new SimulationHio115Adapter(
             Simulation,
             Device,
-            SimulationHio115Mappings.ForProfile(Profile.Id!));
+            IoMapping);
         _adapter.SyncInputsToDevice();
 
         Counters = new IndustrialOperationCounters();
@@ -38,11 +39,27 @@ internal sealed class IndustrialPlatformSession : IDisposable
     internal SimulationProfile Profile { get; }
     internal SimulationEngine Simulation { get; }
     internal NeonHio115FakeDevice Device { get; }
+    internal SimulationHio115Mapping IoMapping { get; }
     internal IndustrialOperationCounters Counters { get; }
     internal InMemoryOperationLog OperationLog { get; }
     internal RtuIdentificationResult? LastIdentification { get; private set; }
 
     internal event EventHandler? Changed;
+
+    internal SimulationIoBinding? FindBinding(
+        SimulationIoDirection direction,
+        SimulationIoType ioType,
+        int channel) =>
+        Profile.IoBindings.FirstOrDefault(binding =>
+            binding.Direction == direction
+            && binding.IoType == ioType
+            && binding.Channel == channel);
+
+    internal SimulationSignalDefinition? FindSignal(string? signalId) =>
+        Profile.Signals.FirstOrDefault(signal => string.Equals(
+            signal.Id,
+            signalId,
+            StringComparison.OrdinalIgnoreCase));
 
     internal void ResetSimulation()
     {

@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Industrial.Platform.Mapping;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Integration;
@@ -75,55 +76,41 @@ internal sealed class SimulationHio115Adapter : IDisposable
 
 internal static class SimulationHio115Mappings
 {
-    internal static SimulationHio115Mapping ForProfile(string profileId) =>
-        profileId.ToLowerInvariant() switch
+    internal static SimulationHio115Mapping FromProfile(SimulationProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        IndustrialIoMappingValidationResult validation = IndustrialIoMappingValidator.Validate(profile);
+        if (!validation.IsValid)
         {
-            "pivo-central" => new(
-                "pivo-central",
-                new Dictionary<int, string>
-                {
-                    [0] = "Emergencia",
-                    [1] = "Pressostato",
-                    [2] = "Alinhamento",
-                    [3] = "FimDeCurso",
-                    [4] = "FalhaTorre",
-                    [5] = "PermissivoAgua"
-                },
-                new Dictionary<int, string>
-                {
-                    [0] = "Pressao",
-                    [1] = "Corrente",
-                    [2] = "PosicaoPercentual"
-                },
-                new Dictionary<Layout3OutputChannel, string>
-                {
-                    [Layout3OutputChannel.DO00] = "Bomba",
-                    [Layout3OutputChannel.DO01] = "Frente",
-                    [Layout3OutputChannel.DO02] = "Reverso",
-                    [Layout3OutputChannel.DO03] = "ValvulaAgua"
-                }),
-            "poco" => new(
-                "poco",
-                new Dictionary<int, string>
-                {
-                    [0] = "NivelMinimo",
-                    [1] = "NivelMaximo",
-                    [2] = "FaltaFase",
-                    [3] = "Pressostato",
-                    [4] = "Emergencia",
-                    [5] = "SensorInvalido"
-                },
-                new Dictionary<int, string>
-                {
-                    [0] = "Nivel",
-                    [1] = "Pressao",
-                    [2] = "Corrente"
-                },
-                new Dictionary<Layout3OutputChannel, string>
-                {
-                    [Layout3OutputChannel.DO00] = "Bomba",
-                    [Layout3OutputChannel.DO01] = "Valvula"
-                }),
-            _ => throw new ArgumentException($"Perfil sem mapeamento HIO115: {profileId}.", nameof(profileId))
-        };
+            throw new ArgumentException(validation.ToDisplayText(), nameof(profile));
+        }
+
+        Dictionary<int, string> digitalInputs = profile.IoBindings
+            .Where(binding => binding.Direction == SimulationIoDirection.Input
+                && binding.IoType == SimulationIoType.Digital)
+            .ToDictionary(binding => binding.Channel, binding => binding.SignalId!);
+        Dictionary<int, string> analogInputs = profile.IoBindings
+            .Where(binding => binding.Direction == SimulationIoDirection.Input
+                && binding.IoType == SimulationIoType.Analog)
+            .ToDictionary(binding => binding.Channel, binding => binding.SignalId!);
+        Dictionary<Layout3OutputChannel, string> digitalOutputs = profile.IoBindings
+            .Where(binding => binding.Direction == SimulationIoDirection.Output
+                && binding.IoType == SimulationIoType.Digital)
+            .ToDictionary(binding => ToOutputChannel(binding.Channel), binding => binding.SignalId!);
+
+        return new(
+            profile.Id!,
+            digitalInputs,
+            analogInputs,
+            digitalOutputs);
+    }
+
+    private static Layout3OutputChannel ToOutputChannel(int channel) => channel switch
+    {
+        0 => Layout3OutputChannel.DO00,
+        1 => Layout3OutputChannel.DO01,
+        2 => Layout3OutputChannel.DO02,
+        3 => Layout3OutputChannel.DO03,
+        _ => throw new ArgumentOutOfRangeException(nameof(channel))
+    };
 }
