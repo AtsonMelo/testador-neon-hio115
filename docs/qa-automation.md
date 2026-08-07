@@ -82,6 +82,21 @@ fases sem abrir a aplicação no fluxo normal nem tratar ausência de flag como
 falha. Uma flag disponível que retorna código diferente de zero continua sendo
 falha crítica.
 
+Para a plataforma Testador + Simulador, executar adicionalmente no ciclo
+canônico da branch:
+
+```powershell
+$project = 'app/TestadorCLPHI.App/TestadorCLPHI.App.csproj'
+dotnet run --project $project -c Release --no-build -- --validate-layout-3-rtu-offline
+dotnet run --project $project -c Release --no-build -- --validate-layout-3-simulation-engine
+dotnet run --project $project -c Release --no-build -- --validate-layout-3-test-simulator-integration
+dotnet run --project $project -c Release --no-build -- --validate-layout-3-industrial-platform-ui
+dotnet run --project $project -c Release --no-build -- --validate-industrial-io-mapping
+```
+
+Essas flags usam somente perfis JSON, transporte em memória e controles
+WinForms construídos para validação estrutural. Elas não enumeram ou abrem COM.
+
 Após os validadores, são executados `dotnet build` e `git diff --check`. Os
 comandos `dotnet` recebem explicitamente o caminho do projeto. Nenhuma flag da
 aplicação que inicialize comunicação física é usada.
