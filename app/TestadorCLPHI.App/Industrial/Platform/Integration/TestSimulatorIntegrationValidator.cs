@@ -172,6 +172,20 @@ internal static class TestSimulatorIntegrationValidator
                 && context.Engine.Snapshot.OutputsBlocked
                 && context.Engine.CurrentState == "Emergencia";
         }),
+        new("mudanca de perfil troca bindings sem reaproveitar aliases", () =>
+        {
+            using IndustrialPlatformSession pivot = new("pivo-central");
+            using IndustrialPlatformSession well = new("poco");
+            return Task.FromResult(
+                pivot.FindBinding(SimulationIoDirection.Input, SimulationIoType.Digital, 0)?.SignalId
+                    == "Emergencia"
+                && well.FindBinding(SimulationIoDirection.Input, SimulationIoType.Digital, 0)?.SignalId
+                    == "NivelMinimo"
+                && pivot.FindBinding(SimulationIoDirection.Output, SimulationIoType.Digital, 1)?.SignalId
+                    == "Frente"
+                && well.FindBinding(SimulationIoDirection.Output, SimulationIoType.Digital, 1)?.SignalId
+                    == "Valvula");
+        }),
         new("perfil sem mapeamento falha fechado", () =>
         {
             SimulationProfile profile = SimulationProfileLoader.Load("pivo-central");

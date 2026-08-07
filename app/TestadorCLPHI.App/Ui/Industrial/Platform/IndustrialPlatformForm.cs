@@ -5,9 +5,17 @@ namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
 internal sealed class IndustrialPlatformForm : Form
 {
-    private readonly Panel _content = new() { Dock = DockStyle.Fill, Padding = new(16) };
+    private readonly Panel _content = new() { Dock = DockStyle.Fill, Padding = new(12) };
     private readonly Button _testerButton = PlatformUi.Button("TESTADOR", "modeTesterButton");
     private readonly Button _simulatorButton = PlatformUi.Button("SIMULADOR", "modeSimulatorButton");
+    private readonly Label _offlineStatus = PlatformUi.StatusChip(
+        "OFFLINE • EM MEMÓRIA",
+        PlatformStatusTone.Offline,
+        "platformOfflineStatus");
+    private readonly Label _modeStatus = PlatformUi.StatusChip(
+        "ESCOLHA UM MODO",
+        PlatformStatusTone.Disabled,
+        "platformModeStatus");
     private IndustrialPlatformSession? _session;
     private IndustrialTesterControl? _tester;
     private IndustrialSimulatorControl? _simulator;
@@ -17,11 +25,12 @@ internal sealed class IndustrialPlatformForm : Form
         Text = "Testador CLP - Plataforma industrial offline";
         Name = "industrialPlatformForm";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(1080, 720);
-        ClientSize = new Size(1360, 840);
+        MinimumSize = new Size(1024, 680);
+        ClientSize = new Size(1366, 768);
         BackColor = PlatformUi.Background;
         ForeColor = PlatformUi.Text;
         Font = new Font("Segoe UI", 9F);
+        AutoScaleMode = AutoScaleMode.Dpi;
 
         Controls.Add(_content);
         Controls.Add(BuildHeader());
@@ -71,14 +80,16 @@ internal sealed class IndustrialPlatformForm : Form
         TableLayoutPanel header = new()
         {
             Dock = DockStyle.Top,
-            Height = 72,
-            Padding = new Padding(18, 12, 18, 10),
-            ColumnCount = 3,
+            Height = 68,
+            Padding = new Padding(16, 10, 16, 9),
+            ColumnCount = 5,
             BackColor = PlatformUi.Header
         };
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 138F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 138F));
 
         Label brand = new()
         {
@@ -93,9 +104,13 @@ internal sealed class IndustrialPlatformForm : Form
         _simulatorButton.Dock = DockStyle.Fill;
         _testerButton.Margin = new Padding(4);
         _simulatorButton.Margin = new Padding(4);
+        _offlineStatus.Anchor = AnchorStyles.None;
+        _modeStatus.Anchor = AnchorStyles.None;
         header.Controls.Add(brand, 0, 0);
-        header.Controls.Add(_testerButton, 1, 0);
-        header.Controls.Add(_simulatorButton, 2, 0);
+        header.Controls.Add(_offlineStatus, 1, 0);
+        header.Controls.Add(_modeStatus, 2, 0);
+        header.Controls.Add(_testerButton, 3, 0);
+        header.Controls.Add(_simulatorButton, 4, 0);
         return header;
     }
 
@@ -106,7 +121,7 @@ internal sealed class IndustrialPlatformForm : Form
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 2,
-            Padding = new Padding(80)
+            Padding = new Padding(48)
         };
         welcome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
         welcome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
@@ -145,6 +160,13 @@ internal sealed class IndustrialPlatformForm : Form
         _content.Controls.Add(control);
         _testerButton.BackColor = ReferenceEquals(activeButton, _testerButton) ? PlatformUi.Accent : PlatformUi.ButtonSurface;
         _simulatorButton.BackColor = ReferenceEquals(activeButton, _simulatorButton) ? PlatformUi.Accent : PlatformUi.ButtonSurface;
+        bool testerActive = ReferenceEquals(activeButton, _testerButton);
+        _modeStatus.Text = testerActive ? "● MODO: TESTADOR" : "● MODO: SIMULADOR";
+        _modeStatus.ForeColor = PlatformUi.Text;
+        _modeStatus.BackColor = PlatformUi.Accent;
+        _modeStatus.AccessibleDescription = testerActive
+            ? "Modo Testador ativo"
+            : "Modo Simulador ativo";
         _content.ResumeLayout();
     }
 
@@ -166,6 +188,17 @@ internal sealed class IndustrialPlatformForm : Form
     }
 }
 
+internal enum PlatformStatusTone
+{
+    Normal,
+    Attention,
+    Fault,
+    Active,
+    Disabled,
+    Simulated,
+    Offline
+}
+
 internal static class PlatformUi
 {
     internal static readonly Color Background = Color.FromArgb(18, 24, 32);
@@ -180,18 +213,61 @@ internal static class PlatformUi
     internal static readonly Color Text = Color.FromArgb(229, 235, 241);
     internal static readonly Color Muted = Color.FromArgb(160, 174, 190);
 
-    internal static Button Button(string text, string name, bool primary = false) => new()
+    internal static Button Button(string text, string name, bool primary = false)
     {
-        Text = text,
-        Name = name,
-        Height = 36,
-        AutoSize = false,
-        FlatStyle = FlatStyle.Flat,
-        BackColor = primary ? Accent : ButtonSurface,
-        ForeColor = Text,
-        Font = new Font("Segoe UI Semibold", 9F),
-        Cursor = Cursors.Hand
-    };
+        Button button = new()
+        {
+            Text = text,
+            Name = name,
+            Height = 36,
+            AutoSize = false,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = primary ? Accent : ButtonSurface,
+            ForeColor = Text,
+            Font = new Font("Segoe UI Semibold", 9F),
+            Cursor = Cursors.Hand,
+            AccessibleName = text,
+            TabStop = true
+        };
+        button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.BorderColor = primary ? Color.FromArgb(48, 169, 184) : Color.FromArgb(83, 99, 116);
+        button.FlatAppearance.MouseOverBackColor = primary
+            ? Color.FromArgb(0, 143, 160)
+            : Color.FromArgb(58, 72, 87);
+        return button;
+    }
+
+    internal static Label StatusChip(
+        string text,
+        PlatformStatusTone tone,
+        string? name = null)
+    {
+        (string symbol, Color color) = tone switch
+        {
+            PlatformStatusTone.Normal => ("✓", Success),
+            PlatformStatusTone.Attention => ("!", Warning),
+            PlatformStatusTone.Fault => ("×", Danger),
+            PlatformStatusTone.Active => ("●", Accent),
+            PlatformStatusTone.Disabled => ("○", Muted),
+            PlatformStatusTone.Simulated => ("S", Accent),
+            PlatformStatusTone.Offline => ("■", ButtonSurface),
+            _ => ("•", ButtonSurface)
+        };
+        return new Label
+        {
+            Text = $"{symbol} {text}",
+            Name = name ?? string.Empty,
+            AutoSize = true,
+            Padding = new Padding(8, 4, 8, 4),
+            Margin = new Padding(4),
+            BorderStyle = BorderStyle.FixedSingle,
+            BackColor = color,
+            ForeColor = Text,
+            Font = new Font("Segoe UI Semibold", 8.5F),
+            TextAlign = ContentAlignment.MiddleCenter,
+            AccessibleName = text
+        };
+    }
 
     internal static Label Label(string text, bool heading = false) => new()
     {

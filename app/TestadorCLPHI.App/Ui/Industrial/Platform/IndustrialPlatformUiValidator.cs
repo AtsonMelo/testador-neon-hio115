@@ -18,6 +18,11 @@ internal static class IndustrialPlatformUiValidator
             ("modo Simulador carrega sob demanda", SimulatorLoadsLazily),
             ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
             ("Mapa de I/O e aliases acompanham o perfil Poco", WellAliasesAndIoMapAreVisible),
+            ("renderer leve do Pivo carrega quatro torres sem timer", PivotRendererLoadsWithoutTimer),
+            ("renderer do Pivo atualiza somente por mudanca de estado", PivotRendererTracksStateChanges),
+            ("perfil Poco preserva editor agrupado sem renderer de Pivo", WellUsesGenericGroupedEditor),
+            ("layout estrutural permanece utilizavel em 1366x768", () => LayoutFits(new Size(1366, 768))),
+            ("layout estrutural permanece utilizavel em 1920x1080", () => LayoutFits(new Size(1920, 1080))),
             ("sessao padrao usa endereco fake 1", SessionUsesFakeAddressOne),
             ("perfil Pivo pode ser manipulado offline", PivotProfileIsInteractive),
             ("perfil Poco pode ser carregado offline", WellProfileLoads),
@@ -110,6 +115,100 @@ internal static class IndustrialPlatformUiValidator
             && tester.ShowsProcessAlias("DI00", "Nível mínimo")
             && tester.ShowsProcessAlias("AI00", "Nível")
             && tester.ShowsProcessAlias("DO01", "Válvula");
+    }
+
+    private static bool PivotRendererLoadsWithoutTimer()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialSimulatorControl simulator = new(session);
+        return simulator.HasPivotRenderer
+            && simulator.RenderedTowerCount == 4
+            && !simulator.UsesContinuousAnimation
+            && simulator.UsesGroupedSignalEditor;
+    }
+
+    private static bool PivotRendererTracksStateChanges()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialSimulatorControl simulator = new(session);
+        int initialRevision = simulator.PivotStateRevision;
+        session.ApplyScenario("movendo-frente");
+        int changedRevision = simulator.PivotStateRevision;
+        session.ApplyScenario("movendo-frente");
+        return initialRevision > 0
+            && changedRevision == initialRevision + 1
+            && simulator.PivotStateRevision == changedRevision;
+    }
+
+    private static bool WellUsesGenericGroupedEditor()
+    {
+        using IndustrialPlatformSession session = new("poco");
+        using IndustrialSimulatorControl simulator = new(session);
+        return !simulator.HasPivotRenderer
+            && simulator.RenderedTowerCount == 0
+            && simulator.UsesGroupedSignalEditor;
+    }
+
+    private static bool LayoutFits(Size clientSize)
+    {
+        using IndustrialPlatformForm form = new()
+        {
+            ClientSize = clientSize,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        form.ShowSimulator();
+        form.Show();
+        PerformLayoutTree(form);
+        IndustrialSimulatorControl? simulator = Find<IndustrialSimulatorControl>(form);
+        PivotProcessControl? pivot = Find<PivotProcessControl>(form);
+        bool simulatorFits = simulator is not null
+            && simulator.ClientSize.Width >= 680
+            && simulator.ClientSize.Height >= 560
+            && pivot is { Width: >= 420, Height: >= 240 };
+
+        form.ShowTester();
+        PerformLayoutTree(form);
+        IndustrialTesterControl? tester = Find<IndustrialTesterControl>(form);
+        TabControl? tabs = Find<TabControl>(form);
+        TabPage? mapPage = tabs?.TabPages.Cast<TabPage>().FirstOrDefault(page => page.Name == "ioMappingTab");
+        if (tabs is not null && mapPage is not null)
+        {
+            tabs.SelectedTab = mapPage;
+            mapPage.CreateControl();
+            PerformLayoutTree(form);
+        }
+
+        DataGridView? map = form.Controls.Find("ioMappingGrid", searchAllChildren: true)
+            .OfType<DataGridView>()
+            .FirstOrDefault();
+        bool result = simulatorFits
+            && tester is not null
+            && tester.ClientSize.Width >= 900
+            && tester.ClientSize.Height >= 560
+            && map is { Width: >= 700, Height: >= 180 };
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"cliente={clientSize.Width}x{clientSize.Height}; "
+                + $"simulador={simulator?.ClientSize.Width ?? -1}x{simulator?.ClientSize.Height ?? -1}; "
+                + $"pivo={pivot?.Width ?? -1}x{pivot?.Height ?? -1}; "
+                + $"testador={tester?.ClientSize.Width ?? -1}x{tester?.ClientSize.Height ?? -1}; "
+                + $"mapa={map?.Width ?? -1}x{map?.Height ?? -1}.");
+        }
+
+        return true;
+    }
+
+    private static void PerformLayoutTree(Control control)
+    {
+        control.PerformLayout();
+        foreach (Control child in control.Controls)
+        {
+            PerformLayoutTree(child);
+        }
     }
 
     private static bool SessionUsesFakeAddressOne()
