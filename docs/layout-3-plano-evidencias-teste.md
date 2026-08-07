@@ -1,205 +1,88 @@
-# Plano de evidencias - teste read-only Layout 3
+# Layout 3 - Plano de evidencias dos testes
 
 ## Objetivo
 
-Definir evidencias reproduziveis para preparacao local, futura implementacao de
-transporte com fake e eventual teste supervisionado. Este documento nao
-autoriza executar a ultima etapa.
+Provar o estado de configuracao, cada gate e cada operacao sem confundir dados
+offline com leitura fisica. Nesta fase, todos os contadores fisicos permanecem 0.
 
-## Identificador e diretorio
+## Pacote pre-bancada
 
-Formato sugerido do identificador:
+- branch, commit e Draft PR;
+- build Release e validadores;
+- self-tests offline e preflight;
+- configuracao JSON usada;
+- sete documentos obrigatorios;
+- varredura de ausencia de transporte executavel;
+- foto/etiqueta e relacao documental das identidades;
+- caminho e SHA-256 do backup;
+- medicao de tensao e evidencia de aterramento/isolamento;
+- baseline da configuracao do PC;
+- autorizacoes Gate D e gate fisico, quando existirem.
 
-```text
-layout3-readonly-AAAA-MM-DD_HH-mm-ss
-```
+## Evidencias de identificacao
 
-O diretorio deve ser aprovado antes do teste e ficar fora de caminhos que
-possam ser limpos automaticamente. Registrar caminho absoluto, proprietario e
-espaco disponivel.
+Registrar por tentativa: horario, endereco, resultado e duracao. Para resposta,
+registrar familia/versao, F12/ID, F13/CRC, F21 bruto e bits decodificados. O
+equipamento so e `IDENTIFICADO` quando toda a assinatura aprovada coincide.
 
-## Evidencias da Fase 3.9 offline
+Resultados permitidos:
 
-1. `git status -sb` e SHA completo.
-2. Tag/base de partida.
-3. `git diff --name-only` e `git diff --check`.
-4. Build Release completo.
-5. Saida dos cinco validadores existentes.
-6. Saida de `--validate-layout-3-bench-readiness-self-tests`.
-7. Saida de `--validate-layout-3-bench-readiness`.
-8. Varredura dos novos arquivos por APIs de rede/serial/protocolo proibidas.
-9. Hash SHA-256 da configuracao e dos sete documentos obrigatorios.
-10. Contadores zero no inicio e no fim.
-11. Revisao do desenho arquitetural offline RTU/TCP e da varredura de APIs
-    proibidas.
+- IDENTIFICADO;
+- RESPONDEU MAS NAO RECONHECIDO;
+- SEM RESPOSTA;
+- ASSINATURA DIVERGENTE;
+- FALHA CRITICA;
+- CANCELADO.
 
-Evidencia parcial ja registrada no JSON/ficha:
+ID ou CRC divergentes comprovam apenas que houve resposta, nunca que o
+equipamento correto foi encontrado.
 
-- `NEON5-1S / CPU450 slot 0 / HIO115 slot 1`;
-- maximo de 2 modulos e 2 modulos detectados;
-- interfaces disponiveis `ITF-A1 RS232-C`, `ITF-A2 RS232-C` e `ITF-B RS485`,
-  com perfil atual RS232 em `ITF-A1_OR_ITF-A2`; falta diferenciar A1 de A2 e
-  identificar fisicamente o cabo;
-- CPU com revisao de hardware exibida 1, revisao de firmware exibida 0,
-  operacional e sem falhas nos diagnosticos apresentados;
-- HIO115 com revisoes exibidas 0/0, operacional, 8 DI `I00-I07`, 4 DO
-  `O00-O03`, 3 AI `AI00-AI02`, 3 FCT `FCT0-FCT2`, 1 PWM `PWM00` e
-  apresentacao analogica 4-20 mA;
-- HIstudio `2.4.03`;
-- canal `SERIAL_DRIVER / Channel_01 / COM8 / 38400 / 8N1` e temporizacoes;
-- perfil fisico atual RS232, interface `ITF-A1_OR_ITF-A2` com identificacao
-  exata pendente e endereco atual 10;
-- conector atual DB9 `Serial`; bornes RS-485 `D+ / D-` e chave de terminacao
-  disponiveis, sem inferir uso atual de RS-485;
-- frontal `PIVODRIP / OMNICONTROL / OMNI-PLC2`, serie `111.20023`, part number
-  `300.111.622.801` e `Slot 1115`;
-- identidade HIstudio versus frontal classificada como `CONFLITANTE`, com
-  relacao `NÃO CONFIRMADA`;
-- indicacao nominal `1030 VDC` registrada literalmente, sem medicao;
-- programa `MOTOR_HIDRO:PROD_NEON5_HIO115`, versao 3220, identificador 31134,
-  CRC 23248, observado rodando com `Cold restart`.
+## Evidencias de entradas
 
-O valor `3.3.11` deve ser preservado como `PROVÁVEL`, sem promover firmware da
-CPU a confirmado. A evidencia nao inclui protocolo realmente ativado, timeout,
-intervalo entre tentativas, mapa, allow-list ou condicoes seguras de bancada.
+Para DI00..DI07: horario, canal, referencia documental, valor bruto e resultado.
+Para AI00..AI02: horario, canal, referencia, valor bruto e, somente com escala
+confirmada, valor convertido/unidade. A apresentacao 4-20 mA deve ser registrada
+como configuracao observada, nao como leitura atual.
 
-As capturas registram `Equipamento remoto offline` e ausencia de base de
-hardware definida no ambiente. Os canais acima sao capacidades exibidas, nao
-leituras fisicas. Nao registrar como evidencia de teste estados de entradas,
-saidas, valores analogicos, contadores ou PWM dessas telas.
+## Evidencias de saidas supervisionadas
 
-Decisoes arquiteturais registradas, sem transporte:
+Somente apos gate fisico: autorizacao, operador, canal DO00..DO03, estado inicial,
+valor solicitado, horario, duracao limite, resposta, comando de desligamento,
+retorno e estado final observado. Registrar separadamente contador de escritas e
+contador de comandos fisicos.
 
-- perfis selecionaveis RTU/TCP e nenhuma conexao automatica;
-- TCP sem IP/porta default;
-- 1..255 representavel, 1..247 automatico, 248..255 reservado, 0 proibido e
-  255 nunca sondado automaticamente;
-- descoberta OFF, default `10..10`, allow-list `[10]`, uma tentativa e FC03;
-- candidatos F12/30012 = 31134 e F13/30013 = 23248, exigidos em conjunto;
-- `protocolDataAddress` vazio ate aprovacao do mapa; nenhum offset inferido.
+Timeout, cancelamento ou retorno invalido encerram a sequencia. Se OFF nao for
+confirmado, registrar estado `UNKNOWN`, isolar fisicamente e abrir incidente.
 
-Declaracoes recebidas de Atson Melo, ainda sem evidencia confirmatoria:
+## Evidencias do fake server
 
-- responsavel presente;
-- aterramento OK;
-- saidas desenergizadas/isoladas OK;
-- maquina impedida e em estado seguro;
-- emergencia e desconexao rapida OK;
-- backup do programa OK.
+Depois do Gate D, cobrir sem hardware:
 
-Para promover qualquer item, registrar a evidencia correspondente. Backup
-exige caminho/nome, algoritmo e hash; tensao exige medicao; seguranca exige
-foto, medicao ou registro aprovado. A configuracao original de rede do PC
-tambem permanece pendente.
+- endereco correto/incorreto e sem resposta;
+- firmware, ID, CRC e F21 esperados/divergentes;
+- DI, AI e DO;
+- timeout, cancelamento e resposta invalida;
+- tentativa em 31137, 31140, 31143, 31144, 31145 e endereco arbitrario;
+- saida durante identificacao/entradas;
+- duas saidas simultaneas;
+- duracao maxima e desligamento final.
 
-## Comando de preflight
+Anexar saida dos testes, configuracao do fake, commit e prova de que COM8 nao foi
+aberta.
 
-```powershell
-dotnet run `
-    --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj `
-    -c Release `
-    --no-build `
-    -- --validate-layout-3-bench-readiness
-```
+## Nomenclatura de sessao
 
-Exit code diferente de zero bloqueia commit de aprovacao, PR Ready, transporte
-e bancada. A lista de pendencias deve ser preservada integralmente.
+`YYYYMMDD-HHMMSS_LAYOUT3_<commit-curto>_<modo>`
 
-## Evidencia da ausencia de rede
+Cada artefato deve referenciar o identificador da sessao. Hashes SHA-256 devem
+ser registrados para backup e logs finais, sem alterar o projeto do controlador.
 
-Revisar somente os novos arquivos do namespace `BenchReadiness`:
+## Criterios de aceite
 
-- nenhum namespace de rede ou porta serial;
-- nenhum `TcpClient`, `Socket`, `SerialPort`, DNS, ping ou cliente HTTP;
-- nenhuma biblioteca ou classe Modbus;
-- nenhuma referencia a `IPlcCommunicationService`;
-- nenhum timer, worker, polling ou reconexao;
-- somente leitura de JSON/documentos locais e testes em memoria.
-
-A busca textual e apoio de revisao, nao substitui a leitura do diff e do grafo
-de chamadas.
-
-## Evidencias futuras com fake
-
-Somente apos o Gate D:
-
-- nome, versao e licenca de eventual biblioteca;
-- arquitetura sem API publica de escrita;
-- fake server ligado exclusivamente a endereco reservado para testes locais;
-- sucesso single-shot;
-- timeout;
-- cancelamento;
-- desconexao;
-- dado invalido;
-- tentativa fora da allow-list;
-- prova de que escrita/coil nao compila ou nao e acessivel;
-- cenarios separados para selecao RTU e TCP;
-- endereco 0 rejeitado e 248..255 rejeitados sem aprovacao avancada;
-- descoberta limitada a allow-list 1..247, cancelamento e uma tentativa;
-- identificacao somente quando ID e CRC coincidirem;
-- contadores de tentativas, conexoes e leituras;
-- escritas e comandos fisicos fixados em zero.
-
-Nenhum teste automatizado deve conter o IP real do CLP.
-
-## Evidencias do futuro teste supervisionado
-
-Antes:
-
-- foto da etiqueta;
-- ficha de parametros assinada;
-- backup e hash do programa;
-- captura da configuracao do PC;
-- comprovacao documental da relacao `OMNI-PLC2 / NEON5-1S`;
-- foto/registro do isolamento de saidas e estado da maquina;
-- responsavel, emergencia e desconexao rapida;
-- preflight com exit code 0;
-- comando exato aprovado, ainda nao executado.
-
-Durante:
-
-- horario de cada tentativa;
-- parametros efetivamente carregados;
-- endereco de cada leitura e finalidade;
-- duracao e resultado;
-- contador acumulado de leituras;
-- contadores de escrita e comandos fisicos em zero;
-- qualquer timeout, cancelamento ou divergencia.
-
-Depois:
-
-- encerramento e retirada do cabo;
-- comparacao do estado das saidas;
-- restauracao da configuracao do PC;
-- resumo de contadores;
-- hashes dos logs;
-- resultado assinado ou incidente.
-
-## Criterios de aceitacao
-
-- build e testes sem falha;
-- todos os validadores com exit code 0;
-- configuracao e documentos sem pendencias;
-- somente registradores aprovados;
-- limite de leituras respeitado;
-- nenhum polling ou reconexao;
-- zero escritas;
-- zero comandos fisicos;
-- branch limpa e PR revisavel;
-- teste fisico ainda nao realizado durante a preparacao.
-
-## Comando previsto para teste
-
-`[BLOQUEADO]` O comando nao pode ser definido antes de existir transporte
-read-only aprovado, parametros confirmados, allow-list validada e Gate final.
-Quando existir, ele deve ser apresentado para aprovacao e nao executado
-automaticamente.
-
-## Retencao e incidente
-
-- preservar arquivos originais;
-- gerar SHA-256;
-- anotar redacoes separadamente;
-- registrar ausencia de evidencia como falha;
-- vincular incidente aos logs, parametros, participantes e criterio de aborto;
-- nova tentativa exige nova aprovacao.
+- eventos e contadores reconciliados;
+- nenhuma operacao fora da allow-list;
+- nenhuma escrita nos modos 1 e 2;
+- saidas apenas no modo 3 e com gate fisico;
+- abortos e cancelamentos preservam motivo;
+- rollback executavel;
+- conexao fisica somente apos autorizacao final especifica.

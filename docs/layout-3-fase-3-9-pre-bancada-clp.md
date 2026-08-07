@@ -1,214 +1,113 @@
-# Layout 3 - Fase 3.9 - Preparacao segura para bancada CLP
+# Layout 3 - Fase 3.9 - Preparacao offline para bancada
 
-## Objetivo
+## Estado
 
-Preparar o Layout 3 para uma futura leitura supervisionada sem abrir qualquer
-comunicacao real nesta fase. A entrega consolida inventario, checklist, plano de
-rollback, matriz de riscos, ficha de parametros, plano de evidencias e um
-validador local fail-closed.
+`STATUS: SOFTWARE EM PREPARACAO OFFLINE - BANCADA FISICA BLOQUEADA`
 
-Esta fase nao autoriza conexao TCP ou serial, descoberta de portas, DNS, ping,
-Modbus, polling, leitura de registrador, escrita ou comando fisico.
+Esta fase prepara somente configuracao, validacao e arquitetura locais. Nao existe
+transporte RTU executavel, acesso a porta serial, leitura de equipamento, escrita
+fisica ou comando fisico.
 
-## Ponto de partida
+Contadores desta fase:
 
-- branch base: `ui/issue-24-liga-io-industrial-host`;
-- commit base: `8dd0af9eb209f4f8f5682c9318ad1a55a34a6634`;
-- checkpoint: `layout-3-fase-3-8-polimento-visual-completo-host-ok-20260806`;
-- branch da fase: `prep/layout-3-fase-3-9-pre-bancada-clp-readonly`;
-- PR #56 e a evolucao documental da `main` permanecem fora desta branch.
+- conexoes reais: 0;
+- leituras reais: 0;
+- escritas reais: 0;
+- comandos fisicos: 0.
 
-## Fontes auditadas
+## Escopo vigente
 
-Foram auditados o conteudo atual, a documentacao, o catalogo local, o perfil
-HIO115, o codigo de comunicacao legado e o historico Git. Os principais pontos
-de evidencia sao:
+- transporte do escopo atual: Modbus RTU;
+- Modbus TCP: backlog, sem contrato ativo, IP, porta ou descoberta Ethernet;
+- camada fisica selecionavel no futuro: RS-232 ou RS-485;
+- perfil observado: COM8, RS-232, 38400, 8-N-1;
+- endereco manual inicial sugerido: 1;
+- descoberta planejada: 1 a 247, crescente, uma tentativa por endereco;
+- endereco 10: evidencia historica, nunca default operacional;
+- descoberta, feature, comunicacao, polling e reconexao: OFF;
+- Gate D offline: autorizado em 2026-08-06;
+- transporte e teste fisicos: nao autorizados.
 
-- `docs/estado-atual.md`;
-- `docs/pendencias-validacao-hardware.md`;
-- `docs/matriz-modelos-rion-neon.md`;
-- `docs/variaveis-geradas-hio115.md`;
-- `profiles/hio115.json`;
-- `app/TestadorCLPHI.App/Data/Hardware/hi-hardware-catalog.json`;
-- `app/TestadorCLPHI.App/Plc/Hio115MemoryMap.cs`;
-- commits historicos que introduziram configuracao serial e mapas do fluxo
-  legado.
+## Evidencias do equipamento
 
-Defaults de software e perfis genericos nao sao confirmacao do equipamento
-fisico. Nenhum valor foi promovido por semelhanca de nome ou conveniencia.
-
-Em evidencias posteriores, o operador forneceu dados observados diretamente no
-HIstudio. Esses dados confirmam identidade parcial, inventario das interfaces,
-capacidades declaradas dos modulos, configuracao do canal serial e programa
-observado, mas nao confirmam a interface fisica efetivamente usada, protocolo,
-firmware especifico da CPU, mapa, allow-list ou condicoes seguras de bancada.
-
-Uma inspecao frontal posterior identificou `OMNI-PLC2` da `OMNICONTROL`, em
-conflito com `NEON5-1S / CPU450 / HIO115` no HIstudio. A relacao entre essas
-identidades nao foi confirmada documentalmente e nenhuma equivalencia foi
-deduzida.
-
-As capturas mais recentes tambem mostram `Equipamento remoto offline` e
-`Nao existe base de hardware definida no ambiente`. Portanto, estados atuais
-de entradas e saidas, valores analogicos, contadores e PWM nao foram promovidos
-a evidencia fisica.
-
-## Inventario tecnico
-
-| Item | Status | Evidencia e decisao |
+| Item | Valor | Estado |
 |---|---|---|
-| Identidade do equipamento | `CONFLITANTE` | HIstudio: `NEON5-1S / CPU450 / HIO115`; frontal: `OMNICONTROL OMNI-PLC2`. A relacao entre as identidades e `NÃO CONFIRMADA`. |
-| Identificacao frontal | `OBSERVADO` | `PIVODRIP`; fabricante/marca `OMNICONTROL`; modelo `OMNI-PLC2`; serie `111.20023`; part number `300.111.622.801`. |
-| Quantidade de modulos | `CONFIRMADO` | Maximo exibido: 2; modulos detectados: 2. |
-| Modelo do modulo no HIstudio | `CONFIRMADO` | Evidencia direta do HIstudio: `HIO115` no slot 1. A identificacao frontal `Slot 1115` e compativel, mas nao e prova definitiva. |
-| NEON/RION/HIO115 | `CONFLITANTE` | O conjunto `NEON5-1S / CPU450 / HIO115` foi observado no HIstudio, mas ainda nao foi documentalmente relacionado ao frontal `OMNI-PLC2`. |
-| Interfaces disponiveis | `CONFIRMADO` | `ITF-A1` e `ITF-A2`: RS232-C; `ITF-B`: RS485. O perfil atual usa RS232 em A1 ou A2; falta diferenciar fisicamente qual delas e registrar o cabo. |
-| Estado observado da CPU | `CONFIRMADO` | Revisao de hardware exibida 1, revisao de firmware do modulo exibida 0, funcional operacional e sem falhas de inicializacao, operacao, intermitencia ou configuracao. Nao confirma o firmware da CPU. |
-| Capacidades observadas do HIO115 | `CONFIRMADO` | Revisoes de hardware/firmware exibidas 0/0, funcional operacional, 8 DI `I00-I07`, 4 DO `O00-O03`, 3 AI `AI00-AI02`, 3 FCT `FCT0-FCT2`, 1 PWM `PWM00`; apresentacao analogica 4-20 mA. |
-| Estados e valores atuais de I/O | `NÃO DISPONÍVEL` | Capturas com equipamento remoto offline e sem base de hardware definida; nenhum estado ou valor foi confirmado fisicamente. |
-| HIstudio | `CONFIRMADO` | Versao observada: `2.4.03`. |
-| Protocolos previstos pelo testador | `CONFIRMADO` | Selecao explicita entre Modbus RTU e Modbus TCP; nenhuma opcao conecta automaticamente. |
-| Protocolo ativo no canal atual | `PENDENTE` | O transporte observado e serial, mas ainda falta confirmar que Modbus RTU esta realmente ativado no canal. |
-| Perfil fisico atual | `CONFIRMADO` | Serial RS-232 por `ITF-A1` ou `ITF-A2`; ambas sao RS232-C. A interface exata nao foi identificada e permanece pendencia documental, sem bloquear o perfil de software. |
-| Conector atual | `CONFIRMADO` | DB9 frontal identificado como `Serial`. Bornes RS-485 `D+ / D-` e chave de terminacao existem separadamente, mas nao descrevem o cabo atual. |
-| IP | `NÃO DISPONÍVEL` | Nenhum IP aprovado do CLP ou do PC esta registrado. |
-| Porta TCP | `NÃO DISPONÍVEL` | Nenhuma porta foi confirmada. Nao preencher por default. |
-| Driver/canal serial | `CONFIRMADO` | `SERIAL_DRIVER` / `Channel_01`. |
-| Porta serial | `CONFIRMADO` | `COM8`. O default `COM1` do codigo nao foi usado. |
-| Baud rate | `CONFIRMADO` | `38400`. |
-| Data bits | `CONFIRMADO` | `8`. |
-| Paridade | `CONFIRMADO` | Nenhuma (`None`). |
-| Stop bits | `CONFIRMADO` | `1` (`One`). |
-| Temporizacao serial | `CONFIRMADO` | Entre caracteres: 50 ms; transmissao: 2 ms; remover portadora: 0 ms. Nao confundir com timeout de leitura. |
-| Frame/remapeamento | `CONFIRMADO` | Frame maximo: 256; remapeamento de endereco: nao. |
-| Endereco do dispositivo / Unit ID | `CONFIRMADO` | Endereco atual conhecido: `10`; usado como valor inicial editavel nos perfis RTU/TCP. |
-| Firmware | `PROVÁVEL` | `3.3.11` aparece na barra de status, mas nao ha evidencia especifica da CPU. O campo confirmado permanece vazio. |
-| Mapa de registradores | `CONFLITANTE` | O fluxo legado usa `%MW10..74`; o perfil HIO115 tambem registra SysVars `1120..1134`. Falta mapa aprovado para o conjunto e programa reais. |
-| Registradores somente leitura | `NÃO DISPONÍVEL` | Nenhuma allow-list foi aprovada. Enderecos de comando/escrita do fluxo legado sao proibidos nesta fase. |
-| Indicacao nominal de alimentacao | `OBSERVADO` | Texto frontal registrado literalmente como `1030 VDC`; nao reinterpretar como faixa e nao tratar como medicao. |
-| Tensao efetivamente medida | `PENDENTE` | Nenhuma medicao e evidencia correspondente foram registradas. |
-| Alimentacao | `PENDENTE` | Confirmar fonte, polaridade, protecao e grupos de alimentacao no equipamento real. |
-| Aterramento | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou `OK`; falta evidencia verificavel. |
-| Isolamento das saidas | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou saidas desenergizadas ou isoladas; falta evidencia verificavel. |
-| Estado da maquina | `DECLARADO PELO RESPONSÁVEL` | Atson Melo declarou maquina impedida e em estado seguro; falta evidencia verificavel. |
-| Responsavel da bancada | `DECLARADO PELO RESPONSÁVEL` | Atson Melo informou estar presente; falta registro de evidencia/assinatura. |
-| Emergencia/desconexao rapida | `DECLARADO PELO RESPONSÁVEL` | Declaradas `OK`; faltam identificacao e evidencia registradas. |
-| Backup do programa | `DECLARADO PELO RESPONSÁVEL` | Declarado `OK`; caminho, nome, algoritmo e hash permanecem pendentes. |
+| Identidade HIstudio | NEON5-1S / CPU450 / HIO115 slot 1 | CONFIRMADO como exibido |
+| Identidade frontal | PIVODRIP / OMNICONTROL / OMNI-PLC2 | CONFIRMADO como observado |
+| Relacao OMNI-PLC2 / NEON5-1S | Nao comprovada | CONFLITANTE |
+| Numero de serie | 111.20023 | CONFIRMADO como observado |
+| Part number | 300.111.622.801 | CONFIRMADO como observado |
+| Identificacao adicional | Slot 1-115 | COMPATIVEL com HIO115, nao conclusivo |
+| HIstudio | 2.4.03 | CONFIRMADO como exibido |
+| Firmware/familia exibida | G5PLC.C950.ST [3.3.11] | PROVAVEL para a CPU |
+| Programa | MOTOR_HIDRO:PROD_NEON5_HIO115, versao 3220 | CONFIRMADO como exibido |
+| ID / CRC observados | 31134 / 23248 | CONFIRMADO como exibido |
+| Condicao observada | Programa rodando; Cold restart | CONFIRMADO como exibido |
+| Alimentacao nominal indicada | `10-30 VDC` | DECLARADO/OBSERVADO; medir antes da bancada |
 
-As faixas `I00-I07`, `O00-O03`, `AI00-AI02`, `FCT0-FCT2` e `PWM00` descrevem
-recursos exibidos para o modulo. Elas nao constituem mapa de registradores,
-allow-list read-only nem autorizacao para ler, habilitar ou configurar I/O.
+As telas tambem registraram equipamento remoto offline e ausencia de base de
+hardware no ambiente. Portanto, nenhum estado atual de DI, DO, AI, contador ou
+PWM foi promovido a leitura fisica.
 
-## Programa observado no HIstudio
+## Tres modos planejados
 
-| Campo | Valor | Classificacao |
-|---|---|---|
-| Condicao | Programa rodando | `CONFIRMADO` como estado observado; nao equivale a estado seguro da maquina |
-| Nome | `MOTOR_HIDRO:PROD_NEON5_HIO115` | `CONFIRMADO` |
-| Versao | `3220` | `CONFIRMADO` |
-| Identificador | `31134` | `CONFIRMADO` |
-| CRC | `23248` | `CONFIRMADO` |
-| Inicializacao observada | `Cold restart` | `CONFIRMADO` |
+### 1. Identificacao automatica
 
-## Arquitetura local
+Somente leitura. Usa resposta, assinatura de firmware, versao, F12/30012
+`PROG_ID`, F13/30013 `PROG_CRC` e F21/30021 `DEV_GFAIL_STS`. F10 e F11 continuam
+sem referencia de protocolo confirmada. Uma assinatura divergente bloqueia todos
+os testes de I/O.
 
-O validador usa somente:
+Estados previstos: `IDENTIFICADO`, `RESPONDEU MAS NAO RECONHECIDO`, `SEM
+RESPOSTA`, `ASSINATURA DIVERGENTE`, `FALHA CRITICA` e `CANCELADO`.
 
-1. `Data/Bench/layout-3-bench-readiness.json`;
-2. existencia dos sete documentos obrigatorios;
-3. avaliacao pura de campos, aprovacao, allow-list e limites;
-4. cenarios sinteticos em memoria.
+### 2. Teste de entradas
 
-O schema 2 representa perfis `RTU` e `TCP` separados, politica de enderecos e
-desenho de descoberta. O perfil selecionado e RTU, mas
-`activeProtocolConfirmed = false`. O desenho completo esta em
-`docs/layout-3-arquitetura-transporte-readonly-planejada.md`.
+Somente leitura. Allow-list fechada: DI00..DI07 em 31120..31127 e AI00..AI02 em
+31132..31134. A conversao de AI permanece bloqueada ate a escala de engenharia
+ser confirmada; a apresentacao 4-20 mA observada nao define essa escala.
 
-O namespace novo nao referencia `Plc`, o servico de comunicacao, o bridge
-legado nem bibliotecas de transporte. O despacho em `Program.cs` retorna antes
-da inicializacao da UI.
+### 3. Teste supervisionado de saidas
 
-### Flags
+Previsto para o produto final, mas desabilitado nesta fase. A unica allow-list de
+saida e DO00..DO03 em 31128..31131. O contrato de dominio usa canais fechados,
+nunca endereco arbitrario. Exige identificacao valida, F21 sem falha critica,
+checklist aprovado, habilitacao explicita do operador e gate fisico separado.
+
+Somente uma saida por vez, modo momentaneo, duracao maxima, cancelamento,
+desligamento no encerramento e validacao do retorno. Perda de comunicacao nunca
+e tratada como prova de que uma saida fisica desligou.
+
+## Bloqueios tecnicos
+
+- F1137/31137, F1140/31140 e F1143/31143: reservados, bloqueados;
+- F1144/31144 e F1145/31145: PWM, bloqueados;
+- contadores e encoder: fora do primeiro teste operacional;
+- coils: proibidas;
+- escrita generica: proibida;
+- enderecos 0 e 248..255: fora da descoberta automatica;
+- transporte real: inexistente e nao autorizado.
+
+## Pendencias para READY
+
+- confirmar documentalmente a relacao OMNI-PLC2 / NEON5-1S;
+- confirmar o protocolo realmente ativado no canal observado;
+- confirmar referencia de protocolo de F10/F11 e conversao de referencias para PDU;
+- aprovar para bancada os defaults de software: timeout 500 ms, intervalo 100 ms
+  e duracao maxima de saida 1000 ms;
+- anexar foto/evidencia da etiqueta;
+- medir tensao e registrar instrumento/resultado;
+- registrar caminho do backup e SHA-256;
+- comprovar aterramento, isolamento, estado seguro, emergencia e desconexao;
+- concluir e validar o Gate D offline com fake antes de qualquer bancada;
+- autorizar separadamente qualquer teste fisico supervisionado de saida.
+
+## Comandos locais
 
 ```powershell
-dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -c Release -- --validate-layout-3-bench-readiness-self-tests
-dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -c Release -- --validate-layout-3-bench-readiness
+dotnet run --project app/TestadorCLPHI.App/TestadorCLPHI.App.csproj -c Release --no-build -- --validate-layout-3-bench-readiness-self-tests
+dotnet run --project app/TestadorCLPHI.App/TestadorCLPHI.App.csproj -c Release --no-build -- --validate-layout-3-bench-readiness
 ```
 
-A primeira flag valida cenarios sinteticos. A segunda tambem avalia a
-configuracao versionada e retorna codigo diferente de zero enquanto qualquer
-dado estiver ausente, pendente ou conflitante.
-
-## Regras fail-closed
-
-- schema desconhecido bloqueia;
-- equipamento, firmware ou etiqueta ausentes bloqueiam;
-- protocolo e parametros incompativeis bloqueiam;
-- protocolo nao suportado pelo preflight bloqueia;
-- protocolo ativo nao confirmado bloqueia;
-- perfil RTU exige COM, RS232/RS485, serial, timeout, endereco 1..247, uma
-  tentativa e intervalo;
-- perfil TCP exige IP, porta, topologia isolada, timeout, endereco 1..247 e uma
-  tentativa;
-- somente o perfil selecionado e validado; o outro pode permanecer incompleto;
-- identidade fisica conflitante bloqueia ate existir relacao documental;
-- declaracao do responsavel nao substitui foto, medicao, caminho ou hash;
-- endereco 0 e proibido; 248..255 exigem aprovacao avancada manual;
-- descoberta permanece OFF, limitada a 1..247 e a uma tentativa por endereco;
-- somente FC03 e os pares F12/30012 e F13/30013 podem constar no desenho de
-  identificacao; os dois valores devem coincidir;
-- mapa ausente ou allow-list vazia bloqueiam;
-- area `coil` ou acesso diferente de `read` bloqueiam;
-- timeout fora de 100 a 5000 ms bloqueia;
-- limite de leituras nulo, negativo ou superior a allow-list bloqueia;
-- feature flag, comunicacao, escrita, polling ou reconexao ligados bloqueiam;
-- politica diferente de single-shot bloqueia;
-- seguranca eletrica ou de bancada nao confirmada bloqueia;
-- documento obrigatorio ausente bloqueia;
-- qualquer status diferente de `CONFIRMADO` bloqueia.
-- Gate D nao autorizado bloqueia.
-
-Os limites do preflight sao controles de software. Eles nao definem os valores
-reais do equipamento.
-
-## Estado atual
-
-`STATUS: NOT READY - GATE C E GATE D BLOQUEADOS`
-
-Motivos principais:
-
-- identidade `OMNI-PLC2` versus `NEON5-1S` conflitante e sem relacao documental;
-- foto/etiqueta e firmware especifico da CPU ainda nao confirmados;
-- protocolo realmente ativo no canal ainda nao confirmado;
-- timeout RTU e intervalo entre tentativas ainda nao confirmados;
-- IP/porta TCP permanecem vazios e so serao exigidos quando TCP for selecionado;
-- mapa sem aprovacao para o conjunto real;
-- allow-list read-only vazia;
-- seguranca e backup apenas declarados, sem evidencias verificaveis;
-- tensao medida e configuracao original de rede do PC ausentes;
-- Gate D nao autorizado.
-
-## Invariantes desta fase
-
-- feature flag default: `OFF`;
-- comunicacao real default: `OFF`;
-- escrita: `OFF`;
-- polling: `OFF`;
-- reconexao automatica: `OFF`;
-- modo: `single-shot only`;
-- conexoes reais: `0`;
-- leituras reais: `0`;
-- escritas reais: `0`;
-- comandos fisicos: `0`.
-
-## Gates seguintes
-
-1. Gate C: preencher e confirmar os dados da ficha de parametros.
-2. Reexecutar o preflight ate retornar codigo zero.
-3. Revisar e aprovar a documentacao e a allow-list.
-4. Gate D: autorizar, em milestone e branch separadas, a implementacao do
-   transporte real read-only ainda sem teste fisico.
-5. Somente depois de build, testes com fake server, revisao e autorizacao final
-   sera possivel apresentar um comando real de teste.
-
-Esta fase nao implementa o Gate D e nao autoriza conectar o CLP.
+O segundo comando deve retornar exit code 2 enquanto as pendencias e os gates
+permanecerem abertos.

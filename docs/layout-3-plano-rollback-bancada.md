@@ -1,146 +1,72 @@
-# Plano de rollback da bancada - Layout 3 read-only
+# Layout 3 - Plano de cancelamento e rollback de bancada
 
-## Objetivo
+## Estado atual
 
-Retornar aplicacao, comunicacao, PC e bancada ao estado anterior de forma
-reprodutivel. O plano vale para um futuro teste autorizado; nesta fase nenhuma
-conexao existe.
+O plano e documental. Nao houve conexao, leitura, escrita ou comando fisico. O
+Gate D e o gate fisico de saidas permanecem bloqueados.
 
-## Condicoes previas
+## Abortagem imediata
 
-- registrar configuracao de rede/serial atual do PC antes de qualquer ajuste;
-- registrar cabos, conversores, fonte e estado visual das saidas;
-- identificar quem pode retirar o cabo e desenergizar a bancada;
-- preservar backup do projeto HIstudio, caminho/hash e referencia do checkpoint
-  Git; a declaracao `backup OK` nao substitui esses dados;
-- definir o diretorio imutavel de logs e o identificador do ensaio.
+1. Acionar `Cancelar` na sessao quando essa funcao existir.
+2. Impedir nova tentativa, polling ou reconexao.
+3. Se uma saida supervisionada tiver sido acionada, solicitar OFF somente pelo
+   contrato fechado do mesmo canal e registrar retorno.
+4. Se a resposta for ausente ou invalida, nao assumir OFF; entrar em estado de
+   atencao e executar isolamento/desconexao fisica pelo responsavel.
+5. Retirar o cabo serial pelo ponto de desconexao rapida previamente identificado.
+6. Impedir que a maquina opere e usar a emergencia conforme procedimento local.
+7. Preservar logs, horario, operador, canal, ultimo estado conhecido e erro.
 
-Sem essas evidencias, o teste deve ser cancelado antes da conexao.
+## Restauracao do PC
 
-## Cancelamento normal da aplicacao
+1. Fechar somente a sessao do testador, sem encerrar processos nao identificados.
+2. Restaurar configuracao original de porta serial/rede a partir da evidencia
+   coletada antes do teste.
+3. Confirmar que nenhuma porta ficou aberta pelo processo.
+4. Confirmar feature, comunicacao, polling, reconexao e modo de saida em OFF.
+5. Arquivar diff da configuracao temporaria, sem gravar dados do equipamento.
 
-1. Acionar `Cancelar` no futuro fluxo; o comando deve cancelar tanto uma
-   operacao manual quanto uma descoberta, sem iniciar nova tentativa.
-2. Aguardar somente o tempo de encerramento aprovado.
-3. Confirmar que nao ha operacao pendente.
-4. Encerrar o processo pelo fluxo normal da aplicacao ou `Ctrl+C` quando a
-   execucao for em console.
-5. Nao usar encerramento forcado sem registrar PID, caminho, estado e obter
-   autorizacao do responsavel.
+## Confirmacao de zero ou de operacoes controladas
 
-## Interromper uma tentativa de conexao
+- antes do gate fisico: conexoes, leituras, escritas e comandos devem ser zero;
+- apos identificacao/entradas autorizadas: revisar contadores de conexao/leitura;
+- apos saida autorizada: confrontar cada escrita e comando com canal, valor,
+  duracao, retorno e autorizacao;
+- qualquer operacao sem log correspondente e incidente;
+- comparar estado visual/eletrico das saidas com a evidencia anterior ao teste;
+- nunca inferir desligamento por perda da comunicacao.
 
-1. Acionar o cancelamento uma unica vez.
-2. Nao permitir reconexao automatica.
-3. Se o cancelamento nao concluir no limite aprovado, declarar incidente.
-4. O responsavel designado deve retirar o cabo pelo ponto de desconexao rapida.
-5. Nao repetir a tentativa ate revisar logs, parametros e estado da bancada.
-6. Nao trocar RTU por TCP, RS232 por RS485, COM, IP, porta ou endereco como
-   tentativa de recuperacao.
+## Retorno de software
 
-## Interromper descoberta futura
+1. Preservar os logs e o commit do teste.
+2. Parar a aplicacao.
+3. Retornar ao checkpoint/tag anterior somente por procedimento Git nao
+   destrutivo aprovado.
+4. Executar build e validadores locais.
+5. Confirmar branch limpa antes de nova sessao.
 
-1. Acionar cancelamento imediato uma unica vez.
-2. Confirmar que o contador de tentativas parou e nao ultrapassou uma tentativa
-   no endereco corrente.
-3. Confirmar que nenhum endereco fora da allow-list foi tentado.
-4. Confirmar que 0 e 255 nao foram sondados e que 248..255 permaneceram
-   bloqueados sem aprovacao avancada.
-5. Preservar ID/CRC parciais sem declarar equipamento identificado.
-6. Retirar o cabo conforme o procedimento se o cancelamento nao concluir no
-   limite aprovado.
+Nenhum `reset --hard`, `clean`, force push, merge ou tag faz parte deste plano.
 
-## Retirada do cabo
+## Recuperacao de evidencias
 
-1. Confirmar que a pessoa designada esta em posicao segura.
-2. Retirar somente o cabo de comunicacao identificado na ficha.
-3. No perfil atual, o ponto de retirada e o DB9 identificado como `Serial`.
-   Nao usar os bornes RS-485 `D+ / D-` nem a chave de terminacao como ponto de
-   rollback do cabo RS-232.
-4. Nao manipular bornes energizados nem cabos de I/O como forma de rollback.
-5. Confirmar visualmente que o canal ficou desconectado.
-6. Registrar horario e responsavel pela retirada.
-
-## Restaurar a configuracao do PC
-
-1. Usar a evidencia capturada antes do teste como unica fonte de valores.
-2. Restaurar DHCP ou os valores estaticos exatamente como registrados.
-3. Remover apenas rotas ou ajustes criados para a bancada e identificados na
-   evidencia.
-4. Conferir interface, endereco, mascara, gateway e DNS contra o registro
-   anterior.
-5. Registrar a verificacao final; nao testar conectividade contra o CLP.
-
-Sem evidencia da configuracao original de rede do PC, o rollback de rede nao e
-considerado preparado e o teste permanece bloqueado.
-
-Para perfil RTU, tambem restaurar apenas ajustes locais de porta/conversor que
-tenham sido previamente registrados. Nao abrir COM8 para confirmar a
-restauracao e nao alternar fisicamente ITF-A1/ITF-A2/ITF-B sem procedimento da
-bancada.
-
-## Confirmar zero escritas
-
-1. Verificar que o componente read-only nao expoe API de escrita.
-2. Conferir o contador `Escritas reais` no log de inicio e encerramento.
-3. Exigir valor `0` em todas as linhas e no resumo.
-4. Procurar eventos `write`, `coil`, `command` ou equivalentes no log.
-5. Qualquer valor diferente de zero torna o ensaio reprovado e abre incidente.
-
-## Confirmar zero alteracoes em saidas
-
-1. Comparar o estado visual/eletrico registrado antes e depois do teste.
-2. Obter confirmacao independente do responsavel da bancada.
-3. Nao acionar saida para realizar essa confirmacao.
-4. Qualquer mudanca observada exige desconexao imediata e tratamento como
-   incidente, mesmo que os contadores indiquem zero.
-
-## Recuperar logs
-
-1. Copiar os arquivos para o diretorio de evidencias do ensaio.
-2. Registrar tamanho, data/hora e hash SHA-256.
-3. Preservar stdout, stderr, preflight, parametros aprovados e resumo final.
-4. Nao editar o arquivo original; redacoes ou anotacoes devem ficar em arquivo
-   separado.
-5. Registrar ausencia de log como falha do ensaio.
-
-## Retornar ao checkpoint anterior
-
-O checkpoint de software anterior a qualquer futuro transporte e:
-
-```text
-layout-3-fase-3-8-polimento-visual-completo-host-ok-20260806
-```
-
-Para inspecao local, usar checkout destacado ou nova branch a partir da tag.
-Nao usar `reset --hard`, `clean`, force push ou reescrever a branch operacional.
-O retorno de software nao altera nem restaura programa de CLP.
+Coletar log integral, configuracao usada, SHA do commit, horario de inicio/fim,
+responsavel, endereco tentado, assinatura recebida, F21, leituras, escritas,
+comandos, cancelamento, timeout e estado final observado.
 
 ## Registro de incidente
 
-Registrar no minimo:
+Registrar imediatamente:
 
-- identificador, data/hora e participantes;
-- equipamento e etiqueta;
-- identidades HIstudio e frontal, incluindo o conflito `NEON5-1S / OMNI-PLC2`;
-- commit, configuracao e comando executado;
-- ultimo passo concluido;
-- sintoma e criterio de aborto acionado;
-- contadores de conexao, leitura, escrita e comando;
-- estado das saidas e da maquina;
-- acao de desconexao;
-- arquivos de log e respectivos hashes;
-- configuracao do PC antes/depois;
-- decisao sobre repeticao, sempre exigindo nova aprovacao.
+- identificador e horario;
+- pessoas presentes;
+- equipamento/etiqueta;
+- configuracao RTU;
+- ultimo comando e resposta;
+- saida possivelmente ativa;
+- acao de isolamento/desconexao;
+- contadores;
+- logs e hashes;
+- impacto observado;
+- autorizacao para qualquer retomada.
 
-## Criterio de rollback concluido
-
-O rollback termina somente quando:
-
-- processo encerrado;
-- cabo retirado;
-- PC restaurado;
-- logs preservados;
-- escritas e comandos fisicos confirmados em zero;
-- saidas e maquina no estado seguro original;
-- incidente registrado ou encerramento normal assinado.
+Nao retomar teste no mesmo incidente sem nova avaliacao e autorizacao explicita.

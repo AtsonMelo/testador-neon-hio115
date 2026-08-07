@@ -1,199 +1,117 @@
-# Checklist de bancada read-only - Layout 3
+# Layout 3 - Checklist de bancada e gates de I/O
 
-## Identificacao do ensaio
+> O nome historico `readonly` permanece porque identificacao e entradas sao
+> somente leitura. Saidas usam checklist e gate fisico adicionais.
 
-- Data/hora planejada:
-- Local:
-- Responsavel tecnico:
-- Operador:
-- Revisor da allow-list:
-- Branch/commit:
-- Evidencia da aprovacao:
+## Gate C - Evidencias
 
-Nenhum item fisico deve ser marcado por inferencia. Campo vazio ou evidencia
-indisponivel bloqueia o ensaio.
+- [ ] Foto legivel da etiqueta anexada e referenciada.
+- [x] Identificacao frontal PIVODRIP / OMNICONTROL / OMNI-PLC2 registrada.
+- [x] Numero de serie 111.20023 e part number 300.111.622.801 registrados.
+- [x] Identidade HIstudio NEON5-1S / CPU450 / HIO115 slot 1 registrada.
+- [ ] Relacao documental OMNI-PLC2 / NEON5-1S comprovada.
+- [ ] Firmware da CPU confirmado por evidencia especifica; 3.3.11 ainda PROVAVEL.
+- [x] Programa, versao 3220, ID 31134 e CRC 23248 registrados.
+- [ ] Protocolo Modbus RTU ativado no canal confirmado.
+- [x] Mapa documental F12, F13, F21, DI, AI e DO registrado.
+- [x] Allow-list de leitura fechada registrada.
+- [x] Allow-list de saida fechada em DO00..DO03 registrada.
+- [ ] Referencias F10/F11 e conversao para endereco PDU confirmadas.
 
-## Evidencia parcial recebida do HIstudio
+## Perfil RTU
 
-- [x] Controlador observado: `NEON5-1S`.
-- [x] CPU observada: `CPU450`, slot 0.
-- [x] Modulo observado: `HIO115`, slot 1.
-- [x] Limite de 2 modulos e 2 modulos detectados observados.
-- [x] Interfaces disponiveis observadas: `ITF-A1` e `ITF-A2` RS232-C;
-      `ITF-B` RS485.
-- [x] CPU observada com revisao de hardware 1, revisao de firmware exibida 0,
-      status operacional e sem falhas nos quatro diagnosticos apresentados.
-- [x] HIO115 observado com revisoes exibidas 0/0 e status operacional.
-- [x] Capacidades do HIO115 observadas: 8 DI `I00-I07`, 4 DO `O00-O03`,
-      3 AI `AI00-AI02`, 3 FCT `FCT0-FCT2` e 1 PWM `PWM00`.
-- [x] Apresentacao das entradas analogicas observada como 4-20 mA.
-- [x] HIstudio observado: `2.4.03`.
-- [x] Canal observado: `SERIAL_DRIVER / Channel_01 / COM8 / 38400 / 8N1`.
-- [x] Temporizacao observada: 50 ms entre caracteres, 2 ms para transmissao e
-      0 ms para remover portadora.
-- [x] Frame maximo 256 e remapeamento de endereco desabilitado.
-- [x] Programa observado rodando: `MOTOR_HIDRO:PROD_NEON5_HIO115`, versao 3220,
-      identificador 31134, CRC 23248, inicializacao `Cold restart`.
-- [x] Perfil fisico atual confirmado como RS-232, COM8 e endereco 10.
-- [x] Interface registrada como `ITF-A1_OR_ITF-A2`; ambas sao RS232-C.
-- [x] Perfis futuros definidos como Modbus RTU e Modbus TCP, com selecao
-      explicita e sem conexao automatica.
-- [x] Frontal observado: `PIVODRIP / OMNICONTROL / OMNI-PLC2`, serie
-      `111.20023`, part number `300.111.622.801`.
-- [x] Identificacao adicional `Slot 1115` registrada apenas como compativel com
-      HIO115, sem prova definitiva.
-- [x] Conector atual observado como DB9 `Serial`; camada atual informada RS-232.
-- [x] Bornes RS-485 `D+ / D-` e chave de terminacao observados separadamente;
-      nao caracterizam o cabo atual.
-- [x] Indicacao nominal frontal registrada literalmente como `1030 VDC`, sem
-      tratar como tensao medida ou deduzir faixa.
-- [ ] Relacao documental entre `OMNI-PLC2` e `NEON5-1S` confirmada.
-- [ ] Foto/etiqueta da unidade recebida.
-- [ ] Firmware da CPU confirmado. `3.3.11` permanece apenas `PROVÁVEL`.
-- [ ] Interface fisica exata confirmada entre ITF-A1 e ITF-A2. Esta pendencia e
-      documental e nao bloqueia o perfil RS232 de software.
-- [ ] Protocolo realmente ativado no canal confirmado.
-
-O estado "Programa rodando" nao confirma estado seguro da maquina ou das
-saidas e nao autoriza comunicacao pelo Testador. As capturas mostram
-`Equipamento remoto offline` e `Nao existe base de hardware definida no
-ambiente`; por isso, nenhum estado atual de entrada/saida, valor analogico,
-contador ou PWM foi confirmado.
-
-## Equipamento e programa
-
-- [x] Equipamento identificado visualmente como `OMNI-PLC2` no frontal.
-- [ ] Foto legivel da etiqueta anexada.
-- [ ] Modelo exato reconciliado entre frontal e HIstudio.
-- [ ] CPU e slot conferidos.
-- [ ] Modelo do modulo e slot conferidos.
-- [ ] Firmware conferido no equipamento ou ferramenta oficial.
-- [ ] Programa HIstudio carregado identificado por nome, versao e hash/backup.
-- [x] Backup declarado `OK` por Atson Melo.
-- [ ] Caminho/nome do backup, algoritmo e hash registrados e verificados.
-- [ ] Nenhum artefato HIstudio sera alterado pelo teste.
-
-## Protocolo e mapa
-
-- [ ] Protocolo confirmado para a unidade real.
-- [x] Perfil atual RTU selecionado explicitamente no JSON offline.
-- [x] Camada fisica atual RS232 confirmada.
-- [x] Conector atual DB9 `Serial` registrado.
-- [ ] Interface fisica exata A1/A2 documentada.
-- [ ] IP do PC registrado, quando aplicavel.
-- [ ] IP do CLP registrado, quando aplicavel.
-- [ ] Porta TCP registrada, quando aplicavel.
-- [ ] Topologia isolada confirmada, quando TCP estiver selecionado.
-- [ ] Porta serial registrada, quando aplicavel.
-- [ ] Baud rate, data bits, paridade e stop bits registrados, quando aplicavel.
-- [x] Unit ID/endereco atual confirmado como 10.
-- [ ] Mapa de registradores vinculado ao programa e firmware reais.
-- [ ] Revisao independente do mapa concluida.
-- [ ] Registradores de leitura aprovados individualmente.
-- [ ] Allow-list sem coils, comandos, setpoints ou enderecos de escrita.
-- [ ] Cada item da allow-list possui evidencia e finalidade.
+- [x] COM8 registrada como evidencia observada, sem acesso pelo testador.
+- [x] RS-232, 38400, 8-N-1 registrados.
+- [x] ITF-A1 ou ITF-A2 registrada sem falsa precisao.
+- [ ] Interface fisica A1/A2 exata fotografada ou documentada.
+- [x] Endereco inicial 1 e descoberta 1..247 configurados offline.
+- [x] Endereco historico 10 separado do default.
+- [ ] Timeout operacional aprovado.
+- [ ] Intervalo entre tentativas aprovado.
+- [x] Uma tentativa por endereco, sem polling/reconexao.
+- [x] Cancelamento imediato e inicio explicito planejados.
+- [x] 0 e 248..255 bloqueados na descoberta.
 
 ## Seguranca eletrica e operacional
 
-- [x] Indicacao nominal frontal `1030 VDC` registrada sem interpretacao.
-- [ ] Tensao efetivamente medida e instrumento/evidencia registrados.
-- [ ] Fonte e polaridade confirmadas.
-- [x] Declaracao de aterramento `OK` recebida de Atson Melo.
-- [ ] Aterramento verificado por evidencia.
-- [ ] Rede ou canal de comunicacao isolado para a bancada.
-- [ ] Nenhum outro mestre ou software disputa o canal.
-- [x] Saidas desenergizadas/isoladas declaradas `OK` por Atson Melo.
-- [ ] Saidas desenergizadas ou eletricamente isoladas verificadas.
-- [x] Maquina impedida de operar declarada `OK` por Atson Melo.
-- [ ] Maquina impedida de operar verificada.
-- [x] Estado seguro da maquina declarado `OK` por Atson Melo.
-- [ ] Estado seguro da maquina verificado.
-- [ ] Cargas reais removidas ou isoladas conforme procedimento aprovado.
-- [x] Presenca de Atson Melo declarada.
-- [ ] Presenca do responsavel registrada por evidencia/assinatura.
-- [x] Emergencia e desconexao rapida declaradas `OK` por Atson Melo.
-- [ ] Botao de emergencia identificado e acessivel por evidencia.
-- [ ] Desconexao rapida identificada, acessivel e atribuida por evidencia.
-- [ ] Cabo pode ser retirado sem contato com parte energizada.
+- [ ] Tensao realmente medida, instrumento e horario registrados.
+- [ ] Aterramento comprovado por evidencia aplicavel.
+- [ ] Canal serial de bancada isolado conforme avaliacao eletrica.
+- [ ] Saidas desenergizadas/isoladas comprovadas.
+- [ ] Maquina impedida de operar comprovada.
+- [ ] Estado seguro da maquina comprovado.
+- [x] Responsavel declarado: Atson Melo.
+- [ ] Presenca do responsavel evidenciada no teste.
+- [ ] Emergencia identificada e evidenciada.
+- [ ] Desconexao rapida identificada e evidenciada.
+- [ ] Criterios de aborto revisados com o responsavel.
 
-## Controles do software
+As declaracoes de aterramento, isolamento, maquina segura, emergencia,
+desconexao e backup estao registradas como `DECLARADO PELO RESPONSAVEL`; nao
+substituem as evidencias acima.
 
-- [ ] Feature flag default confirmada como `OFF`.
-- [ ] Comunicacao real default confirmada como `OFF`.
-- [ ] Escrita tecnicamente desabilitada.
-- [ ] Nenhuma API publica de escrita no componente read-only.
-- [ ] Coils proibidas.
-- [ ] Allow-list fechada.
-- [ ] Operacao single-shot confirmada.
-- [ ] Polling continuo desabilitado.
-- [ ] Reconexao automatica desabilitada.
-- [ ] Timeout aprovado: ______ ms.
-- [ ] Maximo de leituras aprovado: ______.
-- [ ] Intervalo entre tentativas aprovado: ______ ms.
-- [x] Maximo de uma tentativa por endereco.
-- [x] Faixa representavel 1..255; descoberta automatica limitada a 1..247.
-- [x] Endereco 0 proibido e 255 nunca sondado automaticamente.
-- [x] Enderecos 248..255 bloqueados sem modo avancado, selecao manual unica,
-      aviso e aprovacao explicita.
-- [x] Descoberta default OFF, range `10..10` e allow-list `[10]`.
-- [x] Descoberta planejada somente FC03, sem coil ou escrita.
-- [x] Identificacao planejada exige F12/30012 = 31134 e F13/30013 = 23248.
-- [ ] Traducao dos candidatos para endereco de dados do protocolo aprovada no
-      mapa; nenhum offset pode ser deduzido.
-- [ ] Gate D autorizado para implementar transporte em branch separada.
-- [ ] Cancelamento testado com fake.
-- [ ] Contadores de escrita e comandos fisicos fixados em zero.
+## Backup e rastreabilidade
 
-## Preflight local
+- [ ] Caminho/nome do backup registrado.
+- [ ] SHA-256 do backup registrado.
+- [ ] Backup verificado sem download/restart do controlador.
+- [ ] Configuracao original da porta serial/rede do PC registrada.
+- [ ] Diretorio de logs e identificador da sessao definidos.
+- [ ] Relogio do PC e responsavel registrados.
 
-- [ ] Build Release: 0 erros.
-- [ ] Todos os self-tests de configuracao aprovados.
-- [ ] Cinco validadores anteriores: 5/5.
-- [ ] `--validate-layout-3-bench-readiness`: exit code 0.
-- [ ] Varredura de APIs proibidas: limpa.
-- [ ] `git diff --check`: OK.
-- [ ] Branch limpa e PR revisavel.
-- [ ] Evidencias armazenadas no diretorio aprovado.
-- [ ] Configuracao original de rede do PC registrada.
+## Gate D offline - Transporte em memoria e fake server
 
-## Rollback e logs
+- [x] Gate D offline autorizado explicitamente em 2026-08-06.
+- [ ] Transporte fisico autorizado separadamente.
+- [ ] Biblioteca, versao e licenca aprovadas.
+- [ ] Escrita arbitraria encapsulada e inacessivel.
+- [ ] Transporte/feature default OFF.
+- [ ] Fake server aprovado sem hardware.
+- [ ] Timeout, cancelamento e limite de tentativas testados.
+- [ ] Identificacao divergente bloqueia I/O.
+- [ ] Varredura estatica confirma ausencia de caminho nao autorizado.
 
-- [ ] Plano de rollback revisado pelo responsavel.
-- [ ] Configuracao de rede atual do PC registrada antes do teste.
-- [ ] Procedimento para restaurar IP do PC disponivel.
-- [ ] Local de logs definido e com espaco disponivel.
-- [ ] Relogio do PC conferido para correlacao das evidencias.
-- [ ] Criterio de zero escritas definido no log.
-- [ ] Criterio de zero alteracoes de saida definido por observacao independente.
-- [ ] Formulario de incidente pronto.
+## Modo 1 - Identificacao
 
-## Criterios de aborto imediato
+- [ ] Comando explicito do operador.
+- [ ] Somente FC03 e referencias aprovadas.
+- [ ] ID e CRC coincidem simultaneamente.
+- [ ] Firmware/versao coincidem quando seus enderecos forem confirmados.
+- [ ] F21 sem bit critico.
+- [ ] Nenhuma escrita, coil ou saida executada.
 
-Abortar sem nova tentativa quando ocorrer qualquer item abaixo:
+## Modo 2 - Entradas
 
-- identificacao do equipamento divergir da ficha;
-- firmware, programa, protocolo, topologia ou mapa divergirem;
-- qualquer parametro estiver pendente ou conflitante;
-- tentativa de acesso fora da allow-list;
-- tentativa de funcao de escrita ou coil;
-- contador de escrita ou comando fisico diferente de zero;
-- leitura acima do limite aprovado;
-- polling ou reconexao nao planejada;
-- timeout repetido ou resposta inconsistente;
-- perda de rede/canal ou aplicacao sem responder;
-- maquina sair do estado seguro;
-- saida mudar de estado;
-- responsavel, emergencia ou desconexao rapida deixarem de estar disponiveis.
+- [ ] Equipamento previamente identificado.
+- [ ] Somente DI00..DI07 e AI00..AI02.
+- [ ] Valor bruto preservado.
+- [ ] Escala/unidade analogica confirmada antes de converter.
+- [ ] Escrita permanece tecnicamente indisponivel.
 
-## Encerramento
+## Modo 3 - Saidas supervisionadas
 
-- [ ] Aplicacao cancelada.
-- [ ] Canal fisico desconectado pelo responsavel.
-- [ ] Conexoes reais registradas.
-- [ ] Leituras reais registradas.
-- [ ] Escritas reais confirmadas como zero.
-- [ ] Comandos fisicos confirmados como zero.
-- [ ] Saidas confirmadas sem alteracao.
-- [ ] IP/configuracao do PC restaurados e conferidos.
-- [ ] Logs preservados sem edicao.
-- [ ] Resultado e incidentes assinados pelos participantes.
+- [ ] Gate fisico especifico autorizado.
+- [ ] Checklist eletrico aprovado e responsavel presente.
+- [ ] Modo de escrita habilitado explicitamente.
+- [ ] Duracao maxima aprovada.
+- [ ] Somente uma saida por vez.
+- [ ] Somente DO00..DO03 selecionaveis.
+- [ ] Comando momentaneo e cancelamento disponiveis.
+- [ ] Desligamento ao final e validacao de retorno previstos.
+- [ ] Timeout/resposta invalida abortam sem avancar.
+- [ ] Perda de comunicacao nao e interpretada como saida desligada.
+- [ ] Escritas e comandos fisicos auditados individualmente.
+
+## Criterios de aborto
+
+- identidade ou assinatura divergente;
+- qualquer bit critico em F21;
+- endereco, protocolo ou referencia ambigua;
+- tensao, aterramento, isolamento ou estado da maquina nao comprovados;
+- resposta invalida, timeout ou cancelamento;
+- tentativa fora das allow-lists;
+- mais de uma saida solicitada;
+- impossibilidade de confirmar desligamento;
+- ausencia do responsavel ou perda da desconexao rapida.
+
+Enquanto qualquer item obrigatorio permanecer aberto: `STATUS: NOT READY`.

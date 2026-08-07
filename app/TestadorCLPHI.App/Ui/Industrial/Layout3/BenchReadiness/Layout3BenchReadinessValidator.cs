@@ -34,18 +34,24 @@ internal static class Layout3BenchReadinessValidator
                 $"Documentos locais: {loaded.AvailableDocuments.Count}/" +
                 $"{Layout3BenchReadinessEvaluator.RequiredDocuments.Count}");
             output.WriteLine(
-                $"Perfil selecionado: {loaded.Configuration.Connection?.SelectedProfile ?? "AUSENTE"}");
+                $"Transporte selecionado: {loaded.Configuration.Connection?.SelectedTransport ?? "AUSENTE"}");
             output.WriteLine(
                 $"Protocolo ativo confirmado: {FormatConfirmation(loaded.Configuration.Connection?.ActiveProtocolConfirmed)}");
             output.WriteLine($"Feature flag: {FormatFlag(loaded.Configuration.Safety?.FeatureEnabled)}");
             output.WriteLine(
                 $"Comunicacao real: {FormatFlag(loaded.Configuration.Safety?.RealCommunicationEnabled)}");
             output.WriteLine($"Escrita: {FormatFlag(loaded.Configuration.Safety?.WritesEnabled)}");
+            output.WriteLine(
+                $"Modo supervisionado de saida: {FormatFlag(loaded.Configuration.Safety?.OutputModeEnabled)}");
             output.WriteLine($"Polling: {FormatFlag(loaded.Configuration.Safety?.PollingEnabled)}");
             output.WriteLine(
                 $"Reconexao automatica: {FormatFlag(loaded.Configuration.Safety?.AutomaticReconnectEnabled)}");
             output.WriteLine(
-                $"Gate D autorizado: {FormatConfirmation(loaded.Configuration.Safety?.GateDAuthorized)}");
+                $"Gate D offline autorizado: {FormatConfirmation(loaded.Configuration.Safety?.OfflineGateDAuthorized)}");
+            output.WriteLine(
+                $"Transporte fisico autorizado: {FormatConfirmation(loaded.Configuration.Safety?.PhysicalTransportAuthorized)}");
+            output.WriteLine(
+                $"Gate fisico de saida autorizado: {FormatConfirmation(loaded.Configuration.Safety?.PhysicalOutputGateAuthorized)}");
             output.WriteLine();
 
             if (result.IsReady)
