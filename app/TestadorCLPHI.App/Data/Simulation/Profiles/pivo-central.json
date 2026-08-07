@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "pivo-central",
+  "displayName": "Pivô Central",
+  "initialState": "Parado",
+  "signals": [
+    { "id": "Emergencia", "label": "Emergência", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Pressostato", "label": "Pressostato", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Alinhamento", "label": "Alinhamento", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "FimDeCurso", "label": "Fim de curso", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "FalhaTorre", "label": "Falha de torre", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "PermissivoAgua", "label": "Permissivo de água", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Pressao", "label": "Pressão", "kind": "analogInput", "defaultValue": 4, "minimum": 0, "maximum": 10, "unit": "bar (simulado)" },
+    { "id": "Corrente", "label": "Corrente", "kind": "analogInput", "defaultValue": 15, "minimum": 0, "maximum": 100, "unit": "A (simulado)" },
+    { "id": "Velocidade", "label": "Velocidade", "kind": "analogInput", "defaultValue": 50, "minimum": 0, "maximum": 100, "unit": "%" },
+    { "id": "PosicaoPercentual", "label": "Posição", "kind": "analogInput", "defaultValue": 0, "minimum": 0, "maximum": 100, "unit": "%" },
+    { "id": "Bomba", "label": "Bomba", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Frente", "label": "Frente", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "Reverso", "label": "Reverso", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" },
+    { "id": "ValvulaAgua", "label": "Válvula de água", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "" }
+  ],
+  "rules": [
+    { "id": "emergency", "priority": 100, "conditions": [{ "signalId": "Emergencia", "comparison": "equals", "expectedValue": 1 }], "resultState": "Emergencia", "alarmId": "Emergency", "blockAllOutputs": true },
+    { "id": "tower-fault", "priority": 90, "conditions": [{ "signalId": "FalhaTorre", "comparison": "equals", "expectedValue": 1 }], "resultState": "Falha", "alarmId": "TowerFault", "blockAllOutputs": true },
+    { "id": "misaligned", "priority": 80, "conditions": [{ "signalId": "Alinhamento", "comparison": "equals", "expectedValue": 0 }], "resultState": "Desalinhado", "alarmId": "AlignmentFault", "blockAllOutputs": true },
+    { "id": "pressure-low", "priority": 70, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }, { "signalId": "Pressao", "comparison": "lessThan", "expectedValue": 2 }], "resultState": "Falha", "alarmId": "PressureLow", "blockAllOutputs": true },
+    { "id": "moving-forward", "priority": 40, "conditions": [{ "signalId": "Frente", "comparison": "equals", "expectedValue": 1 }], "resultState": "MovendoFrente", "alarmId": "", "blockAllOutputs": false },
+    { "id": "moving-reverse", "priority": 40, "conditions": [{ "signalId": "Reverso", "comparison": "equals", "expectedValue": 1 }], "resultState": "MovendoReverso", "alarmId": "", "blockAllOutputs": false },
+    { "id": "irrigating", "priority": 30, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }, { "signalId": "ValvulaAgua", "comparison": "equals", "expectedValue": 1 }], "resultState": "Irrigando", "alarmId": "", "blockAllOutputs": false },
+    { "id": "preparing", "priority": 20, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }], "resultState": "Preparando", "alarmId": "", "blockAllOutputs": false }
+  ],
+  "exclusiveOutputGroups": [
+    { "id": "movement-direction", "signalIds": ["Frente", "Reverso"] }
+  ],
+  "scenarios": [
+    { "id": "normal", "displayName": "Normal", "values": {} },
+    { "id": "emergencia", "displayName": "Emergência", "values": { "Emergencia": 1 } },
+    { "id": "falha-torre", "displayName": "Falha de torre", "values": { "FalhaTorre": 1 } },
+    { "id": "pressao-baixa", "displayName": "Pressão baixa", "values": { "Bomba": 1, "Pressao": 1 } },
+    { "id": "desalinhado", "displayName": "Desalinhado", "values": { "Alinhamento": 0 } }
+  ]
+}
