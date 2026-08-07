@@ -53,6 +53,7 @@ internal sealed class NeonHio115FakeDevice
     internal ushort ProgramCrc { get; }
     internal ushort GeneralFailureStatus { get; }
     internal FakeDeviceResponseMode ResponseMode { get; set; }
+    internal event Action<Layout3OutputChannel, bool>? OutputChanged;
 
     internal ushort GetRegister(ushort documentedReference) =>
         _registers.TryGetValue(documentedReference, out ushort value) ? value : (ushort)0;
@@ -140,8 +141,18 @@ internal sealed class NeonHio115FakeDevice
         }
 
         _registers[reference] = value;
+        OutputChanged?.Invoke(GetOutputChannel(reference), value != 0);
         return request.ToArray();
     }
+
+    private static Layout3OutputChannel GetOutputChannel(ushort reference) => reference switch
+    {
+        31128 => Layout3OutputChannel.DO00,
+        31129 => Layout3OutputChannel.DO01,
+        31130 => Layout3OutputChannel.DO02,
+        31131 => Layout3OutputChannel.DO03,
+        _ => throw new ArgumentOutOfRangeException(nameof(reference))
+    };
 
     private static void ValidateChannel(int channel, int count, string parameterName)
     {
