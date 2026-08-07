@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Industrial.Platform.Process;
+
 namespace TestadorCLPHI.App.Industrial.Platform.Simulation;
 
 internal static class SimulationEngineValidator
@@ -66,6 +68,26 @@ internal static class SimulationEngineValidator
             SimulationProfileValidator.Validate(SimulationProfileLoader.Load("poco")).IsValid),
         new("Pivo inicia parado", () =>
             CreateEngine("pivo-central").Snapshot.State == "Parado"),
+        new("Pivo possui cenarios operacionais declarados", () =>
+        {
+            string[] expected =
+            [
+                "normal", "irrigando", "movendo-frente", "movendo-reverso", "emergencia",
+                "desalinhado", "falha-torre", "pressao-baixa", "fim-de-curso"
+            ];
+            SimulationProfile profile = SimulationProfileLoader.Load("pivo-central");
+            return expected.All(id => profile.Scenarios.Any(scenario =>
+                string.Equals(scenario.Id, id, StringComparison.OrdinalIgnoreCase)));
+        }),
+        new("Pivo usa quantidade configuravel de quatro torres", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            return engine.Profile.Visualization.TowerCount == 4
+                && ProjectPivot(engine).Towers.Count == 4;
+        }),
+        new("Pivo normal projeta todas as torres OK", () =>
+            ProjectPivot(CreateEngine("pivo-central")).Towers.All(tower =>
+                tower.Status == PivotTowerStatus.Ok)),
         new("Pivo emergencia bloqueia comandos", () =>
         {
             SimulationEngine engine = CreateEngine("pivo-central");
@@ -83,13 +105,17 @@ internal static class SimulationEngineValidator
             SimulationEngine engine = CreateEngine("pivo-central");
             engine.SetDigitalInput("FalhaTorre", true);
             return engine.Snapshot.State == "Falha"
-                && engine.Snapshot.ActiveAlarms.Contains("TowerFault");
+                && engine.Snapshot.ActiveAlarms.Contains("TowerFault")
+                && ProjectPivot(engine).Towers.Single(tower => tower.Number == 3).Status
+                    == PivotTowerStatus.Fault;
         }),
         new("Pivo desalinhado", () =>
         {
             SimulationEngine engine = CreateEngine("pivo-central");
             engine.SetDigitalInput("Alinhamento", false);
-            return engine.Snapshot.State == "Desalinhado";
+            return engine.Snapshot.State == "Desalinhado"
+                && ProjectPivot(engine).Towers.Single(tower => tower.Number == 3).Status
+                    == PivotTowerStatus.Misaligned;
         }),
         new("Pivo pressao baixa usa limite do perfil", () =>
         {
@@ -100,6 +126,14 @@ internal static class SimulationEngineValidator
                 && engine.Snapshot.ActiveAlarms.Contains("PressureLow")
                 && engine.Snapshot.Values["Bomba"] == 0;
         }),
+        new("Pivo fim de curso bloqueia saidas pelo perfil", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.ApplyScenario("fim-de-curso");
+            return engine.CurrentState == "FimDeCurso"
+                && engine.Snapshot.OutputsBlocked
+                && engine.Snapshot.ActiveAlarms.Contains("EndOfTravel");
+        }),
         new("Pivo Frente e Reverso mutuamente exclusivos", () =>
         {
             SimulationEngine engine = CreateEngine("pivo-central");
@@ -109,12 +143,54 @@ internal static class SimulationEngineValidator
                 && engine.GetValue("Reverso") == 1
                 && engine.CurrentState == "MovendoReverso";
         }),
+        new("Pivo movimento frente projeta posicao e torres MOVING", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.ApplyScenario("movendo-frente");
+            PivotProcessState process = ProjectPivot(engine);
+            return process.Direction == PivotMovementDirection.Forward
+                && process.PositionPercent == 37
+                && process.Towers.All(tower => tower.Status == PivotTowerStatus.Moving);
+        }),
+        new("Pivo cenario irrigando ativa bomba e agua", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.ApplyScenario("irrigando");
+            PivotProcessState process = ProjectPivot(engine);
+            return process.OverallState == "Irrigando"
+                && process.PumpActive
+                && process.WaterActive;
+        }),
+        new("Pivo emergencia projeta torres UNKNOWN", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.ApplyScenario("emergencia");
+            return ProjectPivot(engine).Towers.All(tower => tower.Status == PivotTowerStatus.Unknown);
+        }),
+        new("Pivo posicao permanece em zero a cem", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetAnalogInput("PosicaoPercentual", 100);
+            bool upperBound = ProjectPivot(engine).PositionPercent == 100;
+            engine.SetAnalogInput("PosicaoPercentual", 0);
+            return upperBound && ProjectPivot(engine).PositionPercent == 0;
+        }),
         new("Pivo cenario normal reseta falha", () =>
         {
             SimulationEngine engine = CreateEngine("pivo-central");
             engine.ApplyScenario("emergencia");
             engine.ApplyScenario("normal");
             return engine.CurrentState == "Parado" && engine.Snapshot.ActiveAlarms.Count == 0;
+        }),
+        new("Pivo reset restaura posicao e estado", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.ApplyScenario("movendo-reverso");
+            engine.Reset();
+            PivotProcessState process = ProjectPivot(engine);
+            return process.OverallState == "Parado"
+                && process.PositionPercent == 0
+                && process.Direction == PivotMovementDirection.Stopped;
         }),
         new("Pivo rejeita valor analogico fora do perfil", () =>
         {
@@ -206,6 +282,14 @@ internal static class SimulationEngineValidator
 
     private static SimulationEngine CreateEngine(string profileId) =>
         new(SimulationProfileLoader.Load(profileId));
+
+    private static PivotProcessState ProjectPivot(SimulationEngine engine)
+    {
+        SimulationProcessState state = SimulationProcessStateProjector.Project(
+            engine.Profile,
+            engine.Snapshot);
+        return PivotProcessStateProjector.Project(engine.Profile, state);
+    }
 
     private static bool Throws<TException>(Action action)
         where TException : Exception

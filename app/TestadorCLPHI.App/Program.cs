@@ -2,6 +2,7 @@ using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
+using TestadorCLPHI.App.Industrial.Platform.Mapping;
 using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
@@ -98,6 +99,14 @@ internal static class Program
         if (args.Contains("--validate-layout-3-industrial-platform-ui", StringComparer.OrdinalIgnoreCase))
         {
             Environment.ExitCode = IndustrialPlatformUiValidator.Validate(Console.Out, Console.Error);
+            return;
+        }
+
+        if (args.Contains("--validate-industrial-io-mapping", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = IndustrialIoMappingValidator.ValidateDefaultProfiles(
+                Console.Out,
+                Console.Error);
             return;
         }
 

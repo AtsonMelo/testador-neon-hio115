@@ -7,6 +7,34 @@ internal enum SimulationSignalKind
     VirtualOutput
 }
 
+internal enum SimulationVisualizationType
+{
+    Unspecified,
+    Pivot,
+    Well
+}
+
+internal enum SimulationIoDirection
+{
+    Unspecified,
+    Input,
+    Output
+}
+
+internal enum SimulationIoType
+{
+    Unspecified,
+    Digital,
+    Analog
+}
+
+internal enum SimulationIoEvidenceStatus
+{
+    Unspecified,
+    SimulationProfile,
+    PhysicalConfirmed
+}
+
 internal enum SimulationComparison
 {
     Equals,
@@ -23,10 +51,21 @@ internal sealed class SimulationProfile
     public string? Id { get; set; }
     public string? DisplayName { get; set; }
     public string? InitialState { get; set; }
+    public SimulationVisualizationDefinition Visualization { get; set; } = new();
     public List<SimulationSignalDefinition> Signals { get; set; } = [];
+    public List<SimulationIoBinding> IoBindings { get; set; } = [];
     public List<SimulationRule> Rules { get; set; } = [];
     public List<SimulationExclusiveOutputGroup> ExclusiveOutputGroups { get; set; } = [];
     public List<SimulationScenario> Scenarios { get; set; } = [];
+}
+
+internal sealed class SimulationVisualizationDefinition
+{
+    public SimulationVisualizationType Type { get; set; }
+    public int? TowerCount { get; set; }
+    public int? FaultTowerIndex { get; set; }
+    public Dictionary<string, string> SignalRoles { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 }
 
 internal sealed class SimulationSignalDefinition
@@ -38,6 +77,20 @@ internal sealed class SimulationSignalDefinition
     public double Minimum { get; set; }
     public double Maximum { get; set; }
     public string? Unit { get; set; }
+    public string? Group { get; set; }
+}
+
+internal sealed class SimulationIoBinding
+{
+    public string? SignalId { get; set; }
+    public string? SignalLabel { get; set; }
+    public SimulationIoDirection Direction { get; set; }
+    public SimulationIoType IoType { get; set; }
+    public int Channel { get; set; } = -1;
+    public int Register { get; set; }
+    public string? RegisterAlias { get; set; }
+    public string? Description { get; set; }
+    public SimulationIoEvidenceStatus EvidenceStatus { get; set; }
 }
 
 internal sealed class SimulationRule

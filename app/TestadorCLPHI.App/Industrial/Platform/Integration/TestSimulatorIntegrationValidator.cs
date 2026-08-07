@@ -172,8 +172,27 @@ internal static class TestSimulatorIntegrationValidator
                 && context.Engine.Snapshot.OutputsBlocked
                 && context.Engine.CurrentState == "Emergencia";
         }),
-        new("mapeamento desconhecido falha fechado", () => Task.FromResult(
-            Throws<ArgumentException>(() => SimulationHio115Mappings.ForProfile("unknown")))),
+        new("mudanca de perfil troca bindings sem reaproveitar aliases", () =>
+        {
+            using IndustrialPlatformSession pivot = new("pivo-central");
+            using IndustrialPlatformSession well = new("poco");
+            return Task.FromResult(
+                pivot.FindBinding(SimulationIoDirection.Input, SimulationIoType.Digital, 0)?.SignalId
+                    == "Emergencia"
+                && well.FindBinding(SimulationIoDirection.Input, SimulationIoType.Digital, 0)?.SignalId
+                    == "NivelMinimo"
+                && pivot.FindBinding(SimulationIoDirection.Output, SimulationIoType.Digital, 1)?.SignalId
+                    == "Frente"
+                && well.FindBinding(SimulationIoDirection.Output, SimulationIoType.Digital, 1)?.SignalId
+                    == "Valvula");
+        }),
+        new("perfil sem mapeamento falha fechado", () =>
+        {
+            SimulationProfile profile = SimulationProfileLoader.Load("pivo-central");
+            profile.IoBindings.Clear();
+            return Task.FromResult(Throws<ArgumentException>(() =>
+                SimulationHio115Mappings.FromProfile(profile)));
+        }),
         new("integracao nao usa porta serial", () => Task.FromResult(
             typeof(SimulationHio115Adapter).AssemblyQualifiedName is not null
             && typeof(SimulationHio115Adapter).GetFields().All(field =>
@@ -195,9 +214,10 @@ internal static class TestSimulatorIntegrationValidator
 
     private static IntegrationContext CreateContext(string profileId, byte address)
     {
-        SimulationEngine engine = new(SimulationProfileLoader.Load(profileId));
+        SimulationProfile profile = SimulationProfileLoader.Load(profileId);
+        SimulationEngine engine = new(profile);
         NeonHio115FakeDevice device = new(address);
-        SimulationHio115Adapter adapter = new(engine, device, SimulationHio115Mappings.ForProfile(profileId));
+        SimulationHio115Adapter adapter = new(engine, device, SimulationHio115Mappings.FromProfile(profile));
         adapter.SyncInputsToDevice();
 
         IndustrialOperationCounters counters = new();

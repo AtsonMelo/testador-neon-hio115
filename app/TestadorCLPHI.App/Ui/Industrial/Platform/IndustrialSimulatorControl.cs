@@ -1,4 +1,5 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
+using TestadorCLPHI.App.Industrial.Platform.Process;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -11,15 +12,32 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private readonly Label _state = PlatformUi.Label(string.Empty, heading: true);
     private readonly Label _alarms = PlatformUi.Label(string.Empty);
     private readonly Label _counters = PlatformUi.Label(string.Empty);
-    private readonly FlowLayoutPanel _signals = new() { Dock = DockStyle.Fill, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false };
+    private readonly Label _overviewStatus = PlatformUi.Label(string.Empty, heading: true);
+    private readonly Panel _signals = new() { Dock = DockStyle.Fill, AutoScroll = true };
+    private readonly TableLayoutPanel _signalGroups = new()
+    {
+        Dock = DockStyle.Top,
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        ColumnCount = 1,
+        RowCount = 0,
+        BackColor = PlatformUi.Background
+    };
+    private readonly Dictionary<string, Label> _metricValues = new(StringComparer.OrdinalIgnoreCase);
+    private PivotProcessControl? _pivotVisual;
     private bool _initializing;
 
     internal IndustrialSimulatorControl(IndustrialPlatformSession session)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         Name = "industrialSimulatorControl";
+        AccessibleName = "Simulador industrial offline";
         BackColor = PlatformUi.Background;
         ForeColor = PlatformUi.Text;
+        AutoScaleMode = AutoScaleMode.Dpi;
+        _signals.BackColor = PlatformUi.Background;
+        _signalGroups.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        _signals.Controls.Add(_signalGroups);
         _initializing = true;
         foreach (string id in SimulationProfileLoader.AvailableProfileIds())
         {
@@ -47,6 +65,11 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     internal event EventHandler<string>? ProfileRequested;
     internal bool HasPhysicalTransport => false;
+    internal bool HasPivotRenderer => _pivotVisual is not null;
+    internal int RenderedTowerCount => _pivotVisual?.TowerCount ?? 0;
+    internal int PivotStateRevision => _pivotVisual?.StateRevision ?? 0;
+    internal bool UsesContinuousAnimation => _pivotVisual?.UsesContinuousAnimation == true;
+    internal bool UsesGroupedSignalEditor => _signalGroups.Controls.OfType<GroupBox>().Any();
 
     protected override void Dispose(bool disposing)
     {
@@ -68,7 +91,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
             RowCount = 1,
             BackColor = PlatformUi.Background
         };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300F));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 286F));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         root.Controls.Add(BuildSidebar(), 0, 0);
         root.Controls.Add(BuildProcessPanel(), 1, 0);
@@ -80,67 +103,242 @@ internal sealed class IndustrialSimulatorControl : UserControl
         FlowLayoutPanel sidebar = new()
         {
             Dock = DockStyle.Fill,
+            AutoScroll = true,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            Padding = new Padding(12),
+            Padding = new Padding(14, 12, 10, 12),
             BackColor = PlatformUi.Surface
         };
         PlatformUi.StyleField(_profiles);
         PlatformUi.StyleField(_scenarios);
         sidebar.Controls.Add(PlatformUi.Label("Perfil", heading: true));
         sidebar.Controls.Add(_profiles);
-        sidebar.Controls.Add(PlatformUi.Label("Cenario", heading: true));
+        sidebar.Controls.Add(PlatformUi.Label("Cenário", heading: true));
         sidebar.Controls.Add(_scenarios);
-        Button apply = PlatformUi.Button("Aplicar cenario", "applyScenarioButton", primary: true);
+        Button apply = PlatformUi.Button("Aplicar cenário", "applyScenarioButton", primary: true);
         Button reset = PlatformUi.Button("Resetar", "resetScenarioButton");
         apply.Width = reset.Width = 220;
         apply.Margin = new Padding(3, 12, 3, 3);
         apply.Click += (_, _) => ApplyScenario();
-        reset.Click += (_, _) => _session.ResetSimulation();
+        reset.Click += (_, _) => ResetSimulation();
         sidebar.Controls.Add(apply);
         sidebar.Controls.Add(reset);
+        Label ready = PlatformUi.StatusChip(
+            "SIMULATION_READY",
+            PlatformStatusTone.Simulated,
+            "simulationReadyStatus");
+        ready.Margin = new Padding(3, 14, 3, 6);
+        sidebar.Controls.Add(ready);
         sidebar.Controls.Add(PlatformUi.Label("Estado", heading: true));
         _state.Width = 240;
+        _state.Height = 32;
+        _state.AutoSize = false;
         sidebar.Controls.Add(_state);
         sidebar.Controls.Add(PlatformUi.Label("Alarmes", heading: true));
         _alarms.Width = 240;
         _alarms.Height = 80;
         _alarms.AutoSize = false;
         sidebar.Controls.Add(_alarms);
-        _counters.Width = 250;
-        _counters.Height = 80;
+        _counters.Width = 240;
+        _counters.Height = 94;
         _counters.AutoSize = false;
+        _counters.Margin = new Padding(3, 12, 3, 3);
         sidebar.Controls.Add(_counters);
         return sidebar;
     }
 
     private Control BuildProcessPanel()
     {
-        TableLayoutPanel panel = new() { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1, Padding = new Padding(14) };
+        bool isPivot = _session.Profile.Visualization.Type == SimulationVisualizationType.Pivot;
+        TableLayoutPanel panel = new()
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 3,
+            ColumnCount = 1,
+            Padding = new Padding(12),
+            BackColor = PlatformUi.Background
+        };
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, isPivot ? 292F : 166F));
         panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        Label header = PlatformUi.Label(_session.Profile.DisplayName ?? _session.Profile.Id!, heading: true);
-        header.Font = new Font("Segoe UI Semibold", 17F);
-        header.Dock = DockStyle.Fill;
-        _signals.BackColor = PlatformUi.Background;
-        panel.Controls.Add(header, 0, 0);
-        panel.Controls.Add(_signals, 0, 1);
+        panel.Controls.Add(BuildProcessHeader(), 0, 0);
+        panel.Controls.Add(isPivot ? BuildPivotOverview() : BuildWellOverview(), 0, 1);
+        panel.Controls.Add(BuildSignalEditor(), 0, 2);
         return panel;
+    }
+
+    private Control BuildProcessHeader()
+    {
+        TableLayoutPanel header = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            BackColor = PlatformUi.Background
+        };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        Label title = PlatformUi.Label(_session.Profile.DisplayName ?? _session.Profile.Id!, heading: true);
+        title.Font = new Font("Segoe UI Semibold", 17F);
+        title.Dock = DockStyle.Fill;
+        title.TextAlign = ContentAlignment.MiddleLeft;
+        Label simulated = PlatformUi.StatusChip("SIMULADO", PlatformStatusTone.Simulated, "simulatedProcessStatus");
+        Label evidence = PlatformUi.StatusChip(
+            "PERFIL DE SIMULAÇÃO",
+            PlatformStatusTone.Offline,
+            "simulationProfileEvidenceStatus");
+        simulated.Anchor = AnchorStyles.None;
+        evidence.Anchor = AnchorStyles.None;
+        header.Controls.Add(title, 0, 0);
+        header.Controls.Add(simulated, 1, 0);
+        header.Controls.Add(evidence, 2, 0);
+        return header;
+    }
+
+    private Control BuildPivotOverview()
+    {
+        TableLayoutPanel overview = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            BackColor = PlatformUi.Background,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 232F));
+        _pivotVisual = new PivotProcessControl { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 8, 0) };
+        overview.Controls.Add(_pivotVisual, 0, 0);
+        overview.Controls.Add(BuildMetricPanel(vertical: true), 1, 0);
+        return overview;
+    }
+
+    private Control BuildWellOverview()
+    {
+        TableLayoutPanel overview = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            BackColor = PlatformUi.Background,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260F));
+        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        Panel summary = new()
+        {
+            Dock = DockStyle.Fill,
+            BackColor = PlatformUi.Surface,
+            Padding = new Padding(16),
+            Margin = new Padding(0, 0, 8, 0)
+        };
+        Label identity = PlatformUi.Label("PROCESSO POÇO", heading: true);
+        identity.Dock = DockStyle.Top;
+        _overviewStatus.Dock = DockStyle.Fill;
+        _overviewStatus.AutoSize = false;
+        _overviewStatus.TextAlign = ContentAlignment.MiddleLeft;
+        summary.Controls.Add(_overviewStatus);
+        summary.Controls.Add(identity);
+        overview.Controls.Add(summary, 0, 0);
+        overview.Controls.Add(BuildMetricPanel(vertical: false), 1, 0);
+        return overview;
+    }
+
+    private Control BuildMetricPanel(bool vertical)
+    {
+        FlowLayoutPanel metrics = new()
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            FlowDirection = vertical ? FlowDirection.TopDown : FlowDirection.LeftToRight,
+            WrapContents = !vertical,
+            BackColor = PlatformUi.Background,
+            Padding = new Padding(0)
+        };
+        foreach (SimulationSignalDefinition definition in _session.Profile.Signals.Where(signal =>
+                     signal.Kind == SimulationSignalKind.AnalogInput))
+        {
+            Panel card = new()
+            {
+                Width = vertical ? 214 : 180,
+                Height = 68,
+                BackColor = PlatformUi.Surface,
+                Padding = new Padding(12, 8, 12, 8),
+                Margin = new Padding(0, 0, 8, 8)
+            };
+            Label label = PlatformUi.Label(definition.Label ?? definition.Id!);
+            label.Dock = DockStyle.Top;
+            Label value = PlatformUi.Label(string.Empty, heading: true);
+            value.Name = $"simulationMetric{definition.Id}";
+            value.Dock = DockStyle.Bottom;
+            value.AutoSize = false;
+            value.Height = 26;
+            value.TextAlign = ContentAlignment.MiddleLeft;
+            _metricValues[definition.Id!] = value;
+            card.Controls.Add(value);
+            card.Controls.Add(label);
+            metrics.Controls.Add(card);
+        }
+
+        return metrics;
+    }
+
+    private Control BuildSignalEditor()
+    {
+        GroupBox editor = PlatformUi.Group("Sinais do processo • edição manual e saídas virtuais");
+        editor.Dock = DockStyle.Fill;
+        editor.Padding = new Padding(10, 12, 10, 10);
+        editor.Controls.Add(_signals);
+        return editor;
     }
 
     private void BuildSignals()
     {
-        _signals.Controls.Clear();
-        foreach (SimulationSignalDefinition definition in _session.Profile.Signals)
+        _signalGroups.SuspendLayout();
+        _signalGroups.Controls.Clear();
+        _signalGroups.RowStyles.Clear();
+        _signalGroups.RowCount = 0;
+        foreach (IGrouping<string, SimulationSignalDefinition> group in _session.Profile.Signals.GroupBy(
+                     signal => string.IsNullOrWhiteSpace(signal.Group) ? "Sinais" : signal.Group!,
+                     StringComparer.OrdinalIgnoreCase))
         {
-            _signals.Controls.Add(definition.Kind switch
+            GroupBox section = PlatformUi.Group(group.Key.ToUpperInvariant());
+            section.Dock = DockStyle.Top;
+            section.AutoSize = true;
+            section.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            section.Padding = new Padding(8, 12, 8, 8);
+            TableLayoutPanel rows = new()
             {
-                SimulationSignalKind.DigitalInput => BuildDigitalSignal(definition),
-                SimulationSignalKind.AnalogInput => BuildAnalogSignal(definition),
-                SimulationSignalKind.VirtualOutput => BuildOutputSignal(definition),
-                _ => throw new ArgumentOutOfRangeException()
-            });
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 1,
+                RowCount = 0,
+                BackColor = PlatformUi.Surface
+            };
+            rows.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            foreach (SimulationSignalDefinition definition in group)
+            {
+                Control signal = definition.Kind switch
+                {
+                    SimulationSignalKind.DigitalInput => BuildDigitalSignal(definition),
+                    SimulationSignalKind.AnalogInput => BuildAnalogSignal(definition),
+                    SimulationSignalKind.VirtualOutput => BuildOutputSignal(definition),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                int row = rows.RowCount++;
+                rows.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                rows.Controls.Add(signal, 0, row);
+            }
+
+            section.Controls.Add(rows);
+            int sectionRow = _signalGroups.RowCount++;
+            _signalGroups.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _signalGroups.Controls.Add(section, 0, sectionRow);
         }
+
+        _signalGroups.ResumeLayout(performLayout: true);
     }
 
     private Control BuildDigitalSignal(SimulationSignalDefinition definition)
@@ -150,7 +348,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
             Text = definition.Label,
             Name = $"simulation{definition.Id}Input",
             Checked = _session.Simulation.GetValue(definition.Id!) != 0,
-            Width = 500,
+            AccessibleName = definition.Label ?? definition.Id,
             AutoSize = false,
             Height = 30,
             ForeColor = PlatformUi.Text
@@ -161,9 +359,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private Control BuildAnalogSignal(SimulationSignalDefinition definition)
     {
-        FlowLayoutPanel row = new() { Dock = DockStyle.Fill, WrapContents = false };
+        FlowLayoutPanel row = new() { Dock = DockStyle.Fill, WrapContents = false, AutoScroll = false };
         Label label = PlatformUi.Label(definition.Label ?? definition.Id!, heading: true);
-        label.Width = 220;
+        label.Width = 190;
         NumericUpDown value = new()
         {
             Name = $"simulation{definition.Id}Input",
@@ -172,7 +370,8 @@ internal sealed class IndustrialSimulatorControl : UserControl
             DecimalPlaces = 2,
             Increment = 1,
             Value = (decimal)_session.Simulation.GetValue(definition.Id!),
-            Width = 160
+            Width = 140,
+            AccessibleName = definition.Label ?? definition.Id
         };
         PlatformUi.StyleField(value);
         value.ValueChanged += (_, _) => _session.SetAnalogInput(definition.Id!, (double)value.Value);
@@ -186,11 +385,12 @@ internal sealed class IndustrialSimulatorControl : UserControl
     {
         FlowLayoutPanel row = new() { Dock = DockStyle.Fill, WrapContents = false };
         Label label = PlatformUi.Label(definition.Label ?? definition.Id!, heading: true);
-        label.Width = 220;
-        Label value = PlatformUi.Label(_session.Simulation.GetValue(definition.Id!) != 0 ? "ON" : "OFF");
+        label.Width = 190;
+        bool active = _session.Simulation.GetValue(definition.Id!) != 0;
+        Label value = PlatformUi.Label(active ? "● ON" : "○ OFF");
         value.Name = $"simulation{definition.Id}Output";
         value.Width = 160;
-        value.ForeColor = PlatformUi.Success;
+        value.ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
         row.Controls.Add(label);
         row.Controls.Add(value);
         return SignalSurface(row);
@@ -200,11 +400,11 @@ internal sealed class IndustrialSimulatorControl : UserControl
     {
         Panel surface = new()
         {
-            Width = 760,
-            Height = 48,
+            Dock = DockStyle.Top,
+            Height = 50,
             BackColor = PlatformUi.Surface,
-            Padding = new Padding(12, 7, 12, 7),
-            Margin = new Padding(3, 3, 3, 7)
+            Padding = new Padding(10, 7, 10, 7),
+            Margin = new Padding(0, 2, 0, 4)
         };
         content.Dock = DockStyle.Fill;
         surface.Controls.Add(content);
@@ -217,7 +417,15 @@ internal sealed class IndustrialSimulatorControl : UserControl
         {
             _session.ApplyScenario(scenario.Id);
             BuildSignals();
+            RefreshSnapshot();
         }
+    }
+
+    private void ResetSimulation()
+    {
+        _session.ResetSimulation();
+        BuildSignals();
+        RefreshSnapshot();
     }
 
     private void ProfileChanged(object? sender, EventArgs e)
@@ -234,12 +442,44 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private void RefreshSnapshot()
     {
         SimulationSnapshot snapshot = _session.Simulation.Snapshot;
-        _state.Text = snapshot.State;
+        SimulationProcessState processState = SimulationProcessStateProjector.Project(
+            _session.Profile,
+            snapshot);
+        _state.Text = snapshot.OutputsBlocked ? $"× {snapshot.State}" : $"✓ {snapshot.State}";
         _state.ForeColor = snapshot.OutputsBlocked ? PlatformUi.Danger : PlatformUi.Success;
-        _alarms.Text = snapshot.ActiveAlarms.Count == 0 ? "Nenhum" : string.Join(Environment.NewLine, snapshot.ActiveAlarms);
-        _counters.Text = $"Operacoes simuladas: {_session.Simulation.Counters.SimulatedOperations}\r\n"
+        _alarms.Text = snapshot.ActiveAlarms.Count == 0
+            ? "✓ Nenhum alarme"
+            : "! " + string.Join(Environment.NewLine + "! ", snapshot.ActiveAlarms);
+        _alarms.ForeColor = snapshot.ActiveAlarms.Count == 0 ? PlatformUi.Success : PlatformUi.Warning;
+        _counters.Text = $"Operações simuladas: {_session.Simulation.Counters.SimulatedOperations}\r\n"
             + $"Comandos simulados: {_session.Simulation.Counters.SimulatedCommands}\r\n"
-            + "Operacoes fisicas: 0";
+            + "Físico C/R/W/CMD: 0/0/0/0\r\n"
+            + "Timer contínuo: NÃO";
+
+        if (_pivotVisual is not null)
+        {
+            _pivotVisual.UpdateState(PivotProcessStateProjector.Project(_session.Profile, processState));
+        }
+        else
+        {
+            string pump = processState.IsRoleActive("pump") ? "ON" : "OFF";
+            string valve = processState.IsRoleActive("valve") ? "ON" : "OFF";
+            _overviewStatus.Text = $"Estado: {processState.OverallState}\r\n"
+                + $"Bomba: {pump}\r\n"
+                + $"Válvula: {valve}\r\n"
+                + "Execução: SIMULADA";
+            _overviewStatus.ForeColor = processState.OutputsBlocked ? PlatformUi.Danger : PlatformUi.Text;
+        }
+
+        foreach (ProcessMetricState metric in processState.Metrics)
+        {
+            if (_metricValues.TryGetValue(metric.SignalId, out Label? value))
+            {
+                value.Text = string.IsNullOrWhiteSpace(metric.Unit)
+                    ? $"{metric.Value:0.##} raw"
+                    : $"{metric.Value:0.##} {metric.Unit}";
+            }
+        }
 
         foreach (SimulationSignalDefinition definition in _session.Profile.Signals.Where(signal =>
                      signal.Kind == SimulationSignalKind.VirtualOutput))
@@ -247,7 +487,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
             Control[] controls = Controls.Find($"simulation{definition.Id}Output", searchAllChildren: true);
             if (controls.FirstOrDefault() is Label value)
             {
-                value.Text = _session.Simulation.GetValue(definition.Id!) != 0 ? "ON" : "OFF";
+                bool active = _session.Simulation.GetValue(definition.Id!) != 0;
+                value.Text = active ? "● ON" : "○ OFF";
+                value.ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
             }
         }
     }
