@@ -2,6 +2,8 @@ namespace TestadorCLPHI.App.Industrial.Platform.Rtu;
 
 internal interface IRtuTransport
 {
+    bool IsSimulated { get; }
+
     ValueTask<ReadOnlyMemory<byte>?> ExchangeAsync(
         ReadOnlyMemory<byte> request,
         TimeSpan timeout,
@@ -81,6 +83,8 @@ internal sealed class InMemoryRtuTransport : IRtuTransport
         ArgumentNullException.ThrowIfNull(devices);
         _devices = devices.ToDictionary(device => device.Address);
     }
+
+    public bool IsSimulated => true;
 
     public ValueTask<ReadOnlyMemory<byte>?> ExchangeAsync(
         ReadOnlyMemory<byte> request,

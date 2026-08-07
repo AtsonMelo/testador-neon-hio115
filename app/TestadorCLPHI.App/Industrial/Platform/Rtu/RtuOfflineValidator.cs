@@ -214,7 +214,7 @@ internal static class RtuOfflineValidator
                 1,
                 Layout3OutputChannel.DO00,
                 TimeSpan.FromMilliseconds(1),
-                AuthorizedOutput() with { PhysicalGateAuthorized = false },
+                AuthorizedOutput() with { SimulationOnly = false },
                 CancellationToken.None);
             return result.State == RtuOutputTestState.Rejected;
         }),
@@ -350,7 +350,14 @@ internal static class RtuOfflineValidator
         return Throws<RtuProtocolException>(() => RtuCodec.ParseWriteSingleResponse(response, 1, checked((ushort)reference), 1));
     });
 
-    private static Layout3OutputAuthorization AuthorizedOutput() => new(true, true, true, true, true, true);
+    private static Layout3OutputAuthorization AuthorizedOutput() => new(
+        true,
+        true,
+        true,
+        true,
+        true,
+        PhysicalGateAuthorized: false,
+        SimulationOnly: true);
 
     private static TestContext CreateContext(params NeonHio115FakeDevice[] devices)
     {

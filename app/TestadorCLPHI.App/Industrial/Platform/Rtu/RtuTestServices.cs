@@ -30,6 +30,8 @@ internal sealed class RtuClient
         _timeout = timeout > TimeSpan.Zero ? timeout : throw new ArgumentOutOfRangeException(nameof(timeout));
     }
 
+    internal bool IsSimulated => _transport.IsSimulated;
+
     internal async Task<ushort[]> ReadAsync(
         byte deviceAddress,
         ushort startReference,
@@ -371,7 +373,10 @@ internal sealed class RtuSupervisedOutputService
         Layout3OutputAuthorization authorization,
         CancellationToken cancellationToken)
     {
-        if (!Layout3BenchWorkflowPolicy.CanEnableSupervisedOutput(authorization)
+        bool gateAuthorized = _client.IsSimulated
+            ? Layout3BenchWorkflowPolicy.CanEnableSimulatedOutput(authorization)
+            : Layout3BenchWorkflowPolicy.CanEnableSupervisedOutput(authorization);
+        if (!gateAuthorized
             || duration <= TimeSpan.Zero
             || duration > _maximumDuration)
         {

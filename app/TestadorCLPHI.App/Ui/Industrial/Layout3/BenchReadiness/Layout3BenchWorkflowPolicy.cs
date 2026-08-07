@@ -40,7 +40,8 @@ internal sealed record Layout3OutputAuthorization(
     bool CriticalFailureAbsent,
     bool BenchChecklistApproved,
     bool OperatorExplicitlyEnabled,
-    bool PhysicalGateAuthorized);
+    bool PhysicalGateAuthorized,
+    bool SimulationOnly = false);
 
 internal static class Layout3BenchWorkflowPolicy
 {
@@ -123,7 +124,17 @@ internal static class Layout3BenchWorkflowPolicy
         && authorization.CriticalFailureAbsent
         && authorization.BenchChecklistApproved
         && authorization.OperatorExplicitlyEnabled
-        && authorization.PhysicalGateAuthorized;
+        && authorization.PhysicalGateAuthorized
+        && !authorization.SimulationOnly;
+
+    internal static bool CanEnableSimulatedOutput(Layout3OutputAuthorization authorization) =>
+        authorization.EquipmentIdentified
+        && authorization.SignatureValid
+        && authorization.CriticalFailureAbsent
+        && authorization.BenchChecklistApproved
+        && authorization.OperatorExplicitlyEnabled
+        && !authorization.PhysicalGateAuthorized
+        && authorization.SimulationOnly;
 
     internal static bool CanActivateOutput(
         Layout3BenchMode mode,

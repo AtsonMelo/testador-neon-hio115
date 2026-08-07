@@ -6,6 +6,7 @@ using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
 using TestadorCLPHI.App.Ui.Industrial;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Ui.Industrial.Platform;
 
 namespace TestadorCLPHI.App;
 
@@ -94,7 +95,19 @@ internal static class Program
             return;
         }
 
+        if (args.Contains("--validate-layout-3-industrial-platform-ui", StringComparer.OrdinalIgnoreCase))
+        {
+            Environment.ExitCode = IndustrialPlatformUiValidator.Validate(Console.Out, Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
+
+        if (args.Contains("--industrial-platform", StringComparer.OrdinalIgnoreCase))
+        {
+            Application.Run(new IndustrialPlatformForm());
+            return;
+        }
 
         if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
         {

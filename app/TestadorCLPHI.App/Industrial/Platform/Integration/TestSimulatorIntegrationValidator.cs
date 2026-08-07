@@ -214,7 +214,14 @@ internal static class TestSimulatorIntegrationValidator
             counters);
     }
 
-    private static Layout3OutputAuthorization AuthorizedOutput() => new(true, true, true, true, true, true);
+    private static Layout3OutputAuthorization AuthorizedOutput() => new(
+        true,
+        true,
+        true,
+        true,
+        true,
+        PhysicalGateAuthorized: false,
+        SimulationOnly: true);
 
     private static bool Throws<TException>(Action action)
         where TException : Exception

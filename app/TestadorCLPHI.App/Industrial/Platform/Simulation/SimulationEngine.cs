@@ -26,6 +26,7 @@ internal sealed class SimulationEngine
 
     internal SimulationCounters Counters { get; }
     internal IReadOnlyList<SimulationLogEntry> Log => _log.ToArray();
+    internal SimulationProfile Profile => _profile;
 
     internal SimulationSnapshot Snapshot => new(
         _profile.Id!,
