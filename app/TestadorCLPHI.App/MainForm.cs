@@ -11,7 +11,7 @@ namespace TestadorCLPHI.App;
 public sealed class MainForm : Form
 {
     private readonly PlcConnectionSettings _connectionSettings = new();
-    private readonly IPlcCommunicationService _plcService = new ModbusRtuPlcCommunicationService();
+    private readonly IPlcCommunicationService _plcService = new DisabledPlcCommunicationService();
     private readonly PlcRegisterCommandService _registerCommandService;
     private readonly PlcAutoDetectionService _autoDetectionService;
     private readonly PlcDigitalIoManualService _digitalIoManualService;
