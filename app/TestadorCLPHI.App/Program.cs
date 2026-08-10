@@ -15,7 +15,9 @@ internal enum StartupMode
 {
     Legacy,
     Validator,
-    Industrial
+    Industrial,
+    Auxiliary,
+    Unknown
 }
 
 internal static class Program
@@ -35,6 +37,18 @@ internal static class Program
         "--validate-layout-3-test-simulator-integration",
         "--validate-layout-3-industrial-platform-ui",
         "--validate-industrial-io-mapping"
+    ];
+
+    private static readonly string[] AuxiliaryArguments =
+    [
+        "--layout-3-host-readonly",
+        "--preview-layout-3-auto",
+        "--preview-layout-3-light",
+        "--preview-layout-3",
+        "--preview-layout-alvo",
+        "--preview-industrial-panel",
+        "--preview-layout-alvo-2",
+        "--preview-layout-alvo-2-compacto"
     ];
 
     [STAThread]
@@ -136,9 +150,15 @@ internal static class Program
             return;
         }
 
+        if (startupMode == StartupMode.Unknown)
+        {
+            Environment.ExitCode = RejectUnknownStartupArguments(args, Console.Error);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
-        if (startupMode == StartupMode.Industrial)
+        if (startupMode is StartupMode.Industrial or StartupMode.Legacy)
         {
             Application.Run(CreateStartupForm(startupMode));
             return;
@@ -196,9 +216,7 @@ internal static class Program
             return;
         }
 
-        bool useIndustrialHost = args.Contains("--use-industrial-host", StringComparer.OrdinalIgnoreCase);
-        HardwareCatalog hardwareCatalog = LoadHardwareCatalogForApp();
-        Application.Run(new MainForm(useIndustrialHost, hardwareCatalog));
+        Environment.ExitCode = RejectUnknownStartupArguments(args, Console.Error);
     }
 
     internal static StartupMode ResolveStartupMode(IEnumerable<string>? args)
@@ -211,20 +229,60 @@ internal static class Program
             return StartupMode.Validator;
         }
 
-        return startupArguments.Contains("--industrial", StringComparer.OrdinalIgnoreCase)
-            || startupArguments.Contains("--industrial-platform", StringComparer.OrdinalIgnoreCase)
-            ? StartupMode.Industrial
-            : StartupMode.Legacy;
+        if (startupArguments.Length == 0)
+        {
+            return StartupMode.Industrial;
+        }
+
+        if (startupArguments.Length != 1)
+        {
+            return StartupMode.Unknown;
+        }
+
+        string argument = startupArguments[0];
+        if (argument.Equals("--industrial", StringComparison.OrdinalIgnoreCase)
+            || argument.Equals("--industrial-platform", StringComparison.OrdinalIgnoreCase))
+        {
+            return StartupMode.Industrial;
+        }
+
+        if (argument.Equals("--legacy", StringComparison.OrdinalIgnoreCase))
+        {
+            return StartupMode.Legacy;
+        }
+
+        return AuxiliaryArguments.Contains(argument, StringComparer.OrdinalIgnoreCase)
+            ? StartupMode.Auxiliary
+            : StartupMode.Unknown;
     }
 
     internal static Form CreateStartupForm(StartupMode startupMode) => startupMode switch
     {
         StartupMode.Industrial => new IndustrialPlatformForm(),
+        StartupMode.Legacy => new MainForm(
+            useIndustrialHost: false,
+            hardwareCatalog: LoadHardwareCatalogForApp()),
         _ => throw new ArgumentOutOfRangeException(
             nameof(startupMode),
             startupMode,
-            "Somente o host industrial possui fabrica de startup dedicada.")
+            "O modo informado nao possui formulario de startup.")
     };
+
+    internal static Type? GetStartupFormType(StartupMode startupMode) => startupMode switch
+    {
+        StartupMode.Industrial => typeof(IndustrialPlatformForm),
+        StartupMode.Legacy => typeof(MainForm),
+        _ => null
+    };
+
+    internal static int RejectUnknownStartupArguments(
+        IEnumerable<string>? args,
+        TextWriter error)
+    {
+        string arguments = string.Join(" ", args ?? []);
+        error.WriteLine($"Argumento de inicializacao desconhecido: {arguments}");
+        return 1;
+    }
 
     private static HardwareCatalog LoadHardwareCatalogForApp()
     {

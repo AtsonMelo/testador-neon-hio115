@@ -14,11 +14,14 @@ internal static class IndustrialPlatformUiValidator
         CanonicalCounters? canonicalCounters = null;
         List<(string Name, Func<bool> Validate)> scenarios =
         [
-            ("startup sem argumentos permanece legado", StartupWithoutArgumentsRemainsLegacy),
+            ("startup sem argumentos seleciona a plataforma industrial", StartupWithoutArgumentsSelectsIndustrial),
             ("argumento industrial resolve para a plataforma industrial", IndustrialArgumentSelectsPlatform),
             ("argumento industrial ignora diferenca entre maiusculas e minusculas", IndustrialArgumentIsCaseInsensitive),
+            ("argumento legacy resolve exclusivamente para MainForm", LegacyArgumentSelectsMainForm),
+            ("argumento legacy ignora diferenca entre maiusculas e minusculas", LegacyArgumentIsCaseInsensitive),
             ("validadores preservam prioridade sobre o launcher industrial", ValidatorsKeepStartupPriority),
-            ("argumento desconhecido nao seleciona plataforma industrial", UnknownArgumentRemainsLegacy),
+            ("argumento desconhecido e rejeitado sem abrir MainForm", UnknownArgumentIsRejected),
+            ("rejeicao de argumento desconhecido permanece offline", UnknownArgumentStaysOffline),
             ("launcher industrial cria o host da plataforma", IndustrialLauncherCreatesPlatformHost),
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
             ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
@@ -82,19 +85,40 @@ internal static class IndustrialPlatformUiValidator
         return passed == scenarios.Count ? 0 : 1;
     }
 
-    private static bool StartupWithoutArgumentsRemainsLegacy() =>
-        Program.ResolveStartupMode([]) == StartupMode.Legacy;
+    private static bool StartupWithoutArgumentsSelectsIndustrial() =>
+        Program.ResolveStartupMode([]) == StartupMode.Industrial;
 
     private static bool IndustrialArgumentSelectsPlatform() =>
         Program.ResolveStartupMode(["--industrial"]) == StartupMode.Industrial;
 
     private static bool IndustrialArgumentIsCaseInsensitive() =>
-        Program.ResolveStartupMode(["--InDuStRiAl"]) == StartupMode.Industrial;
+        Program.ResolveStartupMode(["--INDUSTRIAL"]) == StartupMode.Industrial;
+
+    private static bool LegacyArgumentSelectsMainForm()
+    {
+        StartupMode mode = Program.ResolveStartupMode(["--legacy"]);
+        return mode == StartupMode.Legacy
+            && Program.GetStartupFormType(mode) == typeof(MainForm);
+    }
+
+    private static bool LegacyArgumentIsCaseInsensitive()
+    {
+        StartupMode mode = Program.ResolveStartupMode(["--LEGACY"]);
+        return mode == StartupMode.Legacy
+            && Program.GetStartupFormType(mode) == typeof(MainForm);
+    }
 
     private static bool ValidatorsKeepStartupPriority()
     {
         string[] validators =
         [
+            "--validate-hardware-catalog",
+            "--validate-hardware-profile-selection",
+            "--validate-hardware-test-report",
+            "--validate-layout-3-host-readonly-safety",
+            "--validate-layout-3-read-bridge-disabled",
+            "--validate-layout-3-read-bridge-activation-gate",
+            "--validate-layout-3-bench-readiness-self-tests",
             "--validate-layout-3-simulation-engine",
             "--validate-layout-3-test-simulator-integration",
             "--validate-layout-3-industrial-platform-ui",
@@ -106,11 +130,41 @@ internal static class IndustrialPlatformUiValidator
                 Program.ResolveStartupMode([argument]) == StartupMode.Validator)
             && Program.ResolveStartupMode(
                 ["--industrial", "--validate-layout-3-industrial-platform-ui"])
+                == StartupMode.Validator
+            && Program.ResolveStartupMode(
+                ["--legacy", "--validate-layout-3-industrial-platform-ui"])
+                == StartupMode.Validator
+            && Program.ResolveStartupMode(
+                ["--unknown-startup-mode", "--validate-layout-3-industrial-platform-ui"])
                 == StartupMode.Validator;
     }
 
-    private static bool UnknownArgumentRemainsLegacy() =>
-        Program.ResolveStartupMode(["--unknown-startup-mode"]) == StartupMode.Legacy;
+    private static bool UnknownArgumentIsRejected()
+    {
+        StartupMode mode = Program.ResolveStartupMode(["--unknown-startup-mode"]);
+        using StringWriter error = new();
+        int exitCode = Program.RejectUnknownStartupArguments(
+            ["--unknown-startup-mode"],
+            error);
+        return mode == StartupMode.Unknown
+            && Program.GetStartupFormType(mode) is null
+            && Program.ResolveStartupMode(["--use-industrial-host"]) == StartupMode.Unknown
+            && exitCode != 0
+            && error.ToString().Contains("--unknown-startup-mode", StringComparison.Ordinal);
+    }
+
+    private static bool UnknownArgumentStaysOffline()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        StartupMode mode = Program.ResolveStartupMode(["--unknown-startup-mode"]);
+        using StringWriter error = new();
+        int exitCode = Program.RejectUnknownStartupArguments(
+            ["--unknown-startup-mode"],
+            error);
+        return mode == StartupMode.Unknown
+            && exitCode != 0
+            && PhysicalCountersAreZero(session);
+    }
 
     private static bool IndustrialLauncherCreatesPlatformHost()
     {
