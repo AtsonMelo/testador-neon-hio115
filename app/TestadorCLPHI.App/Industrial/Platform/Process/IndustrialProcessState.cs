@@ -118,6 +118,32 @@ internal static class PivotProcessStateProjector
 
         int towerCount = profile.Visualization.TowerCount
             ?? throw new ArgumentException("Perfil de pivo sem towerCount.", nameof(profile));
+
+        IReadOnlyList<string> safetySignalIds = profile.Visualization.TowerSafetySignalIds;
+        if (safetySignalIds.Count > 0)
+        {
+            if (safetySignalIds.Count != towerCount)
+            {
+                throw new ArgumentException("Quantidade de TowerSafetySignalIds deve ser igual a TowerCount.", nameof(profile));
+            }
+
+            HashSet<string> uniqueIds = new(StringComparer.OrdinalIgnoreCase);
+            foreach (string signalId in safetySignalIds)
+            {
+                if (string.IsNullOrWhiteSpace(signalId) || !uniqueIds.Add(signalId))
+                {
+                    throw new ArgumentException($"TowerSafetySignalId invalido ou duplicado: {signalId}.", nameof(profile));
+                }
+
+                SimulationSignalDefinition? def = profile.Signals.FirstOrDefault(s =>
+                    string.Equals(s.Id, signalId, StringComparison.OrdinalIgnoreCase));
+                if (def is null || def.Kind != SimulationSignalKind.DigitalInput)
+                {
+                    throw new ArgumentException($"TowerSafetySignalId {signalId} deve apontar para DigitalInput existente.", nameof(profile));
+                }
+            }
+        }
+
         bool forward = processState.IsRoleActive("forward");
         bool reverse = processState.IsRoleActive("reverse");
         PivotMovementDirection direction = (forward, reverse) switch
@@ -141,7 +167,9 @@ internal static class PivotProcessStateProjector
                     emergency,
                     towerFault,
                     misaligned,
-                    direction)))
+                    direction,
+                    safetySignalIds,
+                    processState.Values)))
             .ToArray();
 
         double position = Math.Clamp(processState.GetRoleValue("position") ?? 0, 0, 100);
@@ -164,14 +192,24 @@ internal static class PivotProcessStateProjector
         bool emergency,
         bool towerFault,
         bool misaligned,
-        PivotMovementDirection direction)
+        PivotMovementDirection direction,
+        IReadOnlyList<string> safetySignalIds,
+        IReadOnlyDictionary<string, double> values)
     {
         if (emergency)
         {
             return PivotTowerStatus.Unknown;
         }
 
-        if (towerFault && towerNumber == affectedTower)
+        if (safetySignalIds.Count > 0)
+        {
+            string signalId = safetySignalIds[towerNumber - 1];
+            if (values.TryGetValue(signalId, out double val) && val == 0)
+            {
+                return PivotTowerStatus.Fault;
+            }
+        }
+        else if (towerFault && towerNumber == affectedTower)
         {
             return PivotTowerStatus.Fault;
         }

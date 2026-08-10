@@ -45,6 +45,18 @@ internal enum SimulationComparison
     GreaterThanOrEqual
 }
 
+internal enum SimulationDerivedOperator
+{
+    And
+}
+
+internal sealed class SimulationDerivedSignal
+{
+    public string? TargetSignalId { get; set; }
+    public SimulationDerivedOperator Operator { get; set; }
+    public List<string> SourceSignalIds { get; set; } = [];
+}
+
 internal sealed class SimulationProfile
 {
     public int SchemaVersion { get; set; }
@@ -53,6 +65,7 @@ internal sealed class SimulationProfile
     public string? InitialState { get; set; }
     public SimulationVisualizationDefinition Visualization { get; set; } = new();
     public List<SimulationSignalDefinition> Signals { get; set; } = [];
+    public List<SimulationDerivedSignal> DerivedSignals { get; set; } = [];
     public List<SimulationIoBinding> IoBindings { get; set; } = [];
     public List<SimulationRule> Rules { get; set; } = [];
     public List<SimulationExclusiveOutputGroup> ExclusiveOutputGroups { get; set; } = [];
@@ -64,6 +77,7 @@ internal sealed class SimulationVisualizationDefinition
     public SimulationVisualizationType Type { get; set; }
     public int? TowerCount { get; set; }
     public int? FaultTowerIndex { get; set; }
+    public List<string> TowerSafetySignalIds { get; set; } = [];
     public Dictionary<string, string> SignalRoles { get; set; } =
         new(StringComparer.OrdinalIgnoreCase);
 }

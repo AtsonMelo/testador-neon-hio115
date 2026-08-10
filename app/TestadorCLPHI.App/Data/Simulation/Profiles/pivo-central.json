@@ -7,6 +7,7 @@
     "type": "pivot",
     "towerCount": 4,
     "faultTowerIndex": 3,
+    "towerSafetySignalIds": ["Tower1Safety", "Tower2Safety", "Tower3Safety", "Tower4Safety"],
     "signalRoles": {
       "position": "PosicaoPercentual",
       "pressure": "Pressao",
@@ -18,7 +19,7 @@
       "water": "ValvulaAgua",
       "emergency": "Emergencia",
       "alignment": "Alinhamento",
-      "towerFault": "FalhaTorre"
+      "safetyChain": "SafetyChain"
     }
   },
   "signals": [
@@ -26,7 +27,11 @@
     { "id": "Pressostato", "label": "Pressostato", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Água" },
     { "id": "Alinhamento", "label": "Alinhamento", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
     { "id": "FimDeCurso", "label": "Fim de curso", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Movimento" },
-    { "id": "FalhaTorre", "label": "Falha de torre", "kind": "digitalInput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Tower1Safety", "label": "Segurança T1", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Tower2Safety", "label": "Segurança T2", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Tower3Safety", "label": "Segurança T3", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "Tower4Safety", "label": "Segurança T4", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
+    { "id": "SafetyChain", "label": "Cadeia de segurança", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Segurança" },
     { "id": "PermissivoAgua", "label": "Permissivo de água", "kind": "digitalInput", "defaultValue": 1, "minimum": 0, "maximum": 1, "unit": "", "group": "Água" },
     { "id": "Pressao", "label": "Pressão", "kind": "analogInput", "defaultValue": 4, "minimum": 0, "maximum": 10, "unit": "bar (simulado)", "group": "Água" },
     { "id": "Corrente", "label": "Corrente", "kind": "analogInput", "defaultValue": 15, "minimum": 0, "maximum": 100, "unit": "A (simulado)", "group": "Movimento" },
@@ -37,12 +42,19 @@
     { "id": "Reverso", "label": "Reverso", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Saídas" },
     { "id": "ValvulaAgua", "label": "Válvula de água", "kind": "virtualOutput", "defaultValue": 0, "minimum": 0, "maximum": 1, "unit": "", "group": "Saídas" }
   ],
+  "derivedSignals": [
+    {
+      "targetSignalId": "SafetyChain",
+      "operator": "and",
+      "sourceSignalIds": ["Tower1Safety", "Tower2Safety", "Tower3Safety", "Tower4Safety"]
+    }
+  ],
   "ioBindings": [
     { "signalId": "Emergencia", "signalLabel": "Emergência", "direction": "input", "ioType": "digital", "channel": 0, "register": 31120, "registerAlias": "DI00", "description": "Emergência do processo simulado", "evidenceStatus": "simulationProfile" },
     { "signalId": "Pressostato", "signalLabel": "Pressostato", "direction": "input", "ioType": "digital", "channel": 1, "register": 31121, "registerAlias": "DI01", "description": "Pressostato do processo simulado", "evidenceStatus": "simulationProfile" },
     { "signalId": "Alinhamento", "signalLabel": "Alinhamento", "direction": "input", "ioType": "digital", "channel": 2, "register": 31122, "registerAlias": "DI02", "description": "Condição de alinhamento simulada", "evidenceStatus": "simulationProfile" },
     { "signalId": "FimDeCurso", "signalLabel": "Fim de curso", "direction": "input", "ioType": "digital", "channel": 3, "register": 31123, "registerAlias": "DI03", "description": "Fim de curso do processo simulado", "evidenceStatus": "simulationProfile" },
-    { "signalId": "FalhaTorre", "signalLabel": "Falha de torre", "direction": "input", "ioType": "digital", "channel": 4, "register": 31124, "registerAlias": "DI04", "description": "Falha conceitual de torre", "evidenceStatus": "simulationProfile" },
+    { "signalId": "SafetyChain", "signalLabel": "Cadeia de segurança", "direction": "input", "ioType": "digital", "channel": 4, "register": 31124, "registerAlias": "DI04", "description": "Estado agregado da cadeia de segurança das torres", "evidenceStatus": "simulationProfile" },
     { "signalId": "PermissivoAgua", "signalLabel": "Permissivo de água", "direction": "input", "ioType": "digital", "channel": 5, "register": 31125, "registerAlias": "DI05", "description": "Permissivo de água simulado", "evidenceStatus": "simulationProfile" },
     { "signalId": "Pressao", "signalLabel": "Pressão", "direction": "input", "ioType": "analog", "channel": 0, "register": 31132, "registerAlias": "AI00", "description": "Pressão raw do perfil", "evidenceStatus": "simulationProfile" },
     { "signalId": "Corrente", "signalLabel": "Corrente", "direction": "input", "ioType": "analog", "channel": 1, "register": 31133, "registerAlias": "AI01", "description": "Corrente raw do perfil", "evidenceStatus": "simulationProfile" },
@@ -54,7 +66,7 @@
   ],
   "rules": [
     { "id": "emergency", "priority": 100, "conditions": [{ "signalId": "Emergencia", "comparison": "equals", "expectedValue": 1 }], "resultState": "Emergencia", "alarmId": "Emergency", "blockAllOutputs": true },
-    { "id": "tower-fault", "priority": 90, "conditions": [{ "signalId": "FalhaTorre", "comparison": "equals", "expectedValue": 1 }], "resultState": "Falha", "alarmId": "TowerFault", "blockAllOutputs": true },
+    { "id": "safety-chain-open", "priority": 90, "conditions": [{ "signalId": "SafetyChain", "comparison": "equals", "expectedValue": 0 }], "resultState": "Falha", "alarmId": "SafetyChainOpen", "blockAllOutputs": true },
     { "id": "misaligned", "priority": 80, "conditions": [{ "signalId": "Alinhamento", "comparison": "equals", "expectedValue": 0 }], "resultState": "Desalinhado", "alarmId": "AlignmentFault", "blockAllOutputs": true },
     { "id": "end-of-travel", "priority": 75, "conditions": [{ "signalId": "FimDeCurso", "comparison": "equals", "expectedValue": 1 }], "resultState": "FimDeCurso", "alarmId": "EndOfTravel", "blockAllOutputs": true },
     { "id": "pressure-low", "priority": 70, "conditions": [{ "signalId": "Bomba", "comparison": "equals", "expectedValue": 1 }, { "signalId": "Pressao", "comparison": "lessThan", "expectedValue": 2 }], "resultState": "Falha", "alarmId": "PressureLow", "blockAllOutputs": true },
@@ -72,7 +84,7 @@
     { "id": "movendo-frente", "displayName": "Movendo frente", "values": { "Frente": 1, "PosicaoPercentual": 37 } },
     { "id": "movendo-reverso", "displayName": "Movendo reverso", "values": { "Reverso": 1, "PosicaoPercentual": 63 } },
     { "id": "emergencia", "displayName": "Emergência", "values": { "Emergencia": 1 } },
-    { "id": "falha-torre", "displayName": "Falha de torre", "values": { "FalhaTorre": 1 } },
+    { "id": "falha-torre", "displayName": "Falha de torre", "values": { "Tower3Safety": 0 } },
     { "id": "pressao-baixa", "displayName": "Pressão baixa", "values": { "Bomba": 1, "Pressao": 1 } },
     { "id": "desalinhado", "displayName": "Desalinhamento", "values": { "Alinhamento": 0 } },
     { "id": "fim-de-curso", "displayName": "Fim de curso", "values": { "FimDeCurso": 1 } }

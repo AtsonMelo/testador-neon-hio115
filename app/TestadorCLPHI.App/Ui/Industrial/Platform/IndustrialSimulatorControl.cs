@@ -343,6 +343,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private Control BuildDigitalSignal(SimulationSignalDefinition definition)
     {
+        bool isDerived = _session.Profile.DerivedSignals.Any(derived =>
+            string.Equals(derived.TargetSignalId, definition.Id, StringComparison.OrdinalIgnoreCase));
+        if (isDerived)
+        {
+            return BuildDerivedDigitalSignal(definition);
+        }
+
         CheckBox value = new()
         {
             Text = definition.Label,
@@ -355,6 +362,21 @@ internal sealed class IndustrialSimulatorControl : UserControl
         };
         value.CheckedChanged += (_, _) => _session.SetDigitalInput(definition.Id!, value.Checked);
         return SignalSurface(value);
+    }
+
+    private Control BuildDerivedDigitalSignal(SimulationSignalDefinition definition)
+    {
+        FlowLayoutPanel row = new() { Dock = DockStyle.Fill, WrapContents = false };
+        Label label = PlatformUi.Label($"{definition.Label ?? definition.Id} • DERIVADO", heading: true);
+        label.Width = 230;
+        bool active = _session.Simulation.GetValue(definition.Id!) != 0;
+        Label value = PlatformUi.Label(active ? "● ON" : "○ OFF");
+        value.Name = $"simulation{definition.Id}Derived";
+        value.Width = 140;
+        value.ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
+        row.Controls.Add(label);
+        row.Controls.Add(value);
+        return SignalSurface(row);
     }
 
     private Control BuildAnalogSignal(SimulationSignalDefinition definition)
@@ -488,6 +510,22 @@ internal sealed class IndustrialSimulatorControl : UserControl
             if (controls.FirstOrDefault() is Label value)
             {
                 bool active = _session.Simulation.GetValue(definition.Id!) != 0;
+                value.Text = active ? "● ON" : "○ OFF";
+                value.ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
+            }
+        }
+
+        foreach (SimulationDerivedSignal derived in _session.Profile.DerivedSignals)
+        {
+            if (string.IsNullOrWhiteSpace(derived.TargetSignalId))
+            {
+                continue;
+            }
+
+            Control[] controls = Controls.Find($"simulation{derived.TargetSignalId}Derived", searchAllChildren: true);
+            if (controls.FirstOrDefault() is Label value)
+            {
+                bool active = _session.Simulation.GetValue(derived.TargetSignalId!) != 0;
                 value.Text = active ? "● ON" : "○ OFF";
                 value.ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
             }

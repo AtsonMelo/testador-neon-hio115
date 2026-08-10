@@ -7,6 +7,7 @@ internal sealed class SimulationEngine
     private readonly Dictionary<string, double> _values;
     private readonly List<SimulationLogEntry> _log = [];
     private readonly HashSet<string> _activeAlarms = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _derivedTargets;
     private bool _outputsBlocked;
 
     internal SimulationEngine(SimulationProfile profile, SimulationCounters? counters = null)
@@ -21,6 +22,10 @@ internal sealed class SimulationEngine
         Counters = counters ?? new SimulationCounters();
         _definitions = profile.Signals.ToDictionary(signal => signal.Id!, StringComparer.OrdinalIgnoreCase);
         _values = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        _derivedTargets = profile.DerivedSignals
+            .Where(ds => !string.IsNullOrWhiteSpace(ds.TargetSignalId))
+            .Select(ds => ds.TargetSignalId!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         Reset();
     }
 
@@ -127,6 +132,11 @@ internal sealed class SimulationEngine
 
     private void SetValue(string signalId, double value, bool evaluate, string operation)
     {
+        if (_derivedTargets.Contains(signalId))
+        {
+            throw new InvalidOperationException($"Sinal derivado e somente leitura: {signalId}.");
+        }
+
         SimulationSignalDefinition definition = GetDefinition(signalId);
         if (value < definition.Minimum || value > definition.Maximum)
         {
@@ -152,6 +162,7 @@ internal sealed class SimulationEngine
 
     private void Evaluate()
     {
+        EvaluateDerivedSignals();
         _activeAlarms.Clear();
         _outputsBlocked = false;
         CurrentState = _profile.InitialState!;
@@ -181,6 +192,43 @@ internal sealed class SimulationEngine
                          signal.Kind == SimulationSignalKind.VirtualOutput))
             {
                 _values[output.Id!] = 0;
+            }
+        }
+    }
+
+    private void EvaluateDerivedSignals()
+    {
+        if (_profile.DerivedSignals.Count == 0)
+        {
+            return;
+        }
+
+        for (int pass = 0; pass < _profile.DerivedSignals.Count; pass++)
+        {
+            bool changed = false;
+            foreach (SimulationDerivedSignal derived in _profile.DerivedSignals)
+            {
+                if (string.IsNullOrWhiteSpace(derived.TargetSignalId))
+                {
+                    continue;
+                }
+
+                if (derived.Operator == SimulationDerivedOperator.And)
+                {
+                    double newValue = derived.SourceSignalIds.All(sourceId =>
+                        _values.TryGetValue(sourceId, out double val) && val != 0) ? 1 : 0;
+
+                    if (!_values.TryGetValue(derived.TargetSignalId, out double currentVal) || currentVal != newValue)
+                    {
+                        _values[derived.TargetSignalId] = newValue;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (!changed)
+            {
+                break;
             }
         }
     }
@@ -261,6 +309,7 @@ internal static class SimulationProfileValidator
 
         ValidateVisualization(profile.Visualization, signalIds, failures);
         ValidateIoBindings(profile, signalIds, failures);
+        ValidateDerivedSignals(profile, signalIds, failures);
 
         foreach (SimulationRule rule in profile.Rules)
         {
@@ -436,5 +485,131 @@ internal static class SimulationProfileValidator
         {
             failures.Add(failure);
         }
+    }
+
+    private static void ValidateDerivedSignals(
+        SimulationProfile profile,
+        IReadOnlySet<string> signalIds,
+        ICollection<string> failures)
+    {
+        if (profile.DerivedSignals.Count == 0)
+        {
+            return;
+        }
+
+        HashSet<string> derivedTargetIds = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, SimulationDerivedSignal> derivedMap = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (SimulationDerivedSignal derived in profile.DerivedSignals)
+        {
+            if (string.IsNullOrWhiteSpace(derived.TargetSignalId))
+            {
+                failures.Add("Sinal derivado sem TargetSignalId.");
+                continue;
+            }
+
+            if (!signalIds.Contains(derived.TargetSignalId))
+            {
+                failures.Add($"Sinal derivado target inexistente: {derived.TargetSignalId}.");
+                continue;
+            }
+
+            if (!derivedTargetIds.Add(derived.TargetSignalId))
+            {
+                failures.Add($"Sinal derivado target duplicado: {derived.TargetSignalId}.");
+            }
+
+            derivedMap[derived.TargetSignalId] = derived;
+
+            SimulationSignalDefinition targetDefinition = profile.Signals.First(s =>
+                string.Equals(s.Id, derived.TargetSignalId, StringComparison.OrdinalIgnoreCase));
+            if (targetDefinition.Kind != SimulationSignalKind.DigitalInput
+                && targetDefinition.Kind != SimulationSignalKind.VirtualOutput)
+            {
+                failures.Add($"Sinal derivado target {derived.TargetSignalId} deve ser digital.");
+            }
+
+            if (derived.SourceSignalIds.Count == 0)
+            {
+                failures.Add($"Sinal derivado {derived.TargetSignalId} sem sinais fonte.");
+            }
+
+            foreach (string sourceId in derived.SourceSignalIds)
+            {
+                if (string.IsNullOrWhiteSpace(sourceId) || !signalIds.Contains(sourceId))
+                {
+                    failures.Add($"Sinal derivado {derived.TargetSignalId}: fonte inexistente {sourceId ?? "AUSENTE"}.");
+                    continue;
+                }
+
+                if (string.Equals(sourceId, derived.TargetSignalId, StringComparison.OrdinalIgnoreCase))
+                {
+                    failures.Add($"Sinal derivado {derived.TargetSignalId} nao pode ser fonte de si mesmo.");
+                }
+
+                SimulationSignalDefinition sourceDefinition = profile.Signals.First(s =>
+                    string.Equals(s.Id, sourceId, StringComparison.OrdinalIgnoreCase));
+                if (sourceDefinition.Kind != SimulationSignalKind.DigitalInput
+                    && sourceDefinition.Kind != SimulationSignalKind.VirtualOutput)
+                {
+                    failures.Add($"Sinal fonte {sourceId} do derivado {derived.TargetSignalId} deve ser digital.");
+                }
+            }
+        }
+
+        HashSet<string> visiting = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> visited = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> cycledTargets = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string targetId in derivedTargetIds)
+        {
+            DetectCycles(targetId, visiting, visited, cycledTargets, derivedMap);
+        }
+
+        foreach (string cycled in cycledTargets)
+        {
+            failures.Add($"Ciclo entre sinais derivados detectado envolvendo {cycled}.");
+        }
+    }
+
+    private static bool DetectCycles(
+        string currentTarget,
+        HashSet<string> visiting,
+        HashSet<string> visited,
+        HashSet<string> cycledTargets,
+        IReadOnlyDictionary<string, SimulationDerivedSignal> derivedMap)
+    {
+        if (visiting.Contains(currentTarget))
+        {
+            cycledTargets.Add(currentTarget);
+            return true;
+        }
+
+        if (visited.Contains(currentTarget))
+        {
+            return false;
+        }
+
+        visiting.Add(currentTarget);
+
+        if (derivedMap.TryGetValue(currentTarget, out SimulationDerivedSignal? derived))
+        {
+            foreach (string sourceId in derived.SourceSignalIds)
+            {
+                if (derivedMap.ContainsKey(sourceId))
+                {
+                    if (DetectCycles(sourceId, visiting, visited, cycledTargets, derivedMap))
+                    {
+                        cycledTargets.Add(currentTarget);
+                        visiting.Remove(currentTarget);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        visiting.Remove(currentTarget);
+        visited.Add(currentTarget);
+        return false;
     }
 }

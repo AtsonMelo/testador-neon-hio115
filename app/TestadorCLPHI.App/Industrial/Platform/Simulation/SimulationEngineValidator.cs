@@ -103,9 +103,10 @@ internal static class SimulationEngineValidator
         new("Pivo falha de torre", () =>
         {
             SimulationEngine engine = CreateEngine("pivo-central");
-            engine.SetDigitalInput("FalhaTorre", true);
+            engine.ApplyScenario("falha-torre");
             return engine.Snapshot.State == "Falha"
-                && engine.Snapshot.ActiveAlarms.Contains("TowerFault")
+                && engine.Snapshot.ActiveAlarms.Contains("SafetyChainOpen")
+                && engine.GetValue("SafetyChain") == 0
                 && ProjectPivot(engine).Towers.Single(tower => tower.Number == 3).Status
                     == PivotTowerStatus.Fault;
         }),
@@ -277,8 +278,181 @@ internal static class SimulationEngineValidator
             };
             return !SimulationProfileValidator.Validate(invalid).IsValid
                 && Throws<ArgumentException>(() => _ = new SimulationEngine(invalid));
+        }),
+        new("sinal derivado AND com todas as fontes 1 produz target 1", () =>
+        {
+            SimulationEngine engine = new(CreateDerivedTestProfile());
+            return engine.GetValue("T1") == 1;
+        }),
+        new("sinal derivado AND com uma fonte 0 produz target 0", () =>
+        {
+            SimulationEngine engine = new(CreateDerivedTestProfile());
+            engine.SetDigitalInput("S1", false);
+            return engine.GetValue("T1") == 0;
+        }),
+        new("sinal derivado restaura target 1 ao restaurar fonte para 1", () =>
+        {
+            SimulationEngine engine = new(CreateDerivedTestProfile());
+            engine.SetDigitalInput("S1", false);
+            bool wasZero = engine.GetValue("T1") == 0;
+            engine.SetDigitalInput("S1", true);
+            return wasZero && engine.GetValue("T1") == 1;
+        }),
+        new("sinal derivado rejeita SetDigitalInput direto", () =>
+        {
+            SimulationEngine engine = new(CreateDerivedTestProfile());
+            return Throws<InvalidOperationException>(() => engine.SetDigitalInput("T1", false));
+        }),
+        new("perfil com fonte derivada inexistente falha na validacao", () =>
+        {
+            SimulationProfile invalid = CreateDerivedTestProfile();
+            invalid.DerivedSignals[0].SourceSignalIds.Add("NON_EXISTENT");
+            return !SimulationProfileValidator.Validate(invalid).IsValid;
+        }),
+        new("perfil com ciclo de sinais derivados falha na validacao", () =>
+        {
+            SimulationProfile invalid = new()
+            {
+                SchemaVersion = 1,
+                Id = "cyclic-derived",
+                DisplayName = "Cyclic Derived Profile",
+                InitialState = "Normal",
+                Signals =
+                [
+                    new() { Id = "D1", Label = "Derived 1", Kind = SimulationSignalKind.DigitalInput, DefaultValue = 0, Minimum = 0, Maximum = 1 },
+                    new() { Id = "D2", Label = "Derived 2", Kind = SimulationSignalKind.DigitalInput, DefaultValue = 0, Minimum = 0, Maximum = 1 }
+                ],
+                DerivedSignals =
+                [
+                    new() { TargetSignalId = "D1", Operator = SimulationDerivedOperator.And, SourceSignalIds = ["D2"] },
+                    new() { TargetSignalId = "D2", Operator = SimulationDerivedOperator.And, SourceSignalIds = ["D1"] }
+                ]
+            };
+            return !SimulationProfileValidator.Validate(invalid).IsValid;
+        }),
+        new("sinais derivados mantem contadores fisicos em zero", () =>
+        {
+            SimulationCounters counters = new();
+            SimulationEngine engine = new(CreateDerivedTestProfile(), counters);
+            engine.SetDigitalInput("S1", false);
+            engine.SetDigitalInput("S1", true);
+            return counters.PhysicalConnections == 0
+                && counters.PhysicalReads == 0
+                && counters.PhysicalWrites == 0
+                && counters.PhysicalCommands == 0;
+        }),
+        new("Pivo normal com todas TowerNSafety 1 mantem SafetyChain 1", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            return engine.GetValue("Tower1Safety") == 1
+                && engine.GetValue("Tower2Safety") == 1
+                && engine.GetValue("Tower3Safety") == 1
+                && engine.GetValue("Tower4Safety") == 1
+                && engine.GetValue("SafetyChain") == 1;
+        }),
+        new("Pivo falha em Tower3Safety resulta em SafetyChain 0, estado Falha, alarme SafetyChainOpen e torre 3 Fault", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetDigitalInput("Tower3Safety", false);
+            PivotProcessState pivot = ProjectPivot(engine);
+            return engine.GetValue("SafetyChain") == 0
+                && engine.Snapshot.State == "Falha"
+                && engine.Snapshot.ActiveAlarms.Contains("SafetyChainOpen")
+                && pivot.Towers.Single(t => t.Number == 3).Status == PivotTowerStatus.Fault
+                && pivot.Towers.Where(t => t.Number != 3).All(t => t.Status == PivotTowerStatus.Ok);
+        }),
+        new("Pivo falha simultanea em Tower2Safety e Tower4Safety marca ambas torres como Fault", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetDigitalInput("Tower2Safety", false);
+            engine.SetDigitalInput("Tower4Safety", false);
+            PivotProcessState pivot = ProjectPivot(engine);
+            return engine.GetValue("SafetyChain") == 0
+                && pivot.Towers.Single(t => t.Number == 2).Status == PivotTowerStatus.Fault
+                && pivot.Towers.Single(t => t.Number == 4).Status == PivotTowerStatus.Fault;
+        }),
+        new("Pivo restaura SafetyChain 1 ao restaurar todas TowerNSafety para 1", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetDigitalInput("Tower3Safety", false);
+            bool wasZero = engine.GetValue("SafetyChain") == 0;
+            engine.SetDigitalInput("Tower3Safety", true);
+            return wasZero && engine.GetValue("SafetyChain") == 1;
+        }),
+        new("Pivo desalinhamento nao altera SafetyChain nem TowerNSafety", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetDigitalInput("Alinhamento", false);
+            return engine.GetValue("SafetyChain") == 1
+                && engine.GetValue("Tower1Safety") == 1
+                && engine.GetValue("Tower2Safety") == 1
+                && engine.GetValue("Tower3Safety") == 1
+                && engine.GetValue("Tower4Safety") == 1;
+        }),
+        new("Pivo emergencia independe de SafetyChain e projeta torres UNKNOWN", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            engine.SetDigitalInput("Emergencia", true);
+            PivotProcessState pivot = ProjectPivot(engine);
+            return engine.GetValue("SafetyChain") == 1
+                && pivot.Towers.All(t => t.Status == PivotTowerStatus.Unknown);
+        }),
+        new("Pivo rejeita escrita direta em SafetyChain por ser derivada", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            return Throws<InvalidOperationException>(() => engine.SetDigitalInput("SafetyChain", false));
+        }),
+        new("Pivo bindings nao possuem TowerNSafety para adapter HIO115", () =>
+        {
+            SimulationProfile profile = SimulationProfileLoader.Load("pivo-central");
+            Integration.SimulationHio115Mapping mapping = Integration.SimulationHio115Mappings.FromProfile(profile);
+            return mapping.DigitalInputs.Values.Contains("SafetyChain")
+                && !mapping.DigitalInputs.Values.Contains("Tower1Safety")
+                && !mapping.DigitalInputs.Values.Contains("Tower2Safety")
+                && !mapping.DigitalInputs.Values.Contains("Tower3Safety")
+                && !mapping.DigitalInputs.Values.Contains("Tower4Safety");
+        }),
+        new("UI identifica SafetyChain como derivado e bloqueia edicao direta", () =>
+        {
+            SimulationEngine engine = CreateEngine("pivo-central");
+            return engine.Profile.DerivedSignals.Any(d => string.Equals(d.TargetSignalId, "SafetyChain", StringComparison.OrdinalIgnoreCase));
         })
     ];
+
+    private static SimulationProfile CreateDerivedTestProfile() => new()
+    {
+        SchemaVersion = 1,
+        Id = "test-derived",
+        DisplayName = "Test Derived Profile",
+        InitialState = "Normal",
+        Signals =
+        [
+            new() { Id = "S1", Label = "Source 1", Kind = SimulationSignalKind.DigitalInput, DefaultValue = 1, Minimum = 0, Maximum = 1 },
+            new() { Id = "S2", Label = "Source 2", Kind = SimulationSignalKind.DigitalInput, DefaultValue = 1, Minimum = 0, Maximum = 1 },
+            new() { Id = "T1", Label = "Target 1", Kind = SimulationSignalKind.DigitalInput, DefaultValue = 0, Minimum = 0, Maximum = 1 }
+        ],
+        DerivedSignals =
+        [
+            new()
+            {
+                TargetSignalId = "T1",
+                Operator = SimulationDerivedOperator.And,
+                SourceSignalIds = ["S1", "S2"]
+            }
+        ],
+        Rules =
+        [
+            new()
+            {
+                Id = "r1",
+                Priority = 100,
+                Conditions = [new() { SignalId = "T1", Comparison = SimulationComparison.Equals, ExpectedValue = 1 }],
+                ResultState = "Normal",
+                AlarmId = "",
+                BlockAllOutputs = false
+            }
+        ]
+    };
 
     private static SimulationEngine CreateEngine(string profileId) =>
         new(SimulationProfileLoader.Load(profileId));
