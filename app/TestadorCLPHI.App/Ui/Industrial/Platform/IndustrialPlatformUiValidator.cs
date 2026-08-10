@@ -1,4 +1,5 @@
 using System.Reflection;
+using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
@@ -13,7 +14,15 @@ internal static class IndustrialPlatformUiValidator
         CanonicalCounters? canonicalCounters = null;
         List<(string Name, Func<bool> Validate)> scenarios =
         [
+            ("startup sem argumentos permanece legado", StartupWithoutArgumentsRemainsLegacy),
+            ("argumento industrial resolve para a plataforma industrial", IndustrialArgumentSelectsPlatform),
+            ("argumento industrial ignora diferenca entre maiusculas e minusculas", IndustrialArgumentIsCaseInsensitive),
+            ("validadores preservam prioridade sobre o launcher industrial", ValidatorsKeepStartupPriority),
+            ("argumento desconhecido nao seleciona plataforma industrial", UnknownArgumentRemainsLegacy),
+            ("launcher industrial cria o host da plataforma", IndustrialLauncherCreatesPlatformHost),
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
+            ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
+            ("ciclo de vida do launcher industrial permanece offline", IndustrialLauncherLifecycleStaysOffline),
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
             ("modo Simulador carrega sob demanda", SimulatorLoadsLazily),
             ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
@@ -73,11 +82,64 @@ internal static class IndustrialPlatformUiValidator
         return passed == scenarios.Count ? 0 : 1;
     }
 
+    private static bool StartupWithoutArgumentsRemainsLegacy() =>
+        Program.ResolveStartupMode([]) == StartupMode.Legacy;
+
+    private static bool IndustrialArgumentSelectsPlatform() =>
+        Program.ResolveStartupMode(["--industrial"]) == StartupMode.Industrial;
+
+    private static bool IndustrialArgumentIsCaseInsensitive() =>
+        Program.ResolveStartupMode(["--InDuStRiAl"]) == StartupMode.Industrial;
+
+    private static bool ValidatorsKeepStartupPriority()
+    {
+        string[] validators =
+        [
+            "--validate-layout-3-simulation-engine",
+            "--validate-layout-3-test-simulator-integration",
+            "--validate-layout-3-industrial-platform-ui",
+            "--validate-industrial-io-mapping",
+            "--validate-layout-3-rtu-offline",
+            "--validate-layout-3-bench-readiness"
+        ];
+        return validators.All(argument =>
+                Program.ResolveStartupMode([argument]) == StartupMode.Validator)
+            && Program.ResolveStartupMode(
+                ["--industrial", "--validate-layout-3-industrial-platform-ui"])
+                == StartupMode.Validator;
+    }
+
+    private static bool UnknownArgumentRemainsLegacy() =>
+        Program.ResolveStartupMode(["--unknown-startup-mode"]) == StartupMode.Legacy;
+
+    private static bool IndustrialLauncherCreatesPlatformHost()
+    {
+        using Form form = Program.CreateStartupForm(StartupMode.Industrial);
+        return form is IndustrialPlatformForm;
+    }
+
     private static bool HostHasTwoModes()
     {
         using IndustrialPlatformForm form = new();
         return form.TesterModeButton.Text == "TESTADOR"
             && form.SimulatorModeButton.Text == "SIMULADOR";
+    }
+
+    private static bool Layout3HostLoadsLayout3HostControl()
+    {
+        using Layout3HostForm form = new(HardwareCatalog.Empty);
+        return Find<Layout3HostControl>(form) is not null;
+    }
+
+    private static bool IndustrialLauncherLifecycleStaysOffline()
+    {
+        using Form form = Program.CreateStartupForm(StartupMode.Industrial);
+        if (form is not IndustrialPlatformForm platform)
+        {
+            return false;
+        }
+
+        return PhysicalCountersAreZero(platform.Session);
     }
 
     private static bool TesterLoadsLazily()
@@ -284,16 +346,19 @@ internal static class IndustrialPlatformUiValidator
         {
             using IndustrialPlatformSession session = new("pivo-central");
             await session.IdentifyAsync(1, CancellationToken.None);
-            return session.Counters.PhysicalConnections == 0
-                && session.Counters.PhysicalReads == 0
-                && session.Counters.PhysicalWrites == 0
-                && session.Counters.PhysicalCommands == 0
-                && session.Simulation.Counters.PhysicalConnections == 0
-                && session.Simulation.Counters.PhysicalReads == 0
-                && session.Simulation.Counters.PhysicalWrites == 0
-                && session.Simulation.Counters.PhysicalCommands == 0;
+            return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
     }
+
+    private static bool PhysicalCountersAreZero(IndustrialPlatformSession session) =>
+        session.Counters.PhysicalConnections == 0
+        && session.Counters.PhysicalReads == 0
+        && session.Counters.PhysicalWrites == 0
+        && session.Counters.PhysicalCommands == 0
+        && session.Simulation.Counters.PhysicalConnections == 0
+        && session.Simulation.Counters.PhysicalReads == 0
+        && session.Simulation.Counters.PhysicalWrites == 0
+        && session.Simulation.Counters.PhysicalCommands == 0;
 
     private static CanonicalCounters CaptureCanonicalCounters() => Task.Run(async () =>
     {

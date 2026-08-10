@@ -11,11 +11,37 @@ using TestadorCLPHI.App.Ui.Industrial.Platform;
 
 namespace TestadorCLPHI.App;
 
+internal enum StartupMode
+{
+    Legacy,
+    Validator,
+    Industrial
+}
+
 internal static class Program
 {
+    private static readonly string[] ValidatorArguments =
+    [
+        "--validate-hardware-catalog",
+        "--validate-hardware-profile-selection",
+        "--validate-hardware-test-report",
+        "--validate-layout-3-host-readonly-safety",
+        "--validate-layout-3-read-bridge-disabled",
+        "--validate-layout-3-read-bridge-activation-gate",
+        "--validate-layout-3-bench-readiness-self-tests",
+        "--validate-layout-3-bench-readiness",
+        "--validate-layout-3-rtu-offline",
+        "--validate-layout-3-simulation-engine",
+        "--validate-layout-3-test-simulator-integration",
+        "--validate-layout-3-industrial-platform-ui",
+        "--validate-industrial-io-mapping"
+    ];
+
     [STAThread]
     private static void Main(string[] args)
     {
+        StartupMode startupMode = ResolveStartupMode(args);
+
         if (args.Contains("--validate-hardware-catalog", StringComparer.OrdinalIgnoreCase))
         {
             Environment.ExitCode = ValidateHardwareCatalogForCommandLine();
@@ -112,9 +138,9 @@ internal static class Program
 
         ApplicationConfiguration.Initialize();
 
-        if (args.Contains("--industrial-platform", StringComparer.OrdinalIgnoreCase))
+        if (startupMode == StartupMode.Industrial)
         {
-            Application.Run(new IndustrialPlatformForm());
+            Application.Run(CreateStartupForm(startupMode));
             return;
         }
 
@@ -174,6 +200,31 @@ internal static class Program
         HardwareCatalog hardwareCatalog = LoadHardwareCatalogForApp();
         Application.Run(new MainForm(useIndustrialHost, hardwareCatalog));
     }
+
+    internal static StartupMode ResolveStartupMode(IEnumerable<string>? args)
+    {
+        string[] startupArguments = args?.ToArray() ?? [];
+        if (startupArguments.Any(argument => ValidatorArguments.Contains(
+                argument,
+                StringComparer.OrdinalIgnoreCase)))
+        {
+            return StartupMode.Validator;
+        }
+
+        return startupArguments.Contains("--industrial", StringComparer.OrdinalIgnoreCase)
+            || startupArguments.Contains("--industrial-platform", StringComparer.OrdinalIgnoreCase)
+            ? StartupMode.Industrial
+            : StartupMode.Legacy;
+    }
+
+    internal static Form CreateStartupForm(StartupMode startupMode) => startupMode switch
+    {
+        StartupMode.Industrial => new IndustrialPlatformForm(),
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(startupMode),
+            startupMode,
+            "Somente o host industrial possui fabrica de startup dedicada.")
+    };
 
     private static HardwareCatalog LoadHardwareCatalogForApp()
     {
