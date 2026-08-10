@@ -1,5 +1,5 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
-using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Mapping;
 
@@ -9,9 +9,10 @@ internal sealed record IndustrialIoMappingValidationResult(IReadOnlyList<string>
     internal string ToDisplayText() => string.Join(Environment.NewLine, Failures);
 }
 
-internal static class Hio115SimulationIoPolicy
+internal static class DeviceProfileSimulationIoPolicy
 {
     internal static bool TryResolve(
+        IndustrialDeviceProfile deviceProfile,
         SimulationIoDirection direction,
         SimulationIoType ioType,
         int channel,
@@ -20,46 +21,47 @@ internal static class Hio115SimulationIoPolicy
     {
         registerAlias = string.Empty;
         documentedRegister = 0;
-        if (direction == SimulationIoDirection.Input
-            && ioType == SimulationIoType.Digital
-            && channel is >= 0 and < 8)
+        if (direction == SimulationIoDirection.Input)
         {
-            registerAlias = $"DI{channel:00}";
-            documentedRegister = 31120 + channel;
-            return true;
-        }
-
-        if (direction == SimulationIoDirection.Input
-            && ioType == SimulationIoType.Analog
-            && channel is >= 0 and < 3)
-        {
-            registerAlias = $"AI{channel:00}";
-            documentedRegister = 31132 + channel;
-            return true;
+            DeviceInputKind expectedKind = ioType == SimulationIoType.Digital
+                ? DeviceInputKind.Digital
+                : DeviceInputKind.Analog;
+            DeviceRegisterPoint? point = deviceProfile.InputMap.Blocks
+                .Where(block => block.Kind == expectedKind)
+                .SelectMany(block => block.Points)
+                .FirstOrDefault(item => item.Channel == channel);
+            if (point is not null)
+            {
+                registerAlias = point.Alias;
+                documentedRegister = point.DocumentedReference;
+                return true;
+            }
         }
 
         if (direction == SimulationIoDirection.Output
-            && ioType == SimulationIoType.Digital
-            && channel is >= 0 and < 4)
+            && ioType == SimulationIoType.Digital)
         {
-            registerAlias = $"DO{channel:00}";
-            documentedRegister = 31128 + channel;
-            return true;
+            DeviceRegisterPoint? point = deviceProfile.OutputMap.Outputs
+                .FirstOrDefault(item => item.Channel == channel);
+            if (point is not null)
+            {
+                registerAlias = point.Alias;
+                documentedRegister = point.DocumentedReference;
+                return true;
+            }
         }
 
         return false;
     }
 
     internal static bool IsAllowListed(
+        IndustrialDeviceProfile deviceProfile,
         SimulationIoDirection direction,
         int documentedRegister) =>
         direction switch
         {
-            SimulationIoDirection.Input => Layout3BenchWorkflowPolicy.IsReadReferenceAllowed(
-                Layout3BenchMode.InputTest,
-                documentedRegister),
-            SimulationIoDirection.Output =>
-                Layout3BenchWorkflowPolicy.IsOutputReferenceAllowed(documentedRegister),
+            SimulationIoDirection.Input => deviceProfile.InputMap.ContainsReference(documentedRegister),
+            SimulationIoDirection.Output => deviceProfile.OutputMap.ContainsReference(documentedRegister),
             _ => false
         };
 }
@@ -68,9 +70,12 @@ internal static class IndustrialIoMappingValidator
 {
     private sealed record Scenario(string Name, Func<bool> Run);
 
-    internal static IndustrialIoMappingValidationResult Validate(SimulationProfile profile)
+    internal static IndustrialIoMappingValidationResult Validate(
+        SimulationProfile profile,
+        IndustrialDeviceProfile? deviceProfile = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
+        IndustrialDeviceProfile selectedDeviceProfile = deviceProfile ?? NeonHio115DeviceProfile.Current;
         List<string> failures = [];
         if (profile.IoBindings.Count == 0)
         {
@@ -111,7 +116,8 @@ internal static class IndustrialIoMappingValidator
                 failures.Add($"Binding {binding.SignalId}: evidenceStatus deve ser SimulationProfile.");
             }
 
-            if (!Hio115SimulationIoPolicy.TryResolve(
+            if (!DeviceProfileSimulationIoPolicy.TryResolve(
+                    selectedDeviceProfile,
                     binding.Direction,
                     binding.IoType,
                     binding.Channel,
@@ -134,7 +140,10 @@ internal static class IndustrialIoMappingValidator
                     $"Binding {binding.SignalId}: registro {binding.Register}; esperado {expectedRegister}.");
             }
 
-            if (!Hio115SimulationIoPolicy.IsAllowListed(binding.Direction, binding.Register))
+            if (!DeviceProfileSimulationIoPolicy.IsAllowListed(
+                    selectedDeviceProfile,
+                    binding.Direction,
+                    binding.Register))
             {
                 failures.Add($"Binding {binding.SignalId}: registro fora da allow-list.");
             }
@@ -226,7 +235,10 @@ internal static class IndustrialIoMappingValidator
         new("DO00 usa registro documentado 31128", () => HasKnownBinding(
             Load("pivo-central"), "DO00", 31128)),
         new("todos registros pertencem a allow-list", () => Load("pivo-central").IoBindings.All(binding =>
-            Hio115SimulationIoPolicy.IsAllowListed(binding.Direction, binding.Register))),
+            DeviceProfileSimulationIoPolicy.IsAllowListed(
+                NeonHio115DeviceProfile.Current,
+                binding.Direction,
+                binding.Register))),
         new("nenhum binding usa reservado ou PWM", () => Load("pivo-central").IoBindings.All(binding =>
             binding.RegisterAlias?.Contains("PWM", StringComparison.OrdinalIgnoreCase) != true
             && binding.Description?.Contains("reservado", StringComparison.OrdinalIgnoreCase) != true)),

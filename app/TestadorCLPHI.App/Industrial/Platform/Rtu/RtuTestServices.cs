@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Rtu;
@@ -17,17 +18,22 @@ internal sealed class RtuClient
     private readonly IndustrialOperationCounters _counters;
     private readonly InMemoryOperationLog _log;
     private readonly TimeSpan _timeout;
+    private readonly string _logIdentity;
 
     internal RtuClient(
         IRtuTransport transport,
         IndustrialOperationCounters counters,
         InMemoryOperationLog log,
-        TimeSpan timeout)
+        TimeSpan timeout,
+        string logIdentity)
     {
         _transport = transport ?? throw new ArgumentNullException(nameof(transport));
         _counters = counters ?? throw new ArgumentNullException(nameof(counters));
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _timeout = timeout > TimeSpan.Zero ? timeout : throw new ArgumentOutOfRangeException(nameof(timeout));
+        _logIdentity = !string.IsNullOrWhiteSpace(logIdentity)
+            ? logIdentity
+            : throw new ArgumentException("Identidade de log ausente.", nameof(logIdentity));
     }
 
     internal bool IsSimulated => _transport.IsSimulated;
@@ -64,12 +70,12 @@ internal sealed class RtuClient
 
     internal async Task SetOutputAsync(
         byte deviceAddress,
-        Layout3OutputChannel channel,
+        ushort documentedReference,
+        string outputAlias,
         bool state,
         CancellationToken cancellationToken)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
-        ushort documentedReference = checked((ushort)Layout3BenchWorkflowPolicy.GetOutputDocumentedReference(channel));
         ushort value = state ? (ushort)1 : (ushort)0;
         try
         {
@@ -86,7 +92,7 @@ internal sealed class RtuClient
                 "SUPERVISED_OUTPUT_TEST",
                 deviceAddress,
                 state ? "OUTPUT_ON" : "OUTPUT_OFF",
-                channel.ToString(),
+                outputAlias,
                 "OK",
                 stopwatch.Elapsed,
                 null);
@@ -97,7 +103,7 @@ internal sealed class RtuClient
                 "SUPERVISED_OUTPUT_TEST",
                 deviceAddress,
                 state ? "OUTPUT_ON" : "OUTPUT_OFF",
-                channel.ToString(),
+                outputAlias,
                 "ERROR",
                 stopwatch.Elapsed,
                 ex.Message);
@@ -116,7 +122,7 @@ internal sealed class RtuClient
         _log.Add(new IndustrialOperationLogEntry(
             DateTimeOffset.UtcNow,
             mode,
-            "NEON5-CPU450-HIO115",
+            _logIdentity,
             "IN_MEMORY_RTU",
             address,
             operation,
@@ -159,62 +165,58 @@ internal sealed record RtuDiscoveryResult(
 internal sealed class RtuEquipmentIdentificationService
 {
     private readonly RtuClient _client;
+    private readonly DeviceIdentificationPolicy _policy;
 
-    internal RtuEquipmentIdentificationService(RtuClient client)
+    internal RtuEquipmentIdentificationService(
+        RtuClient client,
+        DeviceIdentificationPolicy policy)
     {
-        _client = client;
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _policy = policy ?? throw new ArgumentNullException(nameof(policy));
     }
 
     internal async Task<RtuIdentificationResult> ProbeAsync(byte address, CancellationToken cancellationToken)
     {
-        try
+        if (!_policy.IsSupported)
         {
-            ushort programId = (await _client.ReadAsync(
-                address,
-                30012,
-                1,
-                "PROG_ID",
-                "IDENTIFICATION",
-                cancellationToken))[0];
-            ushort programCrc = (await _client.ReadAsync(
-                address,
-                30013,
-                1,
-                "PROG_CRC",
-                "IDENTIFICATION",
-                cancellationToken))[0];
-            ushort failureStatus = (await _client.ReadAsync(
-                address,
-                30021,
-                1,
-                "DEV_GFAIL_STS",
-                "IDENTIFICATION",
-                cancellationToken))[0];
-
-            if (Layout3BenchWorkflowPolicy.HasCriticalFailure(failureStatus))
-            {
-                return new(address, RtuIdentificationState.CriticalFault, programId, programCrc, failureStatus, "F21 critico.");
-            }
-
-            if (programId != Layout3BenchWorkflowPolicy.ExpectedProgramId
-                || programCrc != Layout3BenchWorkflowPolicy.ExpectedProgramCrc)
-            {
-                return new(
-                    address,
-                    RtuIdentificationState.SignatureMismatch,
-                    programId,
-                    programCrc,
-                    failureStatus,
-                    "Resposta RTU valida, assinatura de programa divergente.");
-            }
-
             return new(
                 address,
-                RtuIdentificationState.Identified,
-                programId,
-                programCrc,
-                failureStatus,
-                "Programa conhecido; F10/F11 permanecem opcionais ate mapeamento confirmado.");
+                RtuIdentificationState.UnknownDevice,
+                null,
+                null,
+                null,
+                "Identificacao operacional nao suportada pelo perfil.");
+        }
+
+        try
+        {
+            Dictionary<string, ushort> observations = new(StringComparer.OrdinalIgnoreCase);
+            foreach (DeviceIdentificationProbe probe in _policy.Probes)
+            {
+                ushort value = (await _client.ReadAsync(
+                    address,
+                    probe.DocumentedReference,
+                    1,
+                    probe.Alias,
+                    "IDENTIFICATION",
+                    cancellationToken))[0];
+                observations.Add(probe.Alias, value);
+            }
+
+            DeviceIdentificationEvaluation evaluation = _policy.Evaluate(observations);
+            return new(
+                address,
+                evaluation.State switch
+                {
+                    DeviceIdentificationEvaluationState.Identified => RtuIdentificationState.Identified,
+                    DeviceIdentificationEvaluationState.SignatureMismatch => RtuIdentificationState.SignatureMismatch,
+                    DeviceIdentificationEvaluationState.CriticalFault => RtuIdentificationState.CriticalFault,
+                    _ => RtuIdentificationState.UnknownDevice
+                },
+                evaluation.ProgramId,
+                evaluation.ProgramCrc,
+                evaluation.GeneralFailureStatus,
+                evaluation.Detail);
         }
         catch (RtuNoResponseException ex)
         {
@@ -311,29 +313,66 @@ internal sealed record RtuInputSnapshot(bool[] DigitalInputs, ushort[] AnalogInp
 internal sealed class RtuInputTestService
 {
     private readonly RtuClient _client;
+    private readonly DeviceInputMap _inputMap;
 
-    internal RtuInputTestService(RtuClient client)
+    internal RtuInputTestService(RtuClient client, DeviceInputMap inputMap)
     {
-        _client = client;
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _inputMap = inputMap ?? throw new ArgumentNullException(nameof(inputMap));
     }
 
     internal async Task<RtuInputSnapshot> ReadAsync(byte address, CancellationToken cancellationToken)
     {
-        ushort[] digitalValues = await _client.ReadAsync(
-            address,
-            31120,
-            8,
-            "DI00..DI07",
-            "INPUT_TEST",
-            cancellationToken);
-        ushort[] analogValues = await _client.ReadAsync(
-            address,
-            31132,
-            3,
-            "AI00..AI02",
-            "INPUT_TEST",
-            cancellationToken);
-        return new(digitalValues.Select(value => value != 0).ToArray(), analogValues);
+        bool[] digitalValues = new bool[ResolveArrayLength(_inputMap.DigitalInputs)];
+        ushort[] analogValues = new ushort[ResolveArrayLength(_inputMap.AnalogInputs)];
+
+        foreach (DeviceInputBlock block in _inputMap.Blocks)
+        {
+            ValidateContiguousBlock(block);
+            ushort[] values = await _client.ReadAsync(
+                address,
+                block.StartReference,
+                checked((ushort)block.Points.Count),
+                block.Alias,
+                "INPUT_TEST",
+                cancellationToken);
+
+            for (int index = 0; index < block.Points.Count; index++)
+            {
+                DeviceRegisterPoint point = block.Points[index];
+                if (block.Kind == DeviceInputKind.Digital)
+                {
+                    digitalValues[point.Channel] = values[index] != 0;
+                }
+                else
+                {
+                    analogValues[point.Channel] = values[index];
+                }
+            }
+        }
+
+        return new(digitalValues, analogValues);
+    }
+
+    private static int ResolveArrayLength(IReadOnlyList<DeviceRegisterPoint> points) =>
+        points.Count == 0 ? 0 : points.Max(point => point.Channel) + 1;
+
+    private static void ValidateContiguousBlock(DeviceInputBlock block)
+    {
+        if (block.Points.Count == 0)
+        {
+            throw new InvalidOperationException($"Bloco de entrada vazio: {block.Alias}.");
+        }
+
+        for (int index = 0; index < block.Points.Count; index++)
+        {
+            int expectedReference = block.StartReference + index;
+            if (block.Points[index].DocumentedReference != expectedReference)
+            {
+                throw new InvalidOperationException(
+                    $"Bloco de entrada nao contiguo: {block.Alias}.");
+            }
+        }
     }
 }
 
@@ -354,13 +393,18 @@ internal sealed record RtuOutputTestResult(
 internal sealed class RtuSupervisedOutputService
 {
     private readonly RtuClient _client;
+    private readonly DeviceOutputMap _outputMap;
     private readonly TimeSpan _maximumDuration;
     private readonly object _syncRoot = new();
     private Layout3OutputChannel? _activeChannel;
 
-    internal RtuSupervisedOutputService(RtuClient client, TimeSpan maximumDuration)
+    internal RtuSupervisedOutputService(
+        RtuClient client,
+        DeviceOutputMap outputMap,
+        TimeSpan maximumDuration)
     {
-        _client = client;
+        _client = client ?? throw new ArgumentNullException(nameof(client));
+        _outputMap = outputMap ?? throw new ArgumentNullException(nameof(outputMap));
         _maximumDuration = maximumDuration > TimeSpan.Zero
             ? maximumDuration
             : throw new ArgumentOutOfRangeException(nameof(maximumDuration));
@@ -397,10 +441,21 @@ internal sealed class RtuSupervisedOutputService
         bool turnOffConfirmed = false;
         try
         {
-            await _client.SetOutputAsync(address, channel, state: true, cancellationToken);
+            DeviceRegisterPoint output = ResolveOutput(channel);
+            await _client.SetOutputAsync(
+                address,
+                output.DocumentedReference,
+                output.Alias,
+                state: true,
+                cancellationToken);
             activationConfirmed = true;
             await Task.Delay(duration, cancellationToken);
-            await _client.SetOutputAsync(address, channel, state: false, CancellationToken.None);
+            await _client.SetOutputAsync(
+                address,
+                output.DocumentedReference,
+                output.Alias,
+                state: false,
+                CancellationToken.None);
             turnOffConfirmed = true;
             return new(RtuOutputTestState.Completed, channel, true, "Ciclo momentaneo concluido no fake.");
         }
@@ -430,8 +485,16 @@ internal sealed class RtuSupervisedOutputService
     internal Task TurnOffAsync(
         byte address,
         Layout3OutputChannel channel,
-        CancellationToken cancellationToken) =>
-        _client.SetOutputAsync(address, channel, state: false, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        DeviceRegisterPoint output = ResolveOutput(channel);
+        return _client.SetOutputAsync(
+            address,
+            output.DocumentedReference,
+            output.Alias,
+            state: false,
+            cancellationToken);
+    }
 
     private async Task<bool> TryTurnOffAsync(
         byte address,
@@ -445,12 +508,28 @@ internal sealed class RtuSupervisedOutputService
 
         try
         {
-            await _client.SetOutputAsync(address, channel, state: false, CancellationToken.None);
+            DeviceRegisterPoint output = ResolveOutput(channel);
+            await _client.SetOutputAsync(
+                address,
+                output.DocumentedReference,
+                output.Alias,
+                state: false,
+                CancellationToken.None);
             return true;
         }
         catch
         {
             return false;
         }
+    }
+
+    private DeviceRegisterPoint ResolveOutput(Layout3OutputChannel channel)
+    {
+        if (!_outputMap.TryResolve(channel.ToString(), out DeviceRegisterPoint output))
+        {
+            throw new InvalidOperationException($"Saida {channel} nao suportada pelo perfil.");
+        }
+
+        return output;
     }
 }

@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Rtu;
@@ -12,43 +13,70 @@ internal enum FakeDeviceResponseMode
     InvalidAddress
 }
 
-internal sealed class NeonHio115FakeDevice
+internal sealed class NeonHio115FakeDevice : ISimulatedRtuDeviceEndpoint
 {
     private readonly Dictionary<ushort, ushort> _registers = [];
+    private readonly IndustrialDeviceProfile _profile;
 
     internal NeonHio115FakeDevice(
         byte address,
-        int programId = 31134,
-        int programCrc = 23248,
-        ushort generalFailureStatus = 0)
+        int? programId = null,
+        int? programCrc = null,
+        ushort generalFailureStatus = 0,
+        IndustrialDeviceProfile? profile = null)
     {
         if (address is 0 or > 247)
         {
             throw new ArgumentOutOfRangeException(nameof(address));
         }
 
-        Address = address;
-        ProgramId = checked((ushort)programId);
-        ProgramCrc = checked((ushort)programCrc);
-        GeneralFailureStatus = generalFailureStatus;
-        _registers[30012] = ProgramId;
-        _registers[30013] = ProgramCrc;
-        _registers[30021] = GeneralFailureStatus;
-
-        for (ushort reference = 31120; reference <= 31127; reference++)
+        _profile = profile ?? NeonHio115DeviceProfile.Current;
+        if (!string.Equals(
+                _profile.Id,
+                NeonHio115DeviceProfile.ProfileId,
+                StringComparison.OrdinalIgnoreCase))
         {
-            _registers[reference] = 0;
+            throw new ArgumentException(
+                "NeonHio115FakeDevice requer um perfil executavel HIO115.",
+                nameof(profile));
         }
 
-        for (ushort reference = 31128; reference <= 31134; reference++)
+        Address = address;
+        FirmwareFamily = _profile.IdentificationPolicy.ExpectedFirmwareFamily ?? string.Empty;
+        FirmwareVersion = _profile.IdentificationPolicy.ExpectedFirmwareVersion ?? string.Empty;
+        ProgramId = checked((ushort)(programId
+            ?? _profile.IdentificationPolicy.GetExpectedValue(DeviceIdentificationProbeRole.ProgramId)));
+        ProgramCrc = checked((ushort)(programCrc
+            ?? _profile.IdentificationPolicy.GetExpectedValue(DeviceIdentificationProbeRole.ProgramCrc)));
+        GeneralFailureStatus = generalFailureStatus;
+
+        foreach (DeviceIdentificationProbe probe in _profile.IdentificationPolicy.Probes)
         {
-            _registers[reference] = 0;
+            _registers[probe.DocumentedReference] = probe.Role switch
+            {
+                DeviceIdentificationProbeRole.ProgramId => ProgramId,
+                DeviceIdentificationProbeRole.ProgramCrc => ProgramCrc,
+                DeviceIdentificationProbeRole.GeneralFailureStatus => GeneralFailureStatus,
+                _ => probe.ExpectedValue ?? 0
+            };
+        }
+
+        foreach (DeviceRegisterPoint point in _profile.InputMap.Blocks.SelectMany(block => block.Points))
+        {
+            _registers[point.DocumentedReference] = 0;
+        }
+
+        foreach (DeviceRegisterPoint point in _profile.OutputMap.Outputs)
+        {
+            _registers[point.DocumentedReference] = 0;
         }
     }
 
-    internal byte Address { get; }
-    internal string FirmwareFamily { get; init; } = "G5PLC.C950.ST";
-    internal string FirmwareVersion { get; init; } = "3.3.11";
+    public byte Address { get; }
+    public bool SimulatesTimeout => ResponseMode == FakeDeviceResponseMode.Timeout;
+    internal string DeviceProfileId => _profile.Id;
+    internal string FirmwareFamily { get; init; }
+    internal string FirmwareVersion { get; init; }
     internal ushort ProgramId { get; }
     internal ushort ProgramCrc { get; }
     internal ushort GeneralFailureStatus { get; }
@@ -60,20 +88,35 @@ internal sealed class NeonHio115FakeDevice
 
     internal void SetDigitalInput(int channel, bool value)
     {
-        ValidateChannel(channel, 8, nameof(channel));
-        _registers[(ushort)(31120 + channel)] = value ? (ushort)1 : (ushort)0;
+        if (!_profile.InputMap.TryResolve(DeviceInputKind.Digital, channel, out DeviceRegisterPoint point))
+        {
+            throw new ArgumentOutOfRangeException(nameof(channel));
+        }
+
+        _registers[point.DocumentedReference] = value ? (ushort)1 : (ushort)0;
     }
 
     internal void SetAnalogInput(int channel, ushort rawValue)
     {
-        ValidateChannel(channel, 3, nameof(channel));
-        _registers[(ushort)(31132 + channel)] = rawValue;
+        if (!_profile.InputMap.TryResolve(DeviceInputKind.Analog, channel, out DeviceRegisterPoint point))
+        {
+            throw new ArgumentOutOfRangeException(nameof(channel));
+        }
+
+        _registers[point.DocumentedReference] = rawValue;
     }
 
-    internal bool GetDigitalOutput(Layout3OutputChannel channel) =>
-        _registers[(ushort)Layout3BenchWorkflowPolicy.GetOutputDocumentedReference(channel)] != 0;
+    internal bool GetDigitalOutput(Layout3OutputChannel channel)
+    {
+        if (!_profile.OutputMap.TryResolve(channel.ToString(), out DeviceRegisterPoint point))
+        {
+            throw new ArgumentOutOfRangeException(nameof(channel));
+        }
 
-    internal byte[]? Process(ReadOnlySpan<byte> request)
+        return _registers[point.DocumentedReference] != 0;
+    }
+
+    public byte[]? Process(ReadOnlySpan<byte> request)
     {
         if (ResponseMode == FakeDeviceResponseMode.NoResponse)
         {
@@ -135,30 +178,24 @@ internal sealed class NeonHio115FakeDevice
     {
         ushort reference = (ushort)(request[2] << 8 | request[3]);
         ushort value = (ushort)(request[4] << 8 | request[5]);
-        if (!Layout3BenchWorkflowPolicy.IsOutputReferenceAllowed(reference) || value > 1)
+        DeviceRegisterPoint? output = _profile.OutputMap.Outputs.FirstOrDefault(point =>
+            point.DocumentedReference == reference);
+        if (output is null || value > 1)
         {
             return RtuCodec.CreateExceptionResponse(Address, request[1], 0x02);
         }
 
         _registers[reference] = value;
-        OutputChanged?.Invoke(GetOutputChannel(reference), value != 0);
+        OutputChanged?.Invoke(GetOutputChannel(output), value != 0);
         return request.ToArray();
     }
 
-    private static Layout3OutputChannel GetOutputChannel(ushort reference) => reference switch
+    private static Layout3OutputChannel GetOutputChannel(DeviceRegisterPoint output) => output.Channel switch
     {
-        31128 => Layout3OutputChannel.DO00,
-        31129 => Layout3OutputChannel.DO01,
-        31130 => Layout3OutputChannel.DO02,
-        31131 => Layout3OutputChannel.DO03,
-        _ => throw new ArgumentOutOfRangeException(nameof(reference))
+        0 => Layout3OutputChannel.DO00,
+        1 => Layout3OutputChannel.DO01,
+        2 => Layout3OutputChannel.DO02,
+        3 => Layout3OutputChannel.DO03,
+        _ => throw new ArgumentOutOfRangeException(nameof(output))
     };
-
-    private static void ValidateChannel(int channel, int count, string parameterName)
-    {
-        if (channel < 0 || channel >= count)
-        {
-            throw new ArgumentOutOfRangeException(parameterName);
-        }
-    }
 }

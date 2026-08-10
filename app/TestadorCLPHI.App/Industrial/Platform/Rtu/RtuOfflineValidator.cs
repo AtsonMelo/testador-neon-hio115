@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 using TestadorCLPHI.App.Plc;
 
@@ -276,7 +277,8 @@ internal static class RtuOfflineValidator
             RtuOutputTestResult result = await context.Outputs.ActivateMomentaryAsync(
                 1,
                 Layout3OutputChannel.DO00,
-                TimeSpan.FromMilliseconds(1001),
+                NeonHio115DeviceProfile.Current.Limits.MaximumSimulatedOutputDuration
+                    + TimeSpan.FromMilliseconds(1),
                 AuthorizedOutput(),
                 CancellationToken.None);
             return result.State == RtuOutputTestState.Rejected;
@@ -298,11 +300,124 @@ internal static class RtuOfflineValidator
         }),
         Async("logs distinguem operacoes simuladas", async () =>
         {
+            IndustrialDeviceProfile profile = NeonHio115DeviceProfile.Current;
             TestContext context = CreateContext(new NeonHio115FakeDevice(1));
-            await context.Client.ReadAsync(1, 30012, 1, "PROG_ID", "TEST", CancellationToken.None);
+            DeviceIdentificationProbe probe = profile.IdentificationPolicy.Probes[0];
+            await context.Client.ReadAsync(
+                1,
+                probe.DocumentedReference,
+                1,
+                probe.Alias,
+                "TEST",
+                CancellationToken.None);
             return context.Log.Entries.Count == 1
                 && context.Log.Entries[0].Simulated
-                && context.Log.Entries[0].Transport == "IN_MEMORY_RTU";
+                && context.Log.Entries[0].Transport == "IN_MEMORY_RTU"
+                && context.Log.Entries[0].Profile == profile.LogIdentity;
+        }),
+        Sync("HIO115 possui perfil executavel e fisico bloqueado", () =>
+        {
+            IndustrialDeviceProfile profile = NeonHio115DeviceProfile.Current;
+            return profile.CanCreateSimulatedSession
+                && !profile.CanCreatePhysicalSession
+                && !profile.PhysicalSupport
+                && profile.Family == "NEON5"
+                && profile.Model == "NEON5-1S"
+                && profile.ControllerCpu == "CPU450"
+                && profile.IoModule == "HIO115";
+        }),
+        Async("identificacao usa politica injetada pelo perfil", async () =>
+        {
+            IndustrialDeviceProfile baseline = NeonHio115DeviceProfile.Current;
+            IndustrialDeviceProfile profile = baseline with
+            {
+                IdentificationPolicy = baseline.IdentificationPolicy.WithExpectedValue(
+                    DeviceIdentificationProbeRole.ProgramId,
+                    1234),
+                LogIdentity = "HIO115-PROFILE-INJECTED"
+            };
+            NeonHio115FakeDevice device = new(1, profile: profile);
+            TestContext context = CreateContext(profile, device);
+            RtuIdentificationResult result = await context.Identification.ProbeAsync(
+                1,
+                CancellationToken.None);
+            return result.State == RtuIdentificationState.Identified
+                && result.ProgramId == 1234
+                && context.Log.Entries.All(entry => entry.Profile == profile.LogIdentity);
+        }),
+        Async("leitura usa mapa de entradas injetado pelo perfil", async () =>
+        {
+            IndustrialDeviceProfile baseline = NeonHio115DeviceProfile.Current;
+            IndustrialDeviceProfile profile = baseline with
+            {
+                InputMap = ShiftInputMap(baseline.InputMap, 100)
+            };
+            NeonHio115FakeDevice device = new(1, profile: profile);
+            device.SetDigitalInput(3, true);
+            device.SetAnalogInput(1, 4321);
+            TestContext context = CreateContext(profile, device);
+            RtuInputSnapshot snapshot = await context.Inputs.ReadAsync(1, CancellationToken.None);
+            return snapshot.DigitalInputs[3] && snapshot.AnalogInputs[1] == 4321;
+        }),
+        Async("transporte in-memory aceita endpoint RTU generico", async () =>
+        {
+            const byte endpointAddress = 7;
+            InMemoryRtuTransport transport = new([new FixedReadEndpoint(endpointAddress, 2468)]);
+            byte[] request = RtuCodec.CreateReadRequest(endpointAddress, 40000, 1);
+            ReadOnlyMemory<byte>? response = await transport.ExchangeAsync(
+                request,
+                TimeSpan.FromMilliseconds(100),
+                CancellationToken.None);
+            return response is not null
+                && RtuCodec.ParseReadResponse(response.Value.Span, endpointAddress, 1)[0] == 2468;
+        }),
+        Sync("perfil unsupported falha fechado", () =>
+        {
+            IndustrialDeviceProfile profile = IndustrialDeviceProfile.CreateUnsupported(
+                "UNKNOWN",
+                "Equipamento pendente") with
+            {
+                PhysicalSupport = true
+            };
+            return !profile.CanCreateSimulatedSession
+                && !profile.CanCreatePhysicalSession
+                && !profile.IdentificationPolicy.IsSupported
+                && profile.SupportStatus == IndustrialDeviceSupportStatus.Unsupported;
+        }),
+        Sync("perfil simulation-only nao autoriza sessao fisica", () =>
+        {
+            IndustrialDeviceProfile profile = NeonHio115DeviceProfile.Current with
+            {
+                PhysicalSupport = true
+            };
+            return profile.SupportStatus == IndustrialDeviceSupportStatus.SimulationOnly
+                && !profile.CanCreatePhysicalSession;
+        }),
+        Sync("perfil pending nao autoriza sessao fisica", () =>
+        {
+            IndustrialDeviceProfile profile = NeonHio115DeviceProfile.Current with
+            {
+                SupportStatus = IndustrialDeviceSupportStatus.Pending,
+                PhysicalSupport = true
+            };
+            return !profile.CanCreateSimulatedSession && !profile.CanCreatePhysicalSession;
+        }),
+        Async("identificacao unsupported nao executa leitura", async () =>
+        {
+            IndustrialOperationCounters counters = new();
+            RtuClient client = new(
+                new InMemoryRtuTransport([]),
+                counters,
+                new InMemoryOperationLog(),
+                TimeSpan.FromMilliseconds(100),
+                "UNSUPPORTED");
+            RtuEquipmentIdentificationService service = new(
+                client,
+                DeviceIdentificationPolicy.Unsupported);
+            RtuIdentificationResult result = await service.ProbeAsync(1, CancellationToken.None);
+            return result.State == RtuIdentificationState.UnknownDevice
+                && counters.SimulatedReads == 0
+                && counters.PhysicalReads == 0;
         }),
         Async("contadores fisicos permanecem zero", async () =>
         {
@@ -359,21 +474,47 @@ internal static class RtuOfflineValidator
         PhysicalGateAuthorized: false,
         SimulationOnly: true);
 
-    private static TestContext CreateContext(params NeonHio115FakeDevice[] devices)
+    private static TestContext CreateContext(params NeonHio115FakeDevice[] devices) =>
+        CreateContext(
+            NeonHio115DeviceProfile.Current,
+            devices.Cast<ISimulatedRtuDeviceEndpoint>().ToArray());
+
+    private static TestContext CreateContext(
+        IndustrialDeviceProfile deviceProfile,
+        params ISimulatedRtuDeviceEndpoint[] devices)
     {
         IndustrialOperationCounters counters = new();
         InMemoryOperationLog log = new();
-        RtuClient client = new(new InMemoryRtuTransport(devices), counters, log, TimeSpan.FromMilliseconds(500));
-        RtuEquipmentIdentificationService identification = new(client);
+        RtuClient client = new(
+            new InMemoryRtuTransport(devices),
+            counters,
+            log,
+            TimeSpan.FromMilliseconds(500),
+            deviceProfile.LogIdentity);
+        RtuEquipmentIdentificationService identification = new(
+            client,
+            deviceProfile.IdentificationPolicy);
         return new(
             client,
             identification,
             new RtuDiscoveryService(identification, counters),
-            new RtuInputTestService(client),
-            new RtuSupervisedOutputService(client, TimeSpan.FromSeconds(1)),
+            new RtuInputTestService(client, deviceProfile.InputMap),
+            new RtuSupervisedOutputService(
+                client,
+                deviceProfile.OutputMap,
+                deviceProfile.Limits.MaximumSimulatedOutputDuration),
             counters,
             log);
     }
+
+    private static DeviceInputMap ShiftInputMap(DeviceInputMap inputMap, int offset) => new(
+        inputMap.Blocks.Select(block => block with
+        {
+            Points = block.Points.Select(point => point with
+            {
+                DocumentedReference = checked((ushort)(point.DocumentedReference + offset))
+            }).ToArray()
+        }).ToArray());
 
     private static Scenario Sync(string name, Func<bool> run) => new(name, () => Task.FromResult(run()));
     private static Scenario Async(string name, Func<Task<bool>> run) => new(name, run);
@@ -422,6 +563,15 @@ internal static class RtuOfflineValidator
         RtuSupervisedOutputService Outputs,
         IndustrialOperationCounters Counters,
         InMemoryOperationLog Log);
+
+    private sealed class FixedReadEndpoint(byte address, ushort value) : ISimulatedRtuDeviceEndpoint
+    {
+        public byte Address { get; } = address;
+        public bool SimulatesTimeout => false;
+
+        public byte[] Process(ReadOnlySpan<byte> request) =>
+            RtuCodec.CreateReadResponse(Address, [value]);
+    }
 
     private sealed class SynchronousProgress<T>(Action<T> report) : IProgress<T>
     {

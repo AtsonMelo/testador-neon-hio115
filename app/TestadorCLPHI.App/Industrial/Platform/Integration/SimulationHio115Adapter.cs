@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Industrial.Platform.Mapping;
@@ -7,6 +8,7 @@ namespace TestadorCLPHI.App.Industrial.Platform.Integration;
 
 internal sealed record SimulationHio115Mapping(
     string ProfileId,
+    string DeviceProfileId,
     IReadOnlyDictionary<int, string> DigitalInputs,
     IReadOnlyDictionary<int, string> AnalogInputs,
     IReadOnlyDictionary<Layout3OutputChannel, string> DigitalOutputs);
@@ -20,14 +22,26 @@ internal sealed class SimulationHio115Adapter : IDisposable
     internal SimulationHio115Adapter(
         SimulationEngine engine,
         NeonHio115FakeDevice device,
-        SimulationHio115Mapping mapping)
+        SimulationHio115Mapping mapping,
+        IndustrialDeviceProfile? deviceProfile = null)
     {
+        IndustrialDeviceProfile selectedDeviceProfile = deviceProfile ?? NeonHio115DeviceProfile.Current;
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _device = device ?? throw new ArgumentNullException(nameof(device));
         _mapping = mapping ?? throw new ArgumentNullException(nameof(mapping));
         if (!string.Equals(engine.Snapshot.ProfileId, mapping.ProfileId, StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("Mapeamento nao corresponde ao perfil de simulacao.", nameof(mapping));
+        }
+
+        if (!string.Equals(selectedDeviceProfile.Id, mapping.DeviceProfileId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Mapeamento nao corresponde ao perfil do equipamento.", nameof(mapping));
+        }
+
+        if (!string.Equals(device.DeviceProfileId, mapping.DeviceProfileId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Fake HIO115 nao corresponde ao perfil do mapeamento.", nameof(device));
         }
 
         _device.OutputChanged += HandleOutputChanged;
@@ -76,10 +90,15 @@ internal sealed class SimulationHio115Adapter : IDisposable
 
 internal static class SimulationHio115Mappings
 {
-    internal static SimulationHio115Mapping FromProfile(SimulationProfile profile)
+    internal static SimulationHio115Mapping FromProfile(
+        SimulationProfile profile,
+        IndustrialDeviceProfile? deviceProfile = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        IndustrialIoMappingValidationResult validation = IndustrialIoMappingValidator.Validate(profile);
+        IndustrialDeviceProfile selectedDeviceProfile = deviceProfile ?? NeonHio115DeviceProfile.Current;
+        IndustrialIoMappingValidationResult validation = IndustrialIoMappingValidator.Validate(
+            profile,
+            selectedDeviceProfile);
         if (!validation.IsValid)
         {
             throw new ArgumentException(validation.ToDisplayText(), nameof(profile));
@@ -100,6 +119,7 @@ internal static class SimulationHio115Mappings
 
         return new(
             profile.Id!,
+            selectedDeviceProfile.Id,
             digitalInputs,
             analogInputs,
             digitalOutputs);

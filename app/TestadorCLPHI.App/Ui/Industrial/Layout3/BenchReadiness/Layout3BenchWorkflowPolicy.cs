@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
+
 namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 internal enum Layout3BenchMode
@@ -45,20 +47,16 @@ internal sealed record Layout3OutputAuthorization(
 
 internal static class Layout3BenchWorkflowPolicy
 {
-    internal const string ExpectedFirmwareFamily = "G5PLC.C950.ST";
-    internal const string ExpectedFirmwareVersion = "3.3.11";
-    internal const int ExpectedProgramId = 31134;
-    internal const int ExpectedProgramCrc = 23248;
+    private static IndustrialDeviceProfile DeviceProfile => NeonHio115DeviceProfile.Current;
 
-    private const ushort CriticalF21Mask =
-        (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
-        (1 << 8) | (1 << 9) | (1 << 10) | (1 << 11) |
-        (1 << 12) | (1 << 13) | (1 << 14);
-
-    private static readonly HashSet<int> IdentificationReferences = [30012, 30013, 30021];
-    private static readonly HashSet<int> DigitalInputReferences = [31120, 31121, 31122, 31123, 31124, 31125, 31126, 31127];
-    private static readonly HashSet<int> AnalogInputReferences = [31132, 31133, 31134];
-    private static readonly HashSet<int> OutputReferences = [31128, 31129, 31130, 31131];
+    internal static string ExpectedFirmwareFamily =>
+        DeviceProfile.IdentificationPolicy.ExpectedFirmwareFamily ?? string.Empty;
+    internal static string ExpectedFirmwareVersion =>
+        DeviceProfile.IdentificationPolicy.ExpectedFirmwareVersion ?? string.Empty;
+    internal static int ExpectedProgramId =>
+        DeviceProfile.IdentificationPolicy.GetExpectedValue(DeviceIdentificationProbeRole.ProgramId);
+    internal static int ExpectedProgramCrc =>
+        DeviceProfile.IdentificationPolicy.GetExpectedValue(DeviceIdentificationProbeRole.ProgramCrc);
 
     internal static Layout3EquipmentIdentificationState Classify(Layout3ObservedSignature signature)
     {
@@ -93,30 +91,31 @@ internal static class Layout3BenchWorkflowPolicy
     }
 
     internal static bool HasCriticalFailure(ushort generalFailureStatus) =>
-        (generalFailureStatus & CriticalF21Mask) != 0;
+        (generalFailureStatus
+            & DeviceProfile.IdentificationPolicy.GetCriticalMask(
+                DeviceIdentificationProbeRole.GeneralFailureStatus)) != 0;
 
     internal static bool IsReadReferenceAllowed(Layout3BenchMode mode, int documentedReference) =>
         mode switch
         {
-            Layout3BenchMode.Identification => IdentificationReferences.Contains(documentedReference),
-            Layout3BenchMode.InputTest =>
-                DigitalInputReferences.Contains(documentedReference)
-                || AnalogInputReferences.Contains(documentedReference),
+            Layout3BenchMode.Identification => DeviceProfile.IdentificationPolicy.Probes.Any(
+                probe => probe.DocumentedReference == documentedReference),
+            Layout3BenchMode.InputTest => DeviceProfile.InputMap.ContainsReference(documentedReference),
             _ => false
         };
 
-    internal static int GetOutputDocumentedReference(Layout3OutputChannel channel) =>
-        channel switch
+    internal static int GetOutputDocumentedReference(Layout3OutputChannel channel)
+    {
+        if (!DeviceProfile.OutputMap.TryResolve(channel.ToString(), out DeviceRegisterPoint output))
         {
-            Layout3OutputChannel.DO00 => 31128,
-            Layout3OutputChannel.DO01 => 31129,
-            Layout3OutputChannel.DO02 => 31130,
-            Layout3OutputChannel.DO03 => 31131,
-            _ => throw new ArgumentOutOfRangeException(nameof(channel))
-        };
+            throw new ArgumentOutOfRangeException(nameof(channel));
+        }
+
+        return output.DocumentedReference;
+    }
 
     internal static bool IsOutputReferenceAllowed(int documentedReference) =>
-        OutputReferences.Contains(documentedReference);
+        DeviceProfile.OutputMap.ContainsReference(documentedReference);
 
     internal static bool CanEnableSupervisedOutput(Layout3OutputAuthorization authorization) =>
         authorization.EquipmentIdentified

@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
@@ -14,28 +15,49 @@ internal sealed class IndustrialPlatformSession : IDisposable
     private readonly RtuInputTestService _inputs;
     private readonly RtuSupervisedOutputService _outputs;
 
-    internal IndustrialPlatformSession(string profileId)
+    internal IndustrialPlatformSession(
+        string profileId,
+        IndustrialDeviceProfile? deviceProfile = null)
     {
+        DeviceProfile = deviceProfile ?? NeonHio115DeviceProfile.Current;
+        if (!DeviceProfile.CanCreateSimulatedSession)
+        {
+            throw new InvalidOperationException(
+                $"Equipamento {DeviceProfile.DisplayName} nao possui suporte operacional simulado.");
+        }
+
         Profile = SimulationProfileLoader.Load(profileId);
         Simulation = new SimulationEngine(Profile);
-        Device = new NeonHio115FakeDevice(SimulatedDeviceAddress);
-        IoMapping = SimulationHio115Mappings.FromProfile(Profile);
+        Device = new NeonHio115FakeDevice(SimulatedDeviceAddress, profile: DeviceProfile);
+        IoMapping = SimulationHio115Mappings.FromProfile(Profile, DeviceProfile);
         _adapter = new SimulationHio115Adapter(
             Simulation,
             Device,
-            IoMapping);
+            IoMapping,
+            DeviceProfile);
         _adapter.SyncInputsToDevice();
 
         Counters = new IndustrialOperationCounters();
         OperationLog = new InMemoryOperationLog();
         InMemoryRtuTransport transport = new([Device]);
-        RtuClient client = new(transport, Counters, OperationLog, TimeSpan.FromMilliseconds(250));
-        _identification = new RtuEquipmentIdentificationService(client);
+        RtuClient client = new(
+            transport,
+            Counters,
+            OperationLog,
+            TimeSpan.FromMilliseconds(250),
+            DeviceProfile.LogIdentity);
+        _identification = new RtuEquipmentIdentificationService(
+            client,
+            DeviceProfile.IdentificationPolicy);
         _discovery = new RtuDiscoveryService(_identification, Counters);
-        _inputs = new RtuInputTestService(client);
-        _outputs = new RtuSupervisedOutputService(client, TimeSpan.FromSeconds(3));
+        _inputs = new RtuInputTestService(client, DeviceProfile.InputMap);
+        _outputs = new RtuSupervisedOutputService(
+            client,
+            DeviceProfile.OutputMap,
+            DeviceProfile.Limits.MaximumSimulatedOutputDuration);
     }
 
+    internal IndustrialDeviceProfile DeviceProfile { get; }
     internal SimulationProfile Profile { get; }
     internal SimulationEngine Simulation { get; }
     internal NeonHio115FakeDevice Device { get; }

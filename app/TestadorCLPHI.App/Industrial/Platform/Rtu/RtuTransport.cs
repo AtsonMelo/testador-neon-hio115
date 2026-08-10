@@ -10,6 +10,15 @@ internal interface IRtuTransport
         CancellationToken cancellationToken);
 }
 
+internal interface ISimulatedRtuDeviceEndpoint
+{
+    byte Address { get; }
+
+    bool SimulatesTimeout { get; }
+
+    byte[]? Process(ReadOnlySpan<byte> request);
+}
+
 internal sealed class IndustrialOperationCounters
 {
     private int _simulatedConnections;
@@ -76,9 +85,9 @@ internal sealed class InMemoryOperationLog
 
 internal sealed class InMemoryRtuTransport : IRtuTransport
 {
-    private readonly IReadOnlyDictionary<byte, NeonHio115FakeDevice> _devices;
+    private readonly IReadOnlyDictionary<byte, ISimulatedRtuDeviceEndpoint> _devices;
 
-    internal InMemoryRtuTransport(IEnumerable<NeonHio115FakeDevice> devices)
+    internal InMemoryRtuTransport(IEnumerable<ISimulatedRtuDeviceEndpoint> devices)
     {
         ArgumentNullException.ThrowIfNull(devices);
         _devices = devices.ToDictionary(device => device.Address);
@@ -98,12 +107,12 @@ internal sealed class InMemoryRtuTransport : IRtuTransport
         }
 
         ReadOnlySpan<byte> frame = request.Span;
-        if (frame.Length == 0 || !_devices.TryGetValue(frame[0], out NeonHio115FakeDevice? device))
+        if (frame.Length == 0 || !_devices.TryGetValue(frame[0], out ISimulatedRtuDeviceEndpoint? device))
         {
             return ValueTask.FromResult<ReadOnlyMemory<byte>?>(null);
         }
 
-        if (device.ResponseMode == FakeDeviceResponseMode.Timeout)
+        if (device.SimulatesTimeout)
         {
             throw new TimeoutException("Timeout simulado pelo transporte em memoria.");
         }

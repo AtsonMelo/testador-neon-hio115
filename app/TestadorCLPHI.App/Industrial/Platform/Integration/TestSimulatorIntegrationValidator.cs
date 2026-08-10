@@ -1,3 +1,4 @@
+using TestadorCLPHI.App.Industrial.Platform.Devices;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
@@ -193,6 +194,22 @@ internal static class TestSimulatorIntegrationValidator
             return Task.FromResult(Throws<ArgumentException>(() =>
                 SimulationHio115Mappings.FromProfile(profile)));
         }),
+        new("sessao default resolve perfil HIO115 executavel", () =>
+        {
+            using IndustrialPlatformSession session = new("pivo-central");
+            return Task.FromResult(
+                session.DeviceProfile.Id == NeonHio115DeviceProfile.ProfileId
+                && session.DeviceProfile.CanCreateSimulatedSession
+                && !session.DeviceProfile.CanCreatePhysicalSession);
+        }),
+        new("sessao de equipamento unsupported falha fechado", () =>
+        {
+            IndustrialDeviceProfile unsupported = IndustrialDeviceProfile.CreateUnsupported(
+                "UNKNOWN",
+                "Equipamento pendente");
+            return Task.FromResult(Throws<InvalidOperationException>(() =>
+                new IndustrialPlatformSession("pivo-central", unsupported)));
+        }),
         new("integracao nao usa porta serial", () => Task.FromResult(
             typeof(SimulationHio115Adapter).AssemblyQualifiedName is not null
             && typeof(SimulationHio115Adapter).GetFields().All(field =>
@@ -214,23 +231,38 @@ internal static class TestSimulatorIntegrationValidator
 
     private static IntegrationContext CreateContext(string profileId, byte address)
     {
+        IndustrialDeviceProfile deviceProfile = NeonHio115DeviceProfile.Current;
         SimulationProfile profile = SimulationProfileLoader.Load(profileId);
         SimulationEngine engine = new(profile);
-        NeonHio115FakeDevice device = new(address);
-        SimulationHio115Adapter adapter = new(engine, device, SimulationHio115Mappings.FromProfile(profile));
+        NeonHio115FakeDevice device = new(address, profile: deviceProfile);
+        SimulationHio115Adapter adapter = new(
+            engine,
+            device,
+            SimulationHio115Mappings.FromProfile(profile, deviceProfile),
+            deviceProfile);
         adapter.SyncInputsToDevice();
 
         IndustrialOperationCounters counters = new();
         InMemoryOperationLog log = new();
-        RtuClient client = new(new InMemoryRtuTransport([device]), counters, log, TimeSpan.FromMilliseconds(500));
-        RtuEquipmentIdentificationService identification = new(client);
+        RtuClient client = new(
+            new InMemoryRtuTransport([device]),
+            counters,
+            log,
+            TimeSpan.FromMilliseconds(500),
+            deviceProfile.LogIdentity);
+        RtuEquipmentIdentificationService identification = new(
+            client,
+            deviceProfile.IdentificationPolicy);
         return new(
             engine,
             device,
             adapter,
             new RtuDiscoveryService(identification, counters),
-            new RtuInputTestService(client),
-            new RtuSupervisedOutputService(client, TimeSpan.FromSeconds(1)),
+            new RtuInputTestService(client, deviceProfile.InputMap),
+            new RtuSupervisedOutputService(
+                client,
+                deviceProfile.OutputMap,
+                deviceProfile.Limits.MaximumSimulatedOutputDuration),
             counters);
     }
 
