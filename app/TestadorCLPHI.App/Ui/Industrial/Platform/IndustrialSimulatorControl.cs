@@ -596,6 +596,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
         BackColor = palette.Background;
         ForeColor = palette.TextPrimary;
         ApplyThemeToChildren(this);
+        _pivotVisual?.ApplyTheme();
         RefreshSnapshot();
         Invalidate(true);
     }

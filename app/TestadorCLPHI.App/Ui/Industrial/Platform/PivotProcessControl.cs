@@ -1,25 +1,30 @@
 using System.Drawing.Drawing2D;
 using TestadorCLPHI.App.Industrial.Platform.Process;
+using TestadorCLPHI.App.Ui.Controls;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
 internal sealed class PivotProcessControl : Control
 {
-    private readonly Pen _structurePen = new(Color.FromArgb(126, 146, 164), 3F);
-    private readonly Pen _mutedPen = new(PlatformUi.ButtonSurface, 2F);
-    private readonly Pen _directionPen = new(PlatformUi.Accent, 3F);
-    private readonly Pen _waterPen = new(Color.FromArgb(54, 151, 210), 2F) { DashStyle = DashStyle.Dash };
-    private readonly SolidBrush _surfaceBrush = new(PlatformUi.Surface);
-    private readonly SolidBrush _fieldBrush = new(PlatformUi.Field);
-    private readonly SolidBrush _accentBrush = new(PlatformUi.Accent);
-    private readonly SolidBrush _successBrush = new(PlatformUi.Success);
-    private readonly SolidBrush _warningBrush = new(PlatformUi.Warning);
-    private readonly SolidBrush _dangerBrush = new(PlatformUi.Danger);
-    private readonly SolidBrush _mutedBrush = new(PlatformUi.Muted);
-    private readonly SolidBrush _waterBrush = new(Color.FromArgb(54, 151, 210));
-    private readonly Font _titleFont = new("Segoe UI Semibold", 11F);
-    private readonly Font _labelFont = new("Segoe UI Semibold", 8.5F);
-    private readonly Font _smallFont = new("Segoe UI", 8F);
+    private Pen _structurePen = null!;
+    private Pen _mutedPen = null!;
+    private Pen _directionPen = null!;
+    private Pen _waterPen = null!;
+    private Pen _cardPen = null!;
+    private SolidBrush _surfaceBrush = null!;
+    private SolidBrush _fieldBrush = null!;
+    private SolidBrush _accentBrush = null!;
+    private SolidBrush _successBrush = null!;
+    private SolidBrush _successSurfaceBrush = null!;
+    private SolidBrush _warningBrush = null!;
+    private SolidBrush _dangerBrush = null!;
+    private SolidBrush _dangerSurfaceBrush = null!;
+    private SolidBrush _mutedBrush = null!;
+    private SolidBrush _waterBrush = null!;
+    private readonly Font _titleFont = IndustrialTypography.Section();
+    private readonly Font _labelFont = IndustrialTypography.CaptionStrong();
+    private readonly Font _smallFont = IndustrialTypography.Caption();
     private PivotProcessState? _state;
     private string _stateSignature = string.Empty;
 
@@ -35,15 +40,20 @@ internal sealed class PivotProcessControl : Control
         ResizeRedraw = true;
         SetStyle(
             ControlStyles.AllPaintingInWmPaint
+            | ControlStyles.ApplyThemingImplicitly
             | ControlStyles.OptimizedDoubleBuffer
+            | ControlStyles.ResizeRedraw
             | ControlStyles.UserPaint,
             true);
+        RebuildDrawingResources();
     }
 
     internal int TowerCount => _state?.Towers.Count ?? 0;
     internal int StateRevision { get; private set; }
     internal bool UsesContinuousAnimation => false;
     internal bool IsDoubleBuffered => GetStyle(ControlStyles.OptimizedDoubleBuffer);
+    internal bool UsesUi2Theme => true;
+    internal bool HasTowerStatusCards => true;
 
     internal void UpdateState(PivotProcessState state)
     {
@@ -58,6 +68,14 @@ internal sealed class PivotProcessControl : Control
         _stateSignature = signature;
         StateRevision++;
         AccessibleDescription = BuildAccessibleDescription(state);
+        Invalidate();
+    }
+
+    internal void ApplyTheme()
+    {
+        RebuildDrawingResources();
+        BackColor = IndustrialTheme.Palette.SurfaceElevated;
+        ForeColor = IndustrialTheme.Palette.TextPrimary;
         Invalidate();
     }
 
@@ -80,7 +98,7 @@ internal sealed class PivotProcessControl : Control
         }
 
         DrawHeader(graphics, _state);
-        Rectangle processArea = new(18, 50, ClientSize.Width - 36, Math.Max(120, ClientSize.Height - 112));
+        Rectangle processArea = new(18, 54, ClientSize.Width - 36, Math.Max(120, ClientSize.Height - 116));
         DrawPivot(graphics, processArea, _state);
         DrawPosition(graphics, _state);
     }
@@ -89,18 +107,7 @@ internal sealed class PivotProcessControl : Control
     {
         if (disposing)
         {
-            _structurePen.Dispose();
-            _mutedPen.Dispose();
-            _directionPen.Dispose();
-            _waterPen.Dispose();
-            _surfaceBrush.Dispose();
-            _fieldBrush.Dispose();
-            _accentBrush.Dispose();
-            _successBrush.Dispose();
-            _warningBrush.Dispose();
-            _dangerBrush.Dispose();
-            _mutedBrush.Dispose();
-            _waterBrush.Dispose();
+            DisposeDrawingResources();
             _titleFont.Dispose();
             _labelFont.Dispose();
             _smallFont.Dispose();
@@ -111,22 +118,33 @@ internal sealed class PivotProcessControl : Control
 
     private void DrawHeader(Graphics graphics, PivotProcessState state)
     {
-        Rectangle titleBounds = new(18, 12, ClientSize.Width - 210, 30);
+        Rectangle titleBounds = new(18, 10, Math.Max(120, ClientSize.Width - 360), 34);
         TextRenderer.DrawText(
             graphics,
             $"PIVÔ CENTRAL  •  {state.OverallState}",
             _titleFont,
             titleBounds,
-            state.OutputsBlocked ? PlatformUi.Danger : PlatformUi.Text,
+            state.OutputsBlocked ? IndustrialTheme.Palette.Danger : IndustrialTheme.Palette.TextPrimary,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-        Rectangle positionBounds = new(ClientSize.Width - 190, 12, 172, 30);
+        Rectangle positionBounds = new(ClientSize.Width - 342, 10, 128, 34);
         TextRenderer.DrawText(
             graphics,
             $"POSIÇÃO  {state.PositionPercent:0.#}%",
             _labelFont,
             positionBounds,
-            PlatformUi.Text,
+            IndustrialTheme.Palette.TextPrimary,
             TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+        Rectangle safetyBounds = new(ClientSize.Width - 204, 12, 186, 30);
+        using GraphicsPath safetyPath = IndustrialControlDrawing.RoundedRectangle(safetyBounds, 8);
+        graphics.FillPath(state.OutputsBlocked ? _dangerSurfaceBrush : _successSurfaceBrush, safetyPath);
+        graphics.DrawPath(_cardPen, safetyPath);
+        TextRenderer.DrawText(
+            graphics,
+            state.OutputsBlocked ? "X SAÍDAS BLOQUEADAS" : "OK OPERAÇÃO SIMULADA",
+            _labelFont,
+            safetyBounds,
+            state.OutputsBlocked ? IndustrialTheme.Palette.Danger : IndustrialTheme.Palette.Success,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
     }
 
     private void DrawPivot(Graphics graphics, Rectangle area, PivotProcessState state)
@@ -143,14 +161,14 @@ internal sealed class PivotProcessControl : Control
             "CENTRO",
             _labelFont,
             new Rectangle(centerX - 38, axisY + 28, 76, 22),
-            PlatformUi.Text,
+            IndustrialTheme.Palette.TextPrimary,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
         TextRenderer.DrawText(
             graphics,
             state.PumpActive ? "BOMBA ON" : "BOMBA OFF",
             _smallFont,
             new Rectangle(centerX - 44, axisY + 48, 88, 20),
-            state.PumpActive ? PlatformUi.Success : PlatformUi.Muted,
+            state.PumpActive ? IndustrialTheme.Palette.Success : IndustrialTheme.Palette.TextMuted,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
         graphics.DrawLine(_structurePen, lineStartX, axisY, endX, axisY);
@@ -184,13 +202,17 @@ internal sealed class PivotProcessControl : Control
         graphics.DrawLine(_mutedPen, x, axisY + 2, x + 9, axisY + 35);
         graphics.DrawLine(_mutedPen, x - 13, axisY + 35, x + 13, axisY + 35);
         graphics.FillEllipse(statusBrush, x - 8, axisY - 8, 16, 16);
-        Rectangle labelBounds = new(x - 42, axisY + 39, 84, 20);
+        Rectangle cardBounds = new(x - 44, axisY + 38, 88, 25);
+        using GraphicsPath cardPath = IndustrialControlDrawing.RoundedRectangle(cardBounds, 6);
+        graphics.FillPath(_fieldBrush, cardPath);
+        graphics.DrawPath(_cardPen, cardPath);
+        Rectangle labelBounds = new(x - 42, axisY + 40, 84, 21);
         TextRenderer.DrawText(
             graphics,
             $"T{tower.Number}  {FormatTowerStatus(tower.Status)}",
             _smallFont,
             labelBounds,
-            PlatformUi.Text,
+            IndustrialTheme.Palette.TextPrimary,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
     }
 
@@ -212,7 +234,9 @@ internal sealed class PivotProcessControl : Control
             label,
             _labelFont,
             new Rectangle(lineStartX, y - 18, Math.Max(120, endX - lineStartX), 20),
-            direction == PivotMovementDirection.Stopped ? PlatformUi.Muted : PlatformUi.Accent,
+            direction == PivotMovementDirection.Stopped
+                ? IndustrialTheme.Palette.TextMuted
+                : IndustrialTheme.Palette.Accent,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
         if (direction == PivotMovementDirection.Stopped)
         {
@@ -254,24 +278,24 @@ internal sealed class PivotProcessControl : Control
             "0%",
             _smallFont,
             new Rectangle(track.Left, track.Bottom + 1, 40, 18),
-            PlatformUi.Muted,
+            IndustrialTheme.Palette.TextMuted,
             TextFormatFlags.Left);
         TextRenderer.DrawText(
             graphics,
             "100%",
             _smallFont,
             new Rectangle(track.Right - 44, track.Bottom + 1, 44, 18),
-            PlatformUi.Muted,
+            IndustrialTheme.Palette.TextMuted,
             TextFormatFlags.Right);
     }
 
     private static string FormatTowerStatus(PivotTowerStatus status) => status switch
     {
         PivotTowerStatus.Ok => "OK",
-        PivotTowerStatus.Moving => "MOVING",
-        PivotTowerStatus.Misaligned => "MISALIGNED",
-        PivotTowerStatus.Fault => "FAULT",
-        _ => "UNKNOWN"
+        PivotTowerStatus.Moving => "MOVIMENTO",
+        PivotTowerStatus.Misaligned => "DESALINHADA",
+        PivotTowerStatus.Fault => "FALHA",
+        _ => "DESCONHECIDA"
     };
 
     private static string BuildSignature(PivotProcessState state) =>
@@ -284,4 +308,44 @@ internal sealed class PivotProcessControl : Control
         + $"sentido {state.Direction}; bomba {(state.PumpActive ? "ligada" : "desligada")}; "
         + string.Join(", ", state.Towers.Select(tower =>
             $"torre {tower.Number} {FormatTowerStatus(tower.Status)}"));
+
+    private void RebuildDrawingResources()
+    {
+        DisposeDrawingResources();
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        _structurePen = new Pen(palette.BorderStrong, 3F);
+        _mutedPen = new Pen(palette.Border, 2F);
+        _directionPen = new Pen(palette.Accent, 3F);
+        _waterPen = new Pen(palette.Accent, 2F) { DashStyle = DashStyle.Dash };
+        _cardPen = new Pen(palette.Border, 1F);
+        _surfaceBrush = new SolidBrush(palette.SurfaceElevated);
+        _fieldBrush = new SolidBrush(palette.Field);
+        _accentBrush = new SolidBrush(palette.Accent);
+        _successBrush = new SolidBrush(palette.Success);
+        _successSurfaceBrush = new SolidBrush(palette.SuccessSurface);
+        _warningBrush = new SolidBrush(palette.Warning);
+        _dangerBrush = new SolidBrush(palette.Danger);
+        _dangerSurfaceBrush = new SolidBrush(palette.DangerSurface);
+        _mutedBrush = new SolidBrush(palette.Offline);
+        _waterBrush = new SolidBrush(palette.Accent);
+    }
+
+    private void DisposeDrawingResources()
+    {
+        _structurePen?.Dispose();
+        _mutedPen?.Dispose();
+        _directionPen?.Dispose();
+        _waterPen?.Dispose();
+        _cardPen?.Dispose();
+        _surfaceBrush?.Dispose();
+        _fieldBrush?.Dispose();
+        _accentBrush?.Dispose();
+        _successBrush?.Dispose();
+        _successSurfaceBrush?.Dispose();
+        _warningBrush?.Dispose();
+        _dangerBrush?.Dispose();
+        _dangerSurfaceBrush?.Dispose();
+        _mutedBrush?.Dispose();
+        _waterBrush?.Dispose();
+    }
 }

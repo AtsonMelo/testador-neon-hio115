@@ -47,6 +47,7 @@ internal static class IndustrialPlatformUiValidator
             ("Mapa de I/O UI2 filtra sem alterar bindings", IoMapFiltersWithoutChangingBindings),
             ("renderer leve do Pivo carrega quatro torres sem timer", PivotRendererLoadsWithoutTimer),
             ("renderer do Pivo atualiza somente por mudanca de estado", PivotRendererTracksStateChanges),
+            ("renderer UI2 do Pivo usa cards e linguagem operacional", PivotRendererUsesUi2VisualLanguage),
             ("perfil Poco preserva editor agrupado sem renderer de Pivo", WellUsesGenericGroupedEditor),
             ("layout estrutural permanece utilizavel em 1366x768", () => LayoutFits(new Size(1366, 768))),
             ("layout estrutural permanece utilizavel em 1920x1080", () => LayoutFits(new Size(1920, 1080))),
@@ -532,6 +533,21 @@ internal static class IndustrialPlatformUiValidator
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
+    }
+
+    private static bool PivotRendererUsesUi2VisualLanguage()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialSimulatorControl simulator = new(session);
+        PivotProcessControl? pivot = Find<PivotProcessControl>(simulator);
+        session.ApplyScenario("falha-torre");
+        return pivot is
+            {
+                UsesUi2Theme: true,
+                HasTowerStatusCards: true,
+                UsesContinuousAnimation: false
+            }
+            && pivot.AccessibleDescription?.Contains("FALHA", StringComparison.Ordinal) == true;
     }
 
     private static bool IoMapFiltersWithoutChangingBindings()
