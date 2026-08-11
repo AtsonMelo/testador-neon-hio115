@@ -78,6 +78,9 @@ internal static class IndustrialPlatformUiValidator
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
+            ("layout RTU preserva ordem e breakpoints de cinco duas e uma coluna", TesterRtuLayoutIsResponsive),
+            ("acoes RTU compartilham metrica tipografica e semantica visual", TesterRtuActionsUseOneVisualSpecification),
+            ("botoes e superficies principais usam cantos modernos moderados", ProductionActionsAndCardsUseModerateRoundedCorners),
             ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
             ("tema light preserva profundidade entre superficies", LightThemePreservesSurfaceDepth),
             ("footer permanece compacto e sem marcadores de iteracao UI", FooterHasOnlyProductRuntimeEvidence),
@@ -85,6 +88,8 @@ internal static class IndustrialPlatformUiValidator
             ("quatro metricas do Simulador permanecem visiveis sem rolagem horizontal", SimulatorMetricsRemainVisible),
             ("Simulador light preserva contraste efetivo dos sinais", SimulatorLightThemeHasEffectiveContrast),
             ("Simulador evita regioes de rolagem aninhadas", SimulatorAvoidsNestedScrollRegions),
+            ("scrolls de producao usam chrome fino tematico sem eixo horizontal", ProductionScrollbarsUseSlimThemedChrome),
+            ("Testador evita scrolls aninhados simultaneos em 1366", TesterAvoidsActiveNestedScrollAtStandardViewport),
             ("faixa restante das tabs acompanha tema dark e light", TesterTabStripRemainderMatchesTheme),
             ("configuracao do Simulador cabe em 1366 sem rolagem propria", SimulatorConfigurationFitsStandardViewport),
             ("sinais do Simulador usam densidade responsiva de duas e tres colunas", SimulatorSignalLayoutIsResponsive),
@@ -929,6 +934,126 @@ internal static class IndustrialPlatformUiValidator
         }
     }
 
+    private static bool TesterRtuLayoutIsResponsive()
+    {
+        string[] expectedOrder =
+        [
+            "COM (informativa)",
+            "Camada física",
+            "Baud",
+            "Data bits",
+            "Paridade",
+            "Stop bits",
+            "Timeout (ms)",
+            "Intervalo (ms)",
+            "Endereço inicial",
+            "Endereço final"
+        ];
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session) { Dock = DockStyle.Fill };
+        using Form host = new()
+        {
+            ClientSize = new Size(1112, 610),
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        host.Controls.Add(tester);
+        host.Show();
+        ResponsiveRtuConfigurationControl? rtu = Find<ResponsiveRtuConfigurationControl>(tester);
+        if (rtu is null || !rtu.FieldLabels.SequenceEqual(expectedOrder, StringComparer.Ordinal))
+        {
+            return false;
+        }
+
+        (int Width, int Height, int Fields, int Actions)[] layouts =
+        [
+            (1112, 610, 5, 5),
+            (700, 900, 2, 2),
+            (480, 1300, 1, 1)
+        ];
+        foreach ((int width, int height, int fields, int actions) in layouts)
+        {
+            host.ClientSize = new Size(width, height);
+            PerformLayoutTree(host);
+            TableLayoutPanel? fieldGrid = tester.Controls.Find("rtuFieldGrid", true)
+                .OfType<TableLayoutPanel>()
+                .SingleOrDefault();
+            TableLayoutPanel? actionGrid = tester.Controls.Find("rtuActionGrid", true)
+                .OfType<TableLayoutPanel>()
+                .SingleOrDefault();
+            if (rtu.FieldColumnCount != fields
+                || rtu.ActionColumnCount != actions
+                || rtu.UsesHorizontalScroll
+                || fieldGrid is null
+                || actionGrid is null
+                || fieldGrid.Controls.Count != expectedOrder.Length
+                || actionGrid.Controls.Count != 5
+                || fieldGrid.Controls.Cast<Control>().Any(control => !IsInsideParent(control))
+                || actionGrid.Controls.Cast<Control>().Any(control => !IsInsideParent(control)))
+            {
+                throw new InvalidOperationException(
+                    $"viewport={width}x{height}; fields={rtu.FieldColumnCount}/{fields}; "
+                    + $"actions={rtu.ActionColumnCount}/{actions}; horizontal={rtu.UsesHorizontalScroll}; "
+                    + $"fieldControls={fieldGrid?.Controls.Count}; actionControls={actionGrid?.Controls.Count}.");
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TesterRtuActionsUseOneVisualSpecification()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session);
+        Dictionary<string, PlatformButtonTone> expected = new(StringComparer.Ordinal)
+        {
+            ["refreshPortsButton"] = PlatformButtonTone.Secondary,
+            ["validateRtuButton"] = PlatformButtonTone.Primary,
+            ["identifyButton"] = PlatformButtonTone.Secondary,
+            ["discoverButton"] = PlatformButtonTone.Secondary,
+            ["cancelButton"] = PlatformButtonTone.Danger
+        };
+        Button[] buttons = expected.Keys
+            .Select(name => tester.Controls.Find(name, true).OfType<Button>().SingleOrDefault())
+            .Where(button => button is not null)
+            .Cast<Button>()
+            .ToArray();
+        return buttons.Length == expected.Count
+            && buttons.Select(button => button.Font.Name).Distinct(StringComparer.Ordinal).Count() == 1
+            && buttons.Select(button => button.Font.Size).Distinct().Count() == 1
+            && buttons.Select(button => button.Font.Style).Distinct().Count() == 1
+            && buttons.Select(button => button.Height).Distinct().Single() == IndustrialSpacing.InteractiveHeight
+            && buttons.Select(button => button.Padding).Distinct().Count() == 1
+            && buttons.All(button => button.TextAlign == ContentAlignment.MiddleCenter
+                && button.AccessibleRole == AccessibleRole.PushButton
+                && button.TabStop
+                && !button.UseCompatibleTextRendering
+                && button.Tag is PlatformButtonTone tone
+                && tone == expected[button.Name]);
+    }
+
+    private static bool ProductionActionsAndCardsUseModerateRoundedCorners()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.ShowHome();
+        form.Show();
+        PerformLayoutTree(form);
+        IndustrialButton[] buttons = FindAll<IndustrialButton>(form).ToArray();
+        IndustrialSurfacePanel[] cards = FindAll<IndustrialSurfacePanel>(form).ToArray();
+        ResponsiveRtuConfigurationControl? rtu = Find<ResponsiveRtuConfigurationControl>(form);
+        return buttons.Length >= 5
+            && buttons.All(button => button.Region is not null
+                && button.FlatStyle == FlatStyle.Flat
+                && button.TextAlign is ContentAlignment.MiddleCenter or ContentAlignment.MiddleLeft)
+            && cards.Length >= 2
+            && cards.All(card => card.Region is not null)
+            && rtu?.Region is not null;
+    }
+
     private static bool UnknownInputStateIsNeutral()
     {
         using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
@@ -1085,6 +1210,71 @@ internal static class IndustrialPlatformUiValidator
         return scrolling.Length <= 2
             && scrolling.All(control => !scrolling.Any(other =>
                 !ReferenceEquals(control, other) && IsDescendantOf(control, other)));
+    }
+
+    private static bool ProductionScrollbarsUseSlimThemedChrome()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.ShowSimulator();
+        form.Show();
+        PerformLayoutTree(form);
+        IndustrialScrollPanel[] panels = FindAll<IndustrialScrollPanel>(form).ToArray();
+        IndustrialFlowLayoutPanel[] flows = FindAll<IndustrialFlowLayoutPanel>(form).ToArray();
+        TextBox? log = FindAll<TextBox>(form).FirstOrDefault(textBox =>
+            textBox.Multiline
+            && string.Equals(textBox.AccessibleName, "Log técnico incremental do Testador", StringComparison.Ordinal));
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        bool result = panels.Length >= 2
+            && flows.Length >= 4
+            && panels.All(panel => panel.UsesSlimThemedScrollbar && !panel.HasHorizontalScroll)
+            && flows.All(flow => flow.UsesSlimThemedScrollbar && !flow.HasHorizontalScroll)
+            && IndustrialScrollPanel.ScrollbarThumbWidth is > 0 and <= 6
+            && IndustrialFlowLayoutPanel.ScrollbarThumbWidth == IndustrialScrollPanel.ScrollbarThumbWidth
+            && palette.ScrollThumb != palette.Background
+            && palette.ScrollThumb != palette.Surface
+            && palette.ScrollThumbHover != palette.ScrollThumb
+            && log is { ScrollBars: ScrollBars.Vertical, WordWrap: true };
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"panels={panels.Length} [{string.Join(",", panels.Select(panel => $"{panel.Name}:h={panel.HasHorizontalScroll}:v={panel.IsVerticalScrollRequired}"))}]; "
+                + $"flows={flows.Length} [{string.Join(",", flows.Select(flow => $"{flow.Name}:h={flow.HasHorizontalScroll}:v={flow.IsVerticalScrollRequired}"))}]; "
+                + $"thumb={IndustrialScrollPanel.ScrollbarThumbWidth}; log={log?.ScrollBars}/{log?.WordWrap}.");
+        }
+
+        return true;
+    }
+
+    private static bool TesterAvoidsActiveNestedScrollAtStandardViewport()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.Show();
+        PerformLayoutTree(form);
+        IndustrialScrollPanel[] panels = FindAll<IndustrialScrollPanel>(form)
+            .Where(panel => panel.Visible)
+            .ToArray();
+        IndustrialFlowLayoutPanel[] flows = FindAll<IndustrialFlowLayoutPanel>(form)
+            .Where(flow => flow.Visible)
+            .ToArray();
+        ScrollableControl[] active = panels.Where(panel => panel.IsVerticalScrollRequired)
+            .Cast<ScrollableControl>()
+            .Concat(flows.Where(flow => flow.IsVerticalScrollRequired))
+            .ToArray();
+        IndustrialScrollPanel? main = panels.SingleOrDefault(panel =>
+            string.Equals(panel.Name, "testerMainScrollHost", StringComparison.Ordinal));
+        bool result = main is { IsVerticalScrollRequired: false }
+            && active.All(control => !active.Any(other =>
+                !ReferenceEquals(control, other) && IsDescendantOf(control, other)));
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"main={main?.IsVerticalScrollRequired}; active="
+                + string.Join(",", active.Select(control => $"{control.Name}:{control.GetType().Name}")));
+        }
+
+        return true;
     }
 
     private static bool TesterTabStripRemainderMatchesTheme()
