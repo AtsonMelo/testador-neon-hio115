@@ -79,6 +79,8 @@ internal static class IndustrialPlatformUiValidator
             ("Simulador evita regioes de rolagem aninhadas", SimulatorAvoidsNestedScrollRegions),
             ("faixa restante das tabs acompanha tema dark e light", TesterTabStripRemainderMatchesTheme),
             ("configuracao do Simulador cabe em 1366 sem rolagem propria", SimulatorConfigurationFitsStandardViewport),
+            ("sinais do Simulador usam densidade responsiva de duas e tres colunas", SimulatorSignalLayoutIsResponsive),
+            ("metricas do Simulador preservam hierarquia label valor contexto", SimulatorMetricsExposeVisualHierarchy),
             ("acoes primarias preservam alinhamento e texto", PrimaryActionsRemainAligned),
             ("controles criticos expoem nomes acessiveis", CriticalAccessibleNamesArePresent),
             ("navegacao tema e resize nao ampliam a arvore visual", NavigationThemeAndResizeKeepStructureStable),
@@ -951,6 +953,47 @@ internal static class IndustrialPlatformUiValidator
         return simulator is not null
             && !simulator.ConfigurationUsesScroll
             && simulator.ConfigurationContentFits;
+    }
+
+    private static bool SimulatorSignalLayoutIsResponsive()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session) { ClientSize = new Size(1120, 610) };
+        using Form host = new()
+        {
+            ClientSize = simulator.ClientSize,
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        simulator.Dock = DockStyle.Fill;
+        host.Controls.Add(simulator);
+        host.Show();
+        PerformLayoutTree(host);
+        bool standard = simulator.SignalColumnCount == 2 && simulator.SignalItemsAreCompact;
+        host.ClientSize = new Size(1600, 900);
+        PerformLayoutTree(host);
+        bool wide = simulator.SignalColumnCount == 3 && simulator.SignalItemsAreCompact;
+        Control? derived = simulator.Controls.Find("simulationSafetyChainSignalSurface", true).FirstOrDefault();
+        bool derivedReadOnly = derived?.Parent is TableLayoutPanel grid
+            && grid.GetColumnSpan(derived) == grid.ColumnCount
+            && derived.Controls.Find("simulationSafetyChainInput", true).Length == 0;
+        return standard && wide && derivedReadOnly;
+    }
+
+    private static bool SimulatorMetricsExposeVisualHierarchy()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session);
+        Panel[] cards = FindAll<Panel>(simulator)
+            .Where(panel => panel.Name.StartsWith("simulationMetricCard", StringComparison.Ordinal))
+            .ToArray();
+        return cards.Length == 4
+            && cards.All(card => card.Controls.OfType<TableLayoutPanel>().SingleOrDefault() is
+                { Name: "simulationMetricHierarchy", RowCount: 3 } hierarchy
+                && hierarchy.Controls.OfType<Label>().Count() == 3);
     }
 
     private static bool PrimaryActionsRemainAligned()
