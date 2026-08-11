@@ -182,8 +182,49 @@ internal sealed class IndustrialDesignSystemPreviewForm : Form
             rows.Controls.Add(signal);
         }
 
+        rows.Controls.Add(BuildListLine(header: true));
+        rows.Controls.Add(BuildListLine(header: false));
+
         group.Controls.Add(rows);
         return group;
+    }
+
+    private static Control BuildListLine(bool header)
+    {
+        TableLayoutPanel line = new()
+        {
+            Name = header ? "previewListHeader" : "previewListRow",
+            Width = 420,
+            Height = header ? 26 : 30,
+            ColumnCount = 3,
+            Margin = new Padding(0, header ? IndustrialSpacing.Sm : 0, 0, 0),
+            BackColor = header
+                ? IndustrialTheme.Palette.SurfaceInteractive
+                : IndustrialTheme.Palette.SurfaceElevated
+        };
+        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22F));
+        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+        line.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 28F));
+        string[] text = header
+            ? ["CANAL", "SINAL", "ESTADO"]
+            : ["DI00", "Emergência", "Desconhecido"];
+        for (int index = 0; index < text.Length; index++)
+        {
+            Label label = PlatformUi.Label(text[index]);
+            label.Dock = DockStyle.Fill;
+            label.Margin = Padding.Empty;
+            label.Padding = new Padding(IndustrialSpacing.Sm, 0, IndustrialSpacing.Sm, 0);
+            label.TextAlign = ContentAlignment.MiddleLeft;
+            label.Font = header ? IndustrialTypography.Status() : IndustrialTypography.Body();
+            label.ForeColor = header
+                ? IndustrialTheme.Palette.TextMuted
+                : index == 0
+                    ? IndustrialTheme.Palette.Accent
+                    : IndustrialTheme.Palette.TextPrimary;
+            line.Controls.Add(label, index, 0);
+        }
+
+        return line;
     }
 
     private static FlowLayoutPanel CreateFlow(string name) => new()

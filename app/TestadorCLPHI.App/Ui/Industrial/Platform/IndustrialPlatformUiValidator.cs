@@ -34,6 +34,7 @@ internal static class IndustrialPlatformUiValidator
             ("SafetyChain permanece visualmente read-only", SafetyChainIsVisuallyReadOnly),
             ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
             ("papeis tipograficos de producao seguem contrato unico", ProductionTypographyUsesSemanticRoles),
+            ("texto operacional de producao respeita minimo de 8.5 pontos", OperationalTextUsesMinimumRuntimeSize),
             ("laboratorio visual instancia contratos sem entrar no startup", DesignSystemPreviewIsQaOnly),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
@@ -371,6 +372,19 @@ internal static class IndustrialPlatformUiValidator
             && actual.Style == expected.Style;
     }
 
+    private static bool OperationalTextUsesMinimumRuntimeSize()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.ShowSimulator();
+        form.Show();
+        PerformLayoutTree(form);
+        return FindAll<Control>(form)
+            .Where(control => control is Label or Button or CheckBox or TextBox or ComboBox or NumericUpDown)
+            .Where(control => !string.IsNullOrWhiteSpace(control.Text))
+            .All(control => control.Font.SizeInPoints >= 8.49F);
+    }
+
     private static bool DesignSystemPreviewIsQaOnly()
     {
         using IndustrialDesignSystemPreviewForm preview = new();
@@ -381,6 +395,8 @@ internal static class IndustrialPlatformUiValidator
             && buttons.Length >= 8
             && buttons.Any(button => button.IsNavigation && button.IsSelected)
             && sections.Length >= 5
+            && preview.Controls.Find("previewListHeader", true).Length == 1
+            && preview.Controls.Find("previewListRow", true).Length == 1
             && startup is IndustrialPlatformForm;
     }
 
