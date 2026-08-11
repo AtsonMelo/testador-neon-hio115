@@ -14,8 +14,9 @@ dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --layou
 ```
 
 A flag e o titulo da janela (`Layout 3 - Host read-only | Testador CLP HI`)
-permanecem inalterados. Sem a flag, o fluxo padrao continua abrindo o
-`MainForm`, que nao foi tocado nesta fase.
+permanecem inalterados. Na entrega original, o fluxo padrao ainda abria o
+`MainForm`; no estado atual, abre o `IndustrialPlatformForm`, enquanto o
+Legacy continua isolado em `--legacy`.
 
 ## O que muda
 
@@ -73,8 +74,9 @@ Arquivos alterados em `Ui/Industrial/Layout3/`:
 - `Layout3HostState.cs`: agrega a selecao de perfil inicial e registra o perfil
   local no log de eventos.
 
-O `Layout3ProfilePanelControl.cs` (compartilhado com o preview) nao foi alterado
-e continua atendendo o preview isolado.
+O antigo painel compartilhado com o preview nao foi alterado nesta fase. Ele
+foi removido posteriormente junto da arvore de preview superseded; o host atual
+usa `Layout3HostProfileSelectionControl`.
 
 ## Estado e seguranca
 

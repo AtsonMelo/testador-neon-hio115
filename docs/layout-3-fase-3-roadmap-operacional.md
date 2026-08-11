@@ -50,10 +50,13 @@ autorização de bancada.
 
 Flags de UI disponíveis na base:
 
+- `--industrial`;
+- `--industrial-platform`;
+- `--legacy`;
 - `--layout-3-host-readonly`;
-- `--preview-layout-3`;
-- `--preview-layout-3-light`;
-- `--preview-layout-3-auto`.
+
+Os launchers de preview citados nos checkpoints históricos foram superseded e
+removidos pelo Project Cleanup 1.
 
 Validadores disponíveis na base:
 
@@ -81,8 +84,8 @@ real nem operação de bancada.
 
 ## Controles de segurança vigentes
 
-- entrada do Host Layout 3 somente por flag opt-in; o fluxo padrão permanece no
-  `MainForm`;
+- entrada do Host Layout 3 somente por flag opt-in; o fluxo padrão abre o
+  `IndustrialPlatformForm` e o `MainForm` permanece isolado em `--legacy`;
 - estado produzido exclusivamente pelo catálogo e pela seleção em memória;
 - `Layout3ReadOnlyCommandGuard` nega toda intenção e não possui executor físico;
 - bridge da Fase 3.5 implementado somente como disabled/no-op;

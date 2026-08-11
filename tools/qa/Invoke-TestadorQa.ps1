@@ -397,7 +397,7 @@ try {
     if ($RunGuiSmoke) {
         $smokeCases = @(
             [pscustomobject]@{ Flag = '--layout-3-host-readonly'; Title = 'Layout 3 - Host read-only | Testador CLP HI' },
-            [pscustomobject]@{ Flag = '--industrial'; Title = 'Testador Industrial HI' }
+            [pscustomobject]@{ Flag = '--industrial'; Title = 'Testador Industrial HI - Plataforma industrial offline' }
         )
 
         $smokeFailures = 0

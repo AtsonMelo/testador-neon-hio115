@@ -14,12 +14,11 @@ dotnet run --project .\app\TestadorCLPHI.App\TestadorCLPHI.App.csproj -- --layou
 ```
 
 A janela aberta pela flag tem o título
-`Layout 3 - Host read-only | Testador CLP HI`. Sem a flag, o fluxo padrão
-continua abrindo o `MainForm`. As flags de preview permanecem independentes:
-
-- `--preview-layout-3`;
-- `--preview-layout-3-light`;
-- `--preview-layout-3-auto`.
+`Layout 3 - Host read-only | Testador CLP HI`. Este documento registra a
+entrega original da Fase 3.1. No estado atual, o fluxo padrão abre o
+`IndustrialPlatformForm`; os launchers de preview foram superseded e removidos
+pelo Project Cleanup 1, com cobertura funcional no host read-only e em
+`--industrial`.
 
 ## Arquivos criados e alterados
 
@@ -38,8 +37,9 @@ Arquivos criados em `Ui/Industrial/Layout3/`:
 Arquivos alterados:
 
 - `Program.cs`: somente a entrada opt-in `--layout-3-host-readonly`;
-- `Layout3ProfilePanelControl.cs`: parâmetro visual opcional para distinguir o
-  resumo do preview e do host, preservando o comportamento anterior.
+- painel de perfil do preview: recebeu um parâmetro visual opcional para
+  distinguir o resumo do preview e do host; esse painel foi posteriormente
+  removido junto da árvore de preview superseded.
 
 ## Isolamento operacional
 
@@ -79,7 +79,7 @@ Validações previstas para esta entrega:
 - build do projeto;
 - `git diff --check`;
 - smoke da flag do host read-only;
-- smoke das três flags do preview;
+- smoke do shell industrial oficial que substituiu os previews;
 - auditoria do diff e busca por acoplamento indevido.
 
 Os resultados executados são registrados no corpo do PR Draft.

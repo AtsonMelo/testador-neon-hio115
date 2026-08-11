@@ -6,12 +6,10 @@ A Fase 3 parte da branch `ui/issue-24-liga-io-industrial-host`, no merge
 commit `52a8c08`, resultado do PR #38. Esse estado está marcado pela tag de
 checkpoint `layout-3-preview-ok-20260619`.
 
-O Layout 3 está disponível somente como preview isolado e opt-in pelas flags:
-
-- `--preview-layout-3`, com a paleta dark aprovada;
-- `--preview-layout-3-light`, com a paleta clara aprovada;
-- `--preview-layout-3-auto`, que escolhe a paleta conforme a preferência de
-  aplicativos do Windows.
+Naquele checkpoint, o Layout 3 estava disponível somente como preview isolado
+e opt-in por três launchers, cobrindo paletas dark, clara e automática. Esses
+launchers foram superseded e removidos pelo Project Cleanup 1; o host read-only
+e o shell industrial oficial preservam a cobertura funcional atual.
 
 Já foram validados o isolamento do modo padrão, a composição em zonas, os
 temas dark e claro e a abertura explícita pelas três flags. O modo sem flag
@@ -63,9 +61,9 @@ escrita e sem assumir o ciclo de vida dos serviços existentes.
 
 Podem ser reaproveitados, após separação entre apresentação e dados:
 
-- `Layout3PreviewControl`, como referência da composição geral;
+- a composição geral do antigo preview, como referência histórica;
 - `Layout3IoPanelControl`, como apresentação de DO/DI;
-- `Layout3ProfilePanelControl`, como referência para perfil e preparação;
+- o antigo painel de perfil, como referência histórica para preparação;
 - `Layout3PreviewTheme` e as paletas dark, light e auto;
 - a organização em barra superior, três zonas e terminal inferior;
 - o terminal/log visual;
