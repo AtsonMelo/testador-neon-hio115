@@ -579,9 +579,21 @@ internal sealed class IndustrialPlatformForm : Form
         bool compact = logicalWidth < 1180F;
         _compactNavigation = compact;
         int dpi = Math.Max(DeviceDpi, 96);
-        _shell.RowStyles[0].Height = ScaleLogicalMetric(
-            compact ? IndustrialSpacing.HeaderCompactHeight : IndustrialSpacing.HeaderHeight,
-            dpi);
+        _brandContext.Visible = !compact;
+        _equipmentStatus.Visible = !compact;
+        if (_header.Controls.Find("industrialHeaderPrimary", searchAllChildren: true)
+                .FirstOrDefault() is TableLayoutPanel primary)
+        {
+            primary.ColumnStyles[0].Width = compact ? 100F : 67F;
+            primary.ColumnStyles[1].Width = compact ? 0F : 33F;
+        }
+
+        HeaderLayoutMetrics headerMetrics = CalculateHeaderLayoutMetrics(dpi, compact);
+        _header.RowStyles[0].SizeType = SizeType.Absolute;
+        _header.RowStyles[0].Height = headerMetrics.PrimaryHeight;
+        _header.RowStyles[1].SizeType = SizeType.Absolute;
+        _header.RowStyles[1].Height = headerMetrics.StatusHeight;
+        _shell.RowStyles[0].Height = headerMetrics.TotalHeight;
         _shell.RowStyles[2].Height = ScaleLogicalMetric(IndustrialSpacing.StatusBarHeight, dpi);
         int width = compact ? IndustrialSpacing.SidebarCompactWidth : IndustrialSpacing.SidebarWidth;
         _body.ColumnStyles[0].Width = width;
@@ -594,13 +606,46 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
         _sidebarMode.Text = compact ? "OFF" : "■ OFFLINE • FÍSICA BLOQUEADA";
 
-        _equipmentStatus.Visible = true;
         _header.PerformLayout();
         _statusBar.PerformLayout();
     }
 
+    private HeaderLayoutMetrics CalculateHeaderLayoutMetrics(int dpi, bool compact)
+    {
+        int verticalPadding = ScaleLogicalMetric(_header.Padding.Vertical, dpi);
+        int titleHeight = TextRenderer.MeasureText(
+            _brandTitle.Text,
+            _brandTitle.Font,
+            Size.Empty,
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Height;
+        int contextHeight = compact
+            ? 0
+            : TextRenderer.MeasureText(
+                _brandContext.Text,
+                _brandContext.Font,
+                Size.Empty,
+                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Height;
+        int identityHeight = titleHeight + contextHeight;
+        int primaryHeight = Math.Max(
+            identityHeight,
+            Math.Max(
+                _themeSelector.PreferredHeight,
+                compact ? 0 : _equipmentStatus.GetPreferredSize(Size.Empty).Height));
+        int statusHeight = CriticalHeaderStatuses
+            .Select(status => Math.Max(status.GetPreferredSize(Size.Empty).Height, status.MinimumSize.Height))
+            .DefaultIfEmpty(ScaleLogicalMetric(IndustrialSpacing.InteractiveHeight, dpi))
+            .Max();
+        int minimum = ScaleLogicalMetric(
+            compact ? IndustrialSpacing.HeaderCompactHeight : IndustrialSpacing.HeaderHeight,
+            dpi);
+        int total = Math.Max(minimum, primaryHeight + statusHeight + verticalPadding);
+        return new HeaderLayoutMetrics(primaryHeight, statusHeight, total);
+    }
+
     internal static int ScaleLogicalMetric(int logicalPixels, int dpi) =>
         Math.Max(1, (int)Math.Ceiling(logicalPixels * Math.Max(dpi, 96) / 96D));
+
+    private sealed record HeaderLayoutMetrics(int PrimaryHeight, int StatusHeight, int TotalHeight);
 
     private void ConfigureNavigationButton(Button button, string text, int sidebarWidth)
     {
