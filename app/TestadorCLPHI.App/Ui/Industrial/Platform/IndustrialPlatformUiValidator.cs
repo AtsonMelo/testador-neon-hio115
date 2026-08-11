@@ -77,6 +77,8 @@ internal static class IndustrialPlatformUiValidator
             ("quatro metricas do Simulador permanecem visiveis sem rolagem horizontal", SimulatorMetricsRemainVisible),
             ("Simulador light preserva contraste efetivo dos sinais", SimulatorLightThemeHasEffectiveContrast),
             ("Simulador evita regioes de rolagem aninhadas", SimulatorAvoidsNestedScrollRegions),
+            ("faixa restante das tabs acompanha tema dark e light", TesterTabStripRemainderMatchesTheme),
+            ("configuracao do Simulador cabe em 1366 sem rolagem propria", SimulatorConfigurationFitsStandardViewport),
             ("acoes primarias preservam alinhamento e texto", PrimaryActionsRemainAligned),
             ("controles criticos expoem nomes acessiveis", CriticalAccessibleNamesArePresent),
             ("navegacao tema e resize nao ampliam a arvore visual", NavigationThemeAndResizeKeepStructureStable),
@@ -912,6 +914,43 @@ internal static class IndustrialPlatformUiValidator
         return scrolling.Length <= 2
             && scrolling.All(control => !scrolling.Any(other =>
                 !ReferenceEquals(control, other) && IsDescendantOf(control, other)));
+    }
+
+    private static bool TesterTabStripRemainderMatchesTheme()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            foreach (IndustrialThemeMode mode in new[] { IndustrialThemeMode.Dark, IndustrialThemeMode.Light })
+            {
+                IndustrialTheme.SetMode(mode);
+                using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+                using IndustrialTesterControl tester = new(session);
+                IndustrialTabControl? tabs = Find<IndustrialTabControl>(tester);
+                if (tabs is null || tabs.HeaderRemainderColor != IndustrialTheme.Palette.Background)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static bool SimulatorConfigurationFitsStandardViewport()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowSimulator();
+        form.Show();
+        PerformLayoutTree(form);
+        IndustrialSimulatorControl? simulator = Find<IndustrialSimulatorControl>(form);
+        return simulator is not null
+            && !simulator.ConfigurationUsesScroll
+            && simulator.ConfigurationContentFits;
     }
 
     private static bool PrimaryActionsRemainAligned()

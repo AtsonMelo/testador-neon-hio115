@@ -50,14 +50,11 @@ internal sealed class IndustrialTesterControl : UserControl
         AccessibleDescription = "Eventos offline, comandos simulados e diagnósticos em ordem cronológica"
     };
     private readonly ToolTip _toolTip = new();
-    private readonly TabControl _tabs = new()
+    private readonly IndustrialTabControl _tabs = new()
     {
         Dock = DockStyle.Fill,
         Name = "testerTabs",
-        AccessibleName = "Áreas do Testador",
-        DrawMode = TabDrawMode.OwnerDrawFixed,
-        SizeMode = TabSizeMode.Fixed,
-        ItemSize = new Size(150, 38)
+        AccessibleName = "Áreas do Testador"
     };
     private IndustrialIoMapControl? _ioMap;
     private CancellationTokenSource? _operation;
@@ -75,7 +72,6 @@ internal sealed class IndustrialTesterControl : UserControl
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScroll = true;
         Controls.Add(BuildLayout());
-        _tabs.DrawItem += DrawTab;
         PlatformUi.StyleTabs(_tabs);
         _state.AccessibleDescription = "Estado operacional do Testador offline";
         _result.AccessibleName = "Resultado da operação";
@@ -724,6 +720,7 @@ internal sealed class IndustrialTesterControl : UserControl
         }
 
         _tabs.Invalidate();
+        _tabs.ApplyTheme();
     }
 
     private void ApplyThemeToChildren(Control root)
@@ -776,31 +773,6 @@ internal sealed class IndustrialTesterControl : UserControl
     private static bool IsPrimaryAction(Button button) => button.Name is
         "validateRtuButton" or "readInputsButton"
         || button.Name.StartsWith("activate", StringComparison.Ordinal);
-
-    private void DrawTab(object? sender, DrawItemEventArgs e)
-    {
-        IndustrialPalette palette = IndustrialTheme.Palette;
-        bool selected = e.Index == _tabs.SelectedIndex;
-        using SolidBrush background = new(selected ? palette.SelectedSurface : palette.Surface);
-        e.Graphics.FillRectangle(background, e.Bounds);
-        TextRenderer.DrawText(
-            e.Graphics,
-            _tabs.TabPages[e.Index].Text,
-            _tabs.Font,
-            e.Bounds,
-            selected ? palette.SelectedText : palette.TextSecondary,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-        if (selected)
-        {
-            using SolidBrush accent = new(palette.Accent);
-            e.Graphics.FillRectangle(accent, e.Bounds.Left, e.Bounds.Bottom - 3, e.Bounds.Width, 3);
-        }
-
-        if (selected && _tabs.Focused)
-        {
-            e.DrawFocusRectangle();
-        }
-    }
 
     private void UpdateLogIncrementally(IReadOnlyList<string> lines)
     {

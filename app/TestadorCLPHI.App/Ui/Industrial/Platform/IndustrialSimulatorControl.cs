@@ -48,6 +48,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private readonly Dictionary<string, CheckBox> _digitalEditors = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, NumericUpDown> _analogEditors = new(StringComparer.OrdinalIgnoreCase);
     private TableLayoutPanel? _rootLayout;
+    private FlowLayoutPanel? _configurationSidebar;
     private TableLayoutPanel? _pivotOverview;
     private TableLayoutPanel? _metricGrid;
     private Label? _profileEvidence;
@@ -105,6 +106,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
     internal int EditableSignalCount => _digitalEditors.Count + _analogEditors.Count;
     internal int MetricCount => _metricGrid?.Controls.Count ?? 0;
     internal bool MetricsUseHorizontalScroll => _metricGrid?.AutoScroll == true;
+    internal bool ConfigurationUsesScroll => _configurationSidebar?.AutoScroll == true;
+    internal bool ConfigurationContentFits => _configurationSidebar is not null
+        && _configurationSidebar.Controls.Cast<Control>()
+            .Where(control => control.Visible)
+            .Select(control => control.Bottom + control.Margin.Bottom)
+            .DefaultIfEmpty(0)
+            .Max() <= _configurationSidebar.ClientSize.Height;
 
     protected override void Dispose(bool disposing)
     {
@@ -136,32 +144,35 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private Control BuildSidebar()
     {
-        FlowLayoutPanel sidebar = new()
+        _configurationSidebar = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
+            AutoScroll = false,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             Padding = new Padding(
                 IndustrialSpacing.Md,
-                IndustrialSpacing.Md,
                 IndustrialSpacing.Sm,
-                IndustrialSpacing.Md),
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Sm),
             BackColor = PlatformUi.Surface,
             Name = "simulatorConfigurationSidebar",
             AccessibleName = "Configuração e estado da simulação"
         };
+        FlowLayoutPanel sidebar = _configurationSidebar;
         PlatformUi.StyleField(_profiles);
         PlatformUi.StyleField(_scenarios);
-        sidebar.Controls.Add(PlatformUi.Label("Perfil", heading: true));
+        sidebar.Controls.Add(SidebarLabel("Perfil"));
         sidebar.Controls.Add(_profiles);
-        sidebar.Controls.Add(PlatformUi.Label("Cenário", heading: true));
+        sidebar.Controls.Add(SidebarLabel("Cenário"));
         sidebar.Controls.Add(_scenarios);
         Button apply = PlatformUi.Button("Aplicar cenário", "applyScenarioButton", primary: true);
         Button reset = PlatformUi.Button("Resetar", "resetScenarioButton");
         PlatformUi.SetButtonTone(reset, PlatformButtonTone.Ghost);
         apply.Width = reset.Width = 220;
-        apply.Margin = new Padding(3, 12, 3, 3);
+        apply.Height = reset.Height = IndustrialSpacing.FieldHeight;
+        apply.Margin = new Padding(3, IndustrialSpacing.Sm, 3, 2);
+        reset.Margin = new Padding(3, 2, 3, 2);
         apply.Click += (_, _) => ApplyScenario();
         reset.Click += (_, _) => ResetSimulation();
         apply.AccessibleDescription = "Aplica o cenário selecionado somente à simulação em memória";
@@ -172,39 +183,49 @@ internal sealed class IndustrialSimulatorControl : UserControl
             "SIMULAÇÃO PRONTA • EM MEMÓRIA",
             PlatformStatusTone.Simulated,
             "simulationReadyStatus");
-        ready.Margin = new Padding(3, 14, 3, 6);
+        ready.AutoSize = false;
+        ready.Width = 220;
+        ready.Height = 30;
+        ready.Margin = new Padding(3, IndustrialSpacing.Sm, 3, 2);
         ready.AccessibleDescription = "Simulação pronta; nenhuma comunicação física ativa";
         sidebar.Controls.Add(ready);
-        sidebar.Controls.Add(PlatformUi.Label("Estado", heading: true));
-        _state.Width = 240;
-        _state.Height = 32;
+        sidebar.Controls.Add(SidebarLabel("Estado"));
+        _state.Width = 220;
+        _state.Height = 30;
         _state.AutoSize = false;
         _state.AccessibleDescription = "Estado operacional projetado pela simulação";
         sidebar.Controls.Add(_state);
-        sidebar.Controls.Add(PlatformUi.Label("Segurança derivada", heading: true));
-        _safety.Width = 240;
-        _safety.Height = 38;
+        sidebar.Controls.Add(SidebarLabel("Segurança derivada"));
+        _safety.Width = 220;
+        _safety.Height = 34;
         _safety.AutoSize = false;
         _safety.AccessibleDescription = "SafetyChain derivada e não editável";
         sidebar.Controls.Add(_safety);
-        sidebar.Controls.Add(PlatformUi.Label("Alarmes", heading: true));
-        _alarms.Width = 240;
-        _alarms.Height = 80;
+        sidebar.Controls.Add(SidebarLabel("Alarmes"));
+        _alarms.Width = 220;
+        _alarms.Height = 42;
         _alarms.AutoSize = false;
         _alarms.AccessibleName = "Alarmes simulados";
         sidebar.Controls.Add(_alarms);
-        _counters.Width = 240;
-        _counters.Height = 94;
+        _counters.Width = 220;
+        _counters.Height = 64;
         _counters.AutoSize = false;
         _counters.Margin = new Padding(
             IndustrialSpacing.Xs,
-            IndustrialSpacing.Md,
+            IndustrialSpacing.Sm,
             IndustrialSpacing.Xs,
             IndustrialSpacing.Xs);
         _counters.Font = IndustrialTypography.Technical();
         _counters.AccessibleName = "Contadores da simulação e bloqueio físico";
         sidebar.Controls.Add(_counters);
         return sidebar;
+    }
+
+    private static Label SidebarLabel(string text)
+    {
+        Label label = PlatformUi.Label(text, heading: true);
+        label.Margin = new Padding(IndustrialSpacing.Xs, 2, IndustrialSpacing.Xs, 0);
+        return label;
     }
 
     private Control BuildProcessPanel()
