@@ -27,6 +27,10 @@ internal sealed class IndustrialTesterControl : UserControl
         "LEITURA • DIAGNÓSTICO • RESULTADOS",
         PlatformStatusTone.Active,
         "testerPurposeStatus");
+    private readonly Label _offlineSafety = PlatformUi.StatusChip(
+        "OFFLINE • RTU EM MEMÓRIA • FÍSICA BLOQUEADA",
+        PlatformStatusTone.Offline,
+        "testerOfflineSafetyStatus");
     private readonly Label _result = PlatformUi.Label("Equipamento ainda nao identificado.");
     private readonly Label _counters = PlatformUi.Label(string.Empty);
     private readonly Label[] _digitalValues = Enumerable.Range(0, 8).Select(_ => PlatformUi.Label("- DESCONHECIDO")).ToArray();
@@ -62,7 +66,12 @@ internal sealed class IndustrialTesterControl : UserControl
         AutoScroll = true;
         Controls.Add(BuildLayout());
         _tabs.DrawItem += DrawTab;
-        _tabs.Font = IndustrialTypography.BodyStrong();
+        PlatformUi.StyleTabs(_tabs);
+        _state.AccessibleDescription = "Estado operacional do Testador offline";
+        _result.AccessibleName = "Resultado da operação";
+        _counters.AccessibleName = "Contadores simulados e físicos";
+        _offlineSafety.AccessibleDescription =
+            "Transporte somente em memória; comunicação física bloqueada";
         _session.Changed += SessionChanged;
         ApplyTheme();
         RefreshStatus();
@@ -171,7 +180,13 @@ internal sealed class IndustrialTesterControl : UserControl
         AddField(grid, "Endereço inicial", _startAddress, 8);
         AddField(grid, "Endereço final", _endAddress, 9);
 
-        FlowLayoutPanel actions = new() { Dock = DockStyle.Fill, AutoSize = false, WrapContents = true };
+        FlowLayoutPanel actions = new()
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            WrapContents = true,
+            AccessibleName = "Ações do Testador"
+        };
         Button refreshPorts = PlatformUi.Button("PORTAS BLOQUEADAS", "refreshPortsButton");
         refreshPorts.Enabled = false;
         _toolTip.SetToolTip(refreshPorts, "Indisponível no host estritamente offline.");
@@ -183,8 +198,8 @@ internal sealed class IndustrialTesterControl : UserControl
         foreach (Button button in new[] { refreshPorts, validate, identify, discover, cancel })
         {
             button.Width = 148;
-            button.Height = 34;
-            button.Margin = new Padding(3, 1, 3, 1);
+            button.Height = IndustrialSpacing.FieldHeight;
+            button.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
             actions.Controls.Add(button);
         }
 
@@ -194,11 +209,11 @@ internal sealed class IndustrialTesterControl : UserControl
         cancel.Click += (_, _) => _operation?.Cancel();
         grid.Controls.Add(actions, 0, 2);
         grid.SetColumnSpan(actions, 5);
-        Label safety = PlatformUi.Label("■ OFFLINE • IN_MEMORY_RTU • COM FÍSICA BLOQUEADA • AUTORUN OFF");
-        safety.ForeColor = IndustrialTheme.Palette.Warning;
-        safety.AccessibleDescription = "Comunicação física bloqueada; transporte somente em memória";
-        grid.Controls.Add(safety, 0, 3);
-        grid.SetColumnSpan(safety, 5);
+        _offlineSafety.Dock = DockStyle.Fill;
+        _offlineSafety.AutoSize = false;
+        _offlineSafety.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
+        grid.Controls.Add(_offlineSafety, 0, 3);
+        grid.SetColumnSpan(_offlineSafety, 5);
         group.Controls.Add(grid);
         return group;
     }
@@ -209,7 +224,11 @@ internal sealed class IndustrialTesterControl : UserControl
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            Padding = new Padding(10, 8, 10, 8),
+            Padding = new Padding(
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Sm),
             BackColor = PlatformUi.Surface,
             Name = "testerStatus"
         };
@@ -325,16 +344,45 @@ internal sealed class IndustrialTesterControl : UserControl
     private TabPage BuildDiagnosticsTab()
     {
         TabPage page = Page("Diagnóstico");
-        Label text = PlatformUi.Label(
-            "Assinatura: PROG_ID 31134 | PROG_CRC 23248 | F21 0\r\n"
-            + "Firmware de referencia: G5PLC.C950.ST [3.3.11]\r\n"
-            + "Perfil: NEON5-1S / CPU450 / HIO115 | alias OMNI-PLC2 compativel, nao confirmado");
-        text.Dock = DockStyle.Top;
-        text.Padding = new Padding(12);
-        text.AutoSize = false;
-        text.Height = 110;
-        page.Controls.Add(text);
+        TableLayoutPanel diagnostics = new()
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            RowCount = 3,
+            Padding = new Padding(IndustrialSpacing.Md),
+            AccessibleName = "Resumo de diagnóstico"
+        };
+        diagnostics.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
+        diagnostics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        AddDiagnosticRow(diagnostics, 0, "ASSINATURA", "PROG_ID 31134 • PROG_CRC 23248 • F21 0");
+        AddDiagnosticRow(diagnostics, 1, "FIRMWARE DE REFERÊNCIA", "G5PLC.C950.ST [3.3.11]");
+        AddDiagnosticRow(
+            diagnostics,
+            2,
+            "PERFIL",
+            "NEON5-1S / CPU450 / HIO115 • alias OMNI-PLC2 compatível, não confirmado");
+        page.Controls.Add(diagnostics);
         return page;
+    }
+
+    private static void AddDiagnosticRow(
+        TableLayoutPanel diagnostics,
+        int row,
+        string captionText,
+        string valueText)
+    {
+        diagnostics.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        Label caption = PlatformUi.Label(captionText, heading: true);
+        Label value = PlatformUi.Label(valueText);
+        caption.Dock = DockStyle.Fill;
+        value.Dock = DockStyle.Fill;
+        value.AutoSize = true;
+        value.MaximumSize = new Size(760, 0);
+        value.AccessibleName = captionText;
+        diagnostics.Controls.Add(caption, 0, row);
+        diagnostics.Controls.Add(value, 1, row);
     }
 
     private TabPage BuildLogTab()
@@ -644,6 +692,10 @@ internal sealed class IndustrialTesterControl : UserControl
             _purposeStatus,
             "LEITURA • DIAGNÓSTICO • RESULTADOS",
             PlatformStatusTone.Active);
+        PlatformUi.UpdateStatusChip(
+            _offlineSafety,
+            "OFFLINE • RTU EM MEMÓRIA • FÍSICA BLOQUEADA",
+            PlatformStatusTone.Offline);
         _enableOutputs.ForeColor = palette.Warning;
         _ioMap?.ApplyTheme();
         foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
