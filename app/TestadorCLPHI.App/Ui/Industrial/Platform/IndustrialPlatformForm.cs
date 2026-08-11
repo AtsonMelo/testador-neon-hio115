@@ -1190,12 +1190,16 @@ internal static class PlatformUi
             IndustrialSpacing.Xs)
     };
 
-    internal static GroupBox Group(string text) => new()
+    internal static GroupBox Group(string text) => new IndustrialGroupBox
     {
         Text = text,
         ForeColor = Text,
         BackColor = Surface,
-        Padding = new Padding(IndustrialSpacing.Md),
+        Padding = new Padding(
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Xxl,
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Md),
         Margin = new Padding(IndustrialSpacing.Xs)
     };
 
@@ -1235,5 +1239,15 @@ internal static class PlatformUi
     {
         control.BackColor = Field;
         control.ForeColor = Text;
+        control.Font = IndustrialTypography.Body();
+        switch (control)
+        {
+            case TextBox textBox:
+                textBox.BorderStyle = BorderStyle.FixedSingle;
+                break;
+            case NumericUpDown numeric:
+                numeric.BorderStyle = BorderStyle.FixedSingle;
+                break;
+        }
     }
 }

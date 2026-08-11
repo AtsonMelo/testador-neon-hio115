@@ -160,3 +160,61 @@ internal sealed class IndustrialSurfacePanel : Panel
         previous?.Dispose();
     }
 }
+
+internal sealed class IndustrialGroupBox : GroupBox
+{
+    private const int CornerRadius = 6;
+
+    internal IndustrialGroupBox()
+    {
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint
+            | ControlStyles.OptimizedDoubleBuffer
+            | ControlStyles.ResizeRedraw
+            | ControlStyles.UserPaint,
+            true);
+        Font = IndustrialTypography.SectionTitle();
+        Padding = new Padding(
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Xxl,
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Md);
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        e.Graphics.Clear(palette.SurfaceElevated);
+        Rectangle border = ClientRectangle;
+        border.Width = Math.Max(0, border.Width - 1);
+        border.Height = Math.Max(0, border.Height - 1);
+        int radius = Math.Max(1, (int)Math.Round(CornerRadius * DeviceDpi / 96D));
+        SmoothingMode previous = e.Graphics.SmoothingMode;
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(border, radius);
+        using Pen borderPen = new(palette.Border, IndustrialSpacing.BorderWidth);
+        e.Graphics.DrawPath(borderPen, path);
+        e.Graphics.SmoothingMode = previous;
+
+        Rectangle titleBounds = new(
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Xs,
+            Math.Max(0, Width - (IndustrialSpacing.Md * 2)),
+            IndustrialSpacing.Xl);
+        TextRenderer.DrawText(
+            e.Graphics,
+            Text,
+            Font,
+            titleBounds,
+            palette.TextPrimary,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        int dividerY = IndustrialSpacing.Xxl - IndustrialSpacing.Xs;
+        using Pen divider = new(palette.Border, IndustrialSpacing.BorderWidth);
+        e.Graphics.DrawLine(
+            divider,
+            IndustrialSpacing.Md,
+            dividerY,
+            Math.Max(IndustrialSpacing.Md, Width - IndustrialSpacing.Md),
+            dividerY);
+    }
+}

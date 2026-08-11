@@ -429,7 +429,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
     {
         GroupBox editor = PlatformUi.Group("Sinais do processo • edição manual e saídas virtuais");
         editor.Dock = DockStyle.Fill;
-        editor.Padding = new Padding(10, 12, 10, 10);
+        editor.Padding = new Padding(10, IndustrialSpacing.Xxl, 10, 10);
         editor.Controls.Add(_signals);
         return editor;
     }
@@ -448,11 +448,11 @@ internal sealed class IndustrialSimulatorControl : UserControl
                      signal => string.IsNullOrWhiteSpace(signal.Group) ? "Sinais" : signal.Group!,
                      StringComparer.OrdinalIgnoreCase))
         {
-            GroupBox section = PlatformUi.Group(group.Key.ToUpperInvariant());
+            GroupBox section = PlatformUi.Group(group.Key);
             section.Dock = DockStyle.Top;
             section.AutoSize = true;
             section.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            section.Padding = new Padding(8, 12, 8, 8);
+            section.Padding = new Padding(8, IndustrialSpacing.Xxl, 8, 8);
             TableLayoutPanel rows = new()
             {
                 Dock = DockStyle.Top,

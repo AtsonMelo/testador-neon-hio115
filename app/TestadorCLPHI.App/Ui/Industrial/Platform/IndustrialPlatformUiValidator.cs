@@ -95,6 +95,7 @@ internal static class IndustrialPlatformUiValidator
             ("Testador evita scrolls aninhados simultaneos em 1366", TesterAvoidsActiveNestedScrollAtStandardViewport),
             ("faixa restante das tabs acompanha tema dark e light", TesterTabStripRemainderMatchesTheme),
             ("configuracao do Simulador cabe em 1366 sem rolagem propria", SimulatorConfigurationFitsStandardViewport),
+            ("secoes do Simulador usam chrome tematico sem GroupBox classico", SimulatorSectionsUseThemedChrome),
             ("sinais do Simulador usam densidade responsiva de duas e tres colunas", SimulatorSignalLayoutIsResponsive),
             ("metricas do Simulador preservam hierarquia label valor contexto", SimulatorMetricsExposeVisualHierarchy),
             ("acoes primarias preservam alinhamento e texto", PrimaryActionsRemainAligned),
@@ -1741,6 +1742,16 @@ internal static class IndustrialPlatformUiValidator
             using Bitmap bitmap = new(pivot.Width, pivot.Height);
             pivot.DrawToBitmap(bitmap, pivot.ClientRectangle);
         }
+    }
+
+    private static bool SimulatorSectionsUseThemedChrome()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session);
+        GroupBox[] sections = FindAll<GroupBox>(simulator).ToArray();
+        return sections.Length >= 2
+            && sections.All(section => section is IndustrialGroupBox)
+            && sections.All(section => section.Padding.Top >= IndustrialSpacing.Xxl);
     }
 
     private static bool OperatorTextIsConsistent()
