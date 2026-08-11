@@ -14,7 +14,7 @@ internal static class IndustrialSpacing
     internal const int SidebarWidth = 224;
     internal const int SidebarCompactWidth = 56;
     internal const int StatusBarHeight = 36;
-    internal const int InteractiveHeight = 40;
+    internal const int InteractiveHeight = 36;
     internal const int CriticalInteractiveHeight = 44;
     internal const int FieldHeight = 36;
     internal const int TabHeight = 38;

@@ -355,6 +355,11 @@ internal sealed class IndustrialPlatformForm : Form
         foreach (Button button in new[] { _homeButton, _testerButton, _simulatorButton })
         {
             button.Font = IndustrialTypography.Navigation();
+            PlatformUi.SetButtonTone(button, PlatformButtonTone.Navigation);
+            if (button is IndustrialButton navigation)
+            {
+                navigation.IsNavigation = true;
+            }
             button.Width = contentWidth;
             button.Height = IndustrialSpacing.CriticalInteractiveHeight;
             button.Margin = new Padding(0, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
@@ -992,7 +997,8 @@ internal enum PlatformButtonTone
     Primary,
     Secondary,
     Ghost,
-    Danger
+    Danger,
+    Navigation
 }
 
 internal static class PlatformUi
@@ -1053,18 +1059,27 @@ internal static class PlatformUi
             ? assigned
             : primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary;
         button.FlatStyle = FlatStyle.Flat;
-        button.TextAlign = ContentAlignment.MiddleCenter;
-        button.Padding = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
+        button.TextAlign = tone == PlatformButtonTone.Navigation
+            ? ContentAlignment.MiddleLeft
+            : ContentAlignment.MiddleCenter;
+        button.Padding = tone == PlatformButtonTone.Navigation
+            ? new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Sm, 0)
+            : new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
         button.UseCompatibleTextRendering = false;
         button.UseVisualStyleBackColor = false;
         button.AutoEllipsis = true;
         button.MinimumSize = new Size(0, IndustrialSpacing.InteractiveHeight);
+        if (button is IndustrialButton industrialButton)
+        {
+            industrialButton.IsSelected = selected;
+        }
         button.ForeColor = selected
             ? palette.SelectedText
             : tone switch
             {
                 PlatformButtonTone.Primary => palette.AccentText,
                 PlatformButtonTone.Danger => palette.Danger,
+                PlatformButtonTone.Navigation => palette.TextPrimary,
                 _ => palette.TextPrimary
             };
         button.BackColor = selected
@@ -1074,27 +1089,33 @@ internal static class PlatformUi
                 PlatformButtonTone.Primary => palette.Accent,
                 PlatformButtonTone.Ghost => palette.Surface,
                 PlatformButtonTone.Danger => palette.DangerSurface,
+                PlatformButtonTone.Navigation => palette.Surface,
                 _ => palette.SurfaceInteractive
             };
-        button.FlatAppearance.BorderSize = IndustrialSpacing.BorderWidth;
+        button.FlatAppearance.BorderSize = tone is PlatformButtonTone.Navigation or PlatformButtonTone.Ghost
+            ? 0
+            : IndustrialSpacing.BorderWidth;
         button.FlatAppearance.BorderColor = selected
             ? palette.Accent
             : tone switch
             {
                 PlatformButtonTone.Primary => palette.AccentHover,
                 PlatformButtonTone.Danger => palette.Danger,
-                _ => palette.BorderStrong
+                PlatformButtonTone.Navigation => palette.Surface,
+                _ => palette.Border
             };
         button.FlatAppearance.MouseOverBackColor = tone switch
         {
             PlatformButtonTone.Primary => palette.AccentHover,
             PlatformButtonTone.Danger => palette.DangerSurface,
+            PlatformButtonTone.Navigation => palette.SurfaceInteractive,
             _ => palette.SurfaceElevated
         };
         button.FlatAppearance.MouseDownBackColor = tone switch
         {
             PlatformButtonTone.Primary => palette.AccentPressed,
             PlatformButtonTone.Danger => palette.DangerSurface,
+            PlatformButtonTone.Navigation => palette.SelectedSurface,
             _ => palette.Surface
         };
     }

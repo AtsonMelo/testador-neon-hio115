@@ -1,4 +1,5 @@
 using System.Drawing.Drawing2D;
+using System.ComponentModel;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -7,6 +8,28 @@ internal sealed class IndustrialButton : Button
 {
     private const int CornerRadius = 6;
     private Region? _ownedRegion;
+    private bool _isSelected;
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal bool IsNavigation { get; set; }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value)
+            {
+                return;
+            }
+
+            _isSelected = value;
+            Invalidate();
+        }
+    }
 
     protected override void OnHandleCreated(EventArgs e)
     {
@@ -18,6 +41,25 @@ internal sealed class IndustrialButton : Button
     {
         base.OnResize(e);
         UpdateRoundedRegion();
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+        if (!IsNavigation || !IsSelected)
+        {
+            return;
+        }
+
+        int indicatorWidth = Math.Max(2, (int)Math.Round(3D * DeviceDpi / 96D));
+        int inset = Math.Max(3, (int)Math.Round(6D * DeviceDpi / 96D));
+        Rectangle indicator = new(
+            0,
+            inset,
+            indicatorWidth,
+            Math.Max(1, ClientSize.Height - (inset * 2)));
+        using SolidBrush brush = new(IndustrialTheme.Palette.Accent);
+        e.Graphics.FillRectangle(brush, indicator);
     }
 
     protected override void Dispose(bool disposing)

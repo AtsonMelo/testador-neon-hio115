@@ -76,6 +76,7 @@ internal static class IndustrialPlatformUiValidator
             ("cards da Home usam altura orientada a conteudo e acoes alinhadas", HomeCardsUseContentDrivenHeight),
             ("status da Home permanece informativo e nao parece botao", HomeStatusIsNotButtonLike),
             ("sidebar separa navegacao de estado fisico nao interativo", SidebarSeparatesNavigationFromPhysicalStatus),
+            ("sidebar usa selecao plana com indicador de acento", NavigationUsesTaskManagerSelectionContract),
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
@@ -1149,6 +1150,24 @@ internal static class IndustrialPlatformUiValidator
             && cards.Length >= 2
             && cards.All(card => card.Region is not null)
             && rtu?.Region is not null;
+    }
+
+    private static bool NavigationUsesTaskManagerSelectionContract()
+    {
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        return form.TesterModeButton is IndustrialButton tester
+            && form.HomeModeButton is IndustrialButton home
+            && form.SimulatorModeButton is IndustrialButton simulator
+            && tester.IsNavigation
+            && home.IsNavigation
+            && simulator.IsNavigation
+            && tester.IsSelected
+            && !home.IsSelected
+            && !simulator.IsSelected
+            && tester.FlatAppearance.BorderSize == 0
+            && tester.TextAlign == ContentAlignment.MiddleLeft
+            && tester.BackColor == IndustrialTheme.Palette.SelectedSurface;
     }
 
     private static bool UnknownInputStateIsNeutral()
