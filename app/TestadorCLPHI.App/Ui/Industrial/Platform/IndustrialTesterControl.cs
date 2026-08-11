@@ -2,6 +2,7 @@ using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Industrial.Platform.Safety;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -204,6 +205,8 @@ internal sealed class IndustrialTesterControl : UserControl
         Button identify = PlatformUi.Button("IDENTIFICAR", "identifyButton");
         Button discover = PlatformUi.Button("PROCURAR ENDEREÇO", "discoverButton");
         Button cancel = PlatformUi.Button("CANCELAR", "cancelButton");
+        PlatformUi.SetButtonTone(refreshPorts, PlatformButtonTone.Ghost);
+        PlatformUi.SetButtonTone(cancel, PlatformButtonTone.Danger);
         foreach (Button button in new[] { refreshPorts, validate, identify, discover, cancel })
         {
             button.Width = 148;
@@ -593,7 +596,7 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private static ComboBox Combo(params string[] items)
     {
-        ComboBox combo = new() { DropDownStyle = ComboBoxStyle.DropDown, Height = 30 };
+        IndustrialComboBox combo = new() { DropDownStyle = ComboBoxStyle.DropDown, Height = 32 };
         combo.Items.AddRange(items);
         if (items.Length > 0)
         {
@@ -733,6 +736,9 @@ internal sealed class IndustrialTesterControl : UserControl
                 : child.ForeColor;
             switch (child)
             {
+                case IndustrialComboBox combo:
+                    combo.ApplyTheme();
+                    break;
                 case TabPage:
                     child.BackColor = palette.Background;
                     break;

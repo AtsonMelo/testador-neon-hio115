@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -14,7 +15,7 @@ internal sealed class IndustrialIoMapControl : UserControl
         AccessibleName = "Buscar no mapa de I/O",
         Dock = DockStyle.Fill
     };
-    private readonly ComboBox _typeFilter = new()
+    private readonly IndustrialComboBox _typeFilter = new()
     {
         Name = "ioMappingTypeFilter",
         DropDownStyle = ComboBoxStyle.DropDownList,
@@ -235,6 +236,7 @@ internal sealed class IndustrialIoMapControl : UserControl
         _search.ForeColor = palette.TextPrimary;
         _typeFilter.BackColor = palette.Field;
         _typeFilter.ForeColor = palette.TextPrimary;
+        _typeFilter.ApplyTheme();
         _grid.BackgroundColor = palette.Field;
         _grid.GridColor = palette.Border;
         _grid.DefaultCellStyle.BackColor = palette.Field;

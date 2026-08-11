@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -104,7 +105,7 @@ internal sealed class IndustrialPlatformForm : Form
         "OFFLINE",
         PlatformStatusTone.Offline,
         "sidebarOfflineStatus");
-    private readonly ComboBox _themeSelector = new()
+    private readonly IndustrialComboBox _themeSelector = new()
     {
         Name = "industrialThemeSelector",
         Dock = DockStyle.Fill,
@@ -613,6 +614,7 @@ internal sealed class IndustrialPlatformForm : Form
         _equipmentStatus.ForeColor = palette.TextSecondary;
         _themeSelector.BackColor = palette.Field;
         _themeSelector.ForeColor = palette.TextPrimary;
+        _themeSelector.ApplyTheme();
         foreach (Label footer in new[]
                  {
                      _profileFooter,
@@ -803,10 +805,12 @@ internal sealed class IndustrialPlatformForm : Form
                 Size.Empty,
                 TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Height;
         int identityHeight = titleHeight + contextHeight;
+        int themeHeight = Math.Max(_themeSelector.Height, _themeSelector.PreferredHeight)
+            + _themeSelector.Margin.Vertical;
         int primaryHeight = Math.Max(
             identityHeight,
             Math.Max(
-                _themeSelector.PreferredHeight,
+                themeHeight,
                 compact ? 0 : _equipmentStatus.GetPreferredSize(Size.Empty).Height));
         int statusHeight = CriticalHeaderStatuses
             .Select(status => Math.Max(status.GetPreferredSize(Size.Empty).Height, status.MinimumSize.Height))
@@ -859,6 +863,14 @@ internal enum PlatformStatusTone
     Offline
 }
 
+internal enum PlatformButtonTone
+{
+    Primary,
+    Secondary,
+    Ghost,
+    Danger
+}
+
 internal static class PlatformUi
 {
     internal static Color Background => IndustrialTheme.Palette.Background;
@@ -887,7 +899,8 @@ internal static class PlatformUi
             Font = IndustrialTypography.BodyStrong(),
             Cursor = Cursors.Hand,
             AccessibleName = text,
-            TabStop = true
+            TabStop = true,
+            Tag = primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary
         };
         button.FlatAppearance.BorderSize = IndustrialSpacing.BorderWidth;
         button.FlatAppearance.BorderColor = primary
@@ -905,21 +918,49 @@ internal static class PlatformUi
     internal static void StyleButton(Button button, bool primary = false, bool selected = false)
     {
         IndustrialPalette palette = IndustrialTheme.Palette;
+        PlatformButtonTone tone = button.Tag is PlatformButtonTone assigned
+            ? assigned
+            : primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary;
         button.FlatStyle = FlatStyle.Flat;
-        button.ForeColor = selected ? palette.SelectedText : palette.TextPrimary;
+        button.ForeColor = selected
+            ? palette.SelectedText
+            : tone == PlatformButtonTone.Danger ? palette.Danger : palette.TextPrimary;
         button.BackColor = selected
             ? palette.SelectedSurface
-            : primary ? palette.Accent : palette.SurfaceInteractive;
+            : tone switch
+            {
+                PlatformButtonTone.Primary => palette.Accent,
+                PlatformButtonTone.Ghost => palette.Surface,
+                PlatformButtonTone.Danger => palette.DangerSurface,
+                _ => palette.SurfaceInteractive
+            };
         button.FlatAppearance.BorderSize = IndustrialSpacing.BorderWidth;
         button.FlatAppearance.BorderColor = selected
             ? palette.Accent
-            : primary ? palette.AccentHover : palette.BorderStrong;
-        button.FlatAppearance.MouseOverBackColor = primary
-            ? palette.AccentHover
-            : palette.SurfaceElevated;
-        button.FlatAppearance.MouseDownBackColor = primary
-            ? palette.AccentPressed
-            : palette.Surface;
+            : tone switch
+            {
+                PlatformButtonTone.Primary => palette.AccentHover,
+                PlatformButtonTone.Danger => palette.Danger,
+                _ => palette.BorderStrong
+            };
+        button.FlatAppearance.MouseOverBackColor = tone switch
+        {
+            PlatformButtonTone.Primary => palette.AccentHover,
+            PlatformButtonTone.Danger => palette.DangerSurface,
+            _ => palette.SurfaceElevated
+        };
+        button.FlatAppearance.MouseDownBackColor = tone switch
+        {
+            PlatformButtonTone.Primary => palette.AccentPressed,
+            PlatformButtonTone.Danger => palette.DangerSurface,
+            _ => palette.Surface
+        };
+    }
+
+    internal static void SetButtonTone(Button button, PlatformButtonTone tone)
+    {
+        button.Tag = tone;
+        StyleButton(button);
     }
 
     internal static Label StatusChip(
@@ -937,10 +978,12 @@ internal static class PlatformUi
                 IndustrialSpacing.Sm,
                 IndustrialSpacing.Xs),
             Margin = new Padding(IndustrialSpacing.Xs),
-            BorderStyle = BorderStyle.FixedSingle,
+            BorderStyle = BorderStyle.None,
             Font = IndustrialTypography.CaptionStrong(),
             TextAlign = ContentAlignment.MiddleCenter,
-            AccessibleName = text
+            AccessibleName = text,
+            AccessibleRole = AccessibleRole.StaticText,
+            TabStop = false
         };
         UpdateStatusChip(label, text, tone);
         return label;
@@ -949,7 +992,9 @@ internal static class PlatformUi
     internal static void UpdateStatusChip(Label label, string text, PlatformStatusTone tone)
     {
         (string symbol, Color background, Color foreground) = StatusAppearance(tone);
-        label.Text = $"{symbol} {text}";
+        label.Text = text.StartsWith(symbol, StringComparison.OrdinalIgnoreCase)
+            ? text
+            : $"{symbol}  {text}";
         label.BackColor = background;
         label.ForeColor = foreground;
         label.AccessibleName = text;

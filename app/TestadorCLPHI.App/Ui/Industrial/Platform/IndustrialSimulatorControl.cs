@@ -1,6 +1,7 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Process;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -8,14 +9,14 @@ namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 internal sealed class IndustrialSimulatorControl : UserControl
 {
     private readonly IndustrialPlatformSession _session;
-    private readonly ComboBox _profiles = new()
+    private readonly IndustrialComboBox _profiles = new()
     {
         DropDownStyle = ComboBoxStyle.DropDownList,
         Width = 220,
         AccessibleName = "Perfil de simulação",
         AccessibleDescription = "Seleciona o processo simulado sem habilitar transporte físico"
     };
-    private readonly ComboBox _scenarios = new()
+    private readonly IndustrialComboBox _scenarios = new()
     {
         DropDownStyle = ComboBoxStyle.DropDownList,
         Width = 220,
@@ -155,6 +156,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
         sidebar.Controls.Add(_scenarios);
         Button apply = PlatformUi.Button("Aplicar cenário", "applyScenarioButton", primary: true);
         Button reset = PlatformUi.Button("Resetar", "resetScenarioButton");
+        PlatformUi.SetButtonTone(reset, PlatformButtonTone.Ghost);
         apply.Width = reset.Width = 220;
         apply.Margin = new Padding(3, 12, 3, 3);
         apply.Click += (_, _) => ApplyScenario();
@@ -672,6 +674,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
             switch (child)
             {
+                case IndustrialComboBox combo:
+                    combo.ApplyTheme();
+                    break;
                 case TextBox or ComboBox or NumericUpDown:
                     child.BackColor = palette.Field;
                     child.ForeColor = palette.TextPrimary;
