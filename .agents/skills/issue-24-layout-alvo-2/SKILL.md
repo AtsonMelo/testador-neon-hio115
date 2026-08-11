@@ -1,17 +1,19 @@
 ---
 name: issue-24-layout-alvo-2
-description: Use for Issue #24 work where the approved Layout Alvo 2 is the visual reference and the integration should remain gradual, componentized, and non-disruptive.
+description: Use only when reviewing the historical Issue #24 Layout Alvo 2 work; current production UI guidance lives in docs/design/ui-industrial-2.md.
 ---
 
 # Issue 24: Layout Alvo 2
 
-Use this skill only for Issue #24 work.
+Use this skill only to understand or review the historical Issue #24 work.
 
 ## Reference Rules
 
-- Treat the approved visual state of Layout Alvo 2 as the primary reference.
-- Integrate the layout gradually through separated components.
-- Preserve `IndustrialMainContentControl` and `IndustrialManualIoPanelControl` as working references and components.
+- Treat the archived Layout Alvo 2 documents as historical context, not as the
+  current production reference.
+- Use `docs/design/ui-industrial-2.md` for the current production UI.
+- Do not restore controls removed by Project Cleanup 1 unless a future task
+  proves a new functional requirement independently.
 
 ## Integration Rules
 
