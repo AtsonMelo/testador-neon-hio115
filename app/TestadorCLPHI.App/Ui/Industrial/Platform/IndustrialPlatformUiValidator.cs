@@ -39,6 +39,7 @@ internal static class IndustrialPlatformUiValidator
             ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
             ("ciclo de vida do launcher industrial permanece offline", IndustrialLauncherLifecycleStaysOffline),
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
+            ("Testador UI2 preserva todas as acoes funcionais", TesterFeatureParityIsPreserved),
             ("modo Simulador carrega sob demanda", SimulatorLoadsLazily),
             ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
             ("Mapa de I/O e aliases acompanham o perfil Poco", WellAliasesAndIoMapAreVisible),
@@ -529,6 +530,37 @@ internal static class IndustrialPlatformUiValidator
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
+    }
+
+    private static bool TesterFeatureParityIsPreserved()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialTesterControl tester = new(session);
+        string[] actions =
+        [
+            "refreshPortsButton",
+            "validateRtuButton",
+            "identifyButton",
+            "discoverButton",
+            "cancelButton",
+            "readInputsButton",
+            "activateDO00Button",
+            "turnOffDO00Button"
+        ];
+        string[] pages =
+        [
+            "Entradas digitais",
+            "Entradas analógicas",
+            "Saídas digitais",
+            "Mapa de I/O",
+            "Diagnóstico",
+            "Log"
+        ];
+        TabControl? tabs = Find<TabControl>(tester);
+        return actions.All(name => tester.Controls.Find(name, searchAllChildren: true).Length == 1)
+            && tabs is not null
+            && pages.All(page => tabs.TabPages.Cast<TabPage>().Any(tab => tab.Text == page))
+            && tester.UsesIncrementalLogUpdates;
     }
 
     private static bool PhysicalCountersAreZero(IndustrialPlatformSession session) =>

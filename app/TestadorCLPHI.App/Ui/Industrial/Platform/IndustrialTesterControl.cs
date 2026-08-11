@@ -2,6 +2,7 @@ using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
@@ -19,33 +20,51 @@ internal sealed class IndustrialTesterControl : UserControl
     private readonly NumericUpDown _startAddress = Number(1, 1, 247);
     private readonly NumericUpDown _endAddress = Number(247, 1, 247);
     private readonly Label _state = PlatformUi.StatusChip(
-        "OFFLINE_READY",
+        "PRONTO OFFLINE",
         PlatformStatusTone.Normal,
         "testerStateStatus");
+    private readonly Label _purposeStatus = PlatformUi.StatusChip(
+        "LEITURA • DIAGNÓSTICO • RESULTADOS",
+        PlatformStatusTone.Active,
+        "testerPurposeStatus");
     private readonly Label _result = PlatformUi.Label("Equipamento ainda nao identificado.");
     private readonly Label _counters = PlatformUi.Label(string.Empty);
-    private readonly Label[] _digitalValues = Enumerable.Range(0, 8).Select(_ => PlatformUi.Label("○ UNKNOWN")).ToArray();
-    private readonly Label[] _analogValues = Enumerable.Range(0, 3).Select(_ => PlatformUi.Label("○ UNKNOWN")).ToArray();
+    private readonly Label[] _digitalValues = Enumerable.Range(0, 8).Select(_ => PlatformUi.Label("- DESCONHECIDO")).ToArray();
+    private readonly Label[] _analogValues = Enumerable.Range(0, 3).Select(_ => PlatformUi.Label("- DESCONHECIDO")).ToArray();
     private readonly Label[] _outputValues = Enumerable.Range(0, 4).Select(_ => PlatformUi.Label("○ OFF")).ToArray();
     private readonly CheckBox _enableOutputs = new() { Text = "MODO SUPERVISIONADO SIMULADO", AutoSize = true };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
     private readonly TextBox _log = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, Dock = DockStyle.Fill };
     private readonly ToolTip _toolTip = new();
+    private readonly TabControl _tabs = new()
+    {
+        Dock = DockStyle.Fill,
+        Name = "testerTabs",
+        AccessibleName = "Áreas do Testador",
+        DrawMode = TabDrawMode.OwnerDrawFixed,
+        SizeMode = TabSizeMode.Fixed,
+        ItemSize = new Size(150, 38)
+    };
     private IndustrialIoMapControl? _ioMap;
     private CancellationTokenSource? _operation;
     private bool _identified;
+    private string _renderedLog = string.Empty;
+    private string _stateText = "PRONTO OFFLINE";
+    private PlatformStatusTone _stateTone = PlatformStatusTone.Normal;
 
     internal IndustrialTesterControl(IndustrialPlatformSession session)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         Name = "industrialTesterControl";
-        AccessibleName = "Testador técnico do CLP simulado";
-        BackColor = PlatformUi.Background;
-        ForeColor = PlatformUi.Text;
+        AccessibleName = "Testador industrial offline";
+        AccessibleDescription = "Leitura, diagnóstico e resultados usando somente transporte em memória";
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScroll = true;
         Controls.Add(BuildLayout());
+        _tabs.DrawItem += DrawTab;
+        _tabs.Font = IndustrialTypography.BodyStrong();
         _session.Changed += SessionChanged;
+        ApplyTheme();
         RefreshStatus();
     }
 
@@ -54,6 +73,7 @@ internal sealed class IndustrialTesterControl : UserControl
     internal bool HasIoMappingTab => Controls.Find("ioMappingTab", searchAllChildren: true).Length == 1;
     internal int IoMappingRowCount => _ioMap?.BindingRowCount ?? 0;
     internal bool IoMappingDeclaresSimulationEvidence => _ioMap?.DeclaresSimulationEvidence == true;
+    internal bool UsesIncrementalLogUpdates => true;
 
     internal bool ShowsProcessAlias(string registerAlias, string expectedLabel)
     {
@@ -84,49 +104,84 @@ internal sealed class IndustrialTesterControl : UserControl
             ColumnCount = 1,
             BackColor = PlatformUi.Background
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 202F));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74F));
+        root.RowCount = 4;
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 168F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        root.Controls.Add(BuildConfiguration(), 0, 0);
-        root.Controls.Add(BuildStatus(), 0, 1);
-        root.Controls.Add(BuildTabs(), 0, 2);
+        root.Controls.Add(BuildHero(), 0, 0);
+        root.Controls.Add(BuildConfiguration(), 0, 1);
+        root.Controls.Add(BuildStatus(), 0, 2);
+        root.Controls.Add(BuildTabs(), 0, 3);
         return root;
+    }
+
+    private Control BuildHero()
+    {
+        TableLayoutPanel hero = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(IndustrialSpacing.Md, IndustrialSpacing.Xs, IndustrialSpacing.Md, IndustrialSpacing.Xs),
+            Name = "testerHero"
+        };
+        hero.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        hero.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280F));
+        Label title = new()
+        {
+            Text = "TESTADOR",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = IndustrialTypography.Title(),
+            AccessibleName = "Modo Testador"
+        };
+        _purposeStatus.Anchor = AnchorStyles.None;
+        hero.Controls.Add(title, 0, 0);
+        hero.Controls.Add(_purposeStatus, 1, 0);
+        return hero;
     }
 
     private Control BuildConfiguration()
     {
-        GroupBox group = PlatformUi.Group("Comunicação RTU • sessão em memória");
+        GroupBox group = PlatformUi.Group("PARÂMETROS RTU • REFERÊNCIA OFFLINE");
         group.Dock = DockStyle.Fill;
-        TableLayoutPanel grid = new() { Dock = DockStyle.Fill, ColumnCount = 10, RowCount = 4 };
-        for (int column = 0; column < 10; column++)
+        group.Padding = new Padding(IndustrialSpacing.Sm);
+        TableLayoutPanel grid = new() { Dock = DockStyle.Fill, ColumnCount = 5, RowCount = 4 };
+        for (int column = 0; column < 5; column++)
         {
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10F));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
         }
+        grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
 
-        AddField(grid, "COM", _port, 0);
-        AddField(grid, "Camada", _physicalLayer, 1);
+        AddField(grid, "COM (informativa)", _port, 0);
+        AddField(grid, "Camada física", _physicalLayer, 1);
         AddField(grid, "Baud", _baud, 2);
         AddField(grid, "Data bits", _dataBits, 3);
         AddField(grid, "Paridade", _parity, 4);
         AddField(grid, "Stop bits", _stopBits, 5);
-        AddField(grid, "Timeout ms", _timeout, 6);
-        AddField(grid, "Intervalo ms", _interval, 7);
-        AddField(grid, "Inicial", _startAddress, 8);
-        AddField(grid, "Final", _endAddress, 9);
+        AddField(grid, "Timeout (ms)", _timeout, 6);
+        AddField(grid, "Intervalo (ms)", _interval, 7);
+        AddField(grid, "Endereço inicial", _startAddress, 8);
+        AddField(grid, "Endereço final", _endAddress, 9);
 
-        FlowLayoutPanel actions = new() { Dock = DockStyle.Fill, AutoSize = false, WrapContents = false };
-        Button refreshPorts = PlatformUi.Button("Atualizar portas", "refreshPortsButton");
+        FlowLayoutPanel actions = new() { Dock = DockStyle.Fill, AutoSize = false, WrapContents = true };
+        Button refreshPorts = PlatformUi.Button("PORTAS BLOQUEADAS", "refreshPortsButton");
         refreshPorts.Enabled = false;
         _toolTip.SetToolTip(refreshPorts, "Indisponível no host estritamente offline.");
         _toolTip.SetToolTip(_port, "Valor informativo do perfil. Nenhuma porta é enumerada ou aberta.");
-        Button validate = PlatformUi.Button("Validar", "validateRtuButton", primary: true);
-        Button identify = PlatformUi.Button("Identificar", "identifyButton");
-        Button discover = PlatformUi.Button("Procurar endereco", "discoverButton");
-        Button cancel = PlatformUi.Button("Cancelar", "cancelButton");
+        Button validate = PlatformUi.Button("VALIDAR", "validateRtuButton", primary: true);
+        Button identify = PlatformUi.Button("IDENTIFICAR", "identifyButton");
+        Button discover = PlatformUi.Button("PROCURAR ENDEREÇO", "discoverButton");
+        Button cancel = PlatformUi.Button("CANCELAR", "cancelButton");
         foreach (Button button in new[] { refreshPorts, validate, identify, discover, cancel })
         {
-            button.Width = 150;
-            button.Margin = new Padding(3, 7, 3, 3);
+            button.Width = 148;
+            button.Height = 34;
+            button.Margin = new Padding(3, 1, 3, 1);
             actions.Controls.Add(button);
         }
 
@@ -135,11 +190,12 @@ internal sealed class IndustrialTesterControl : UserControl
         discover.Click += async (_, _) => await DiscoverAsync();
         cancel.Click += (_, _) => _operation?.Cancel();
         grid.Controls.Add(actions, 0, 2);
-        grid.SetColumnSpan(actions, 10);
-        Label safety = PlatformUi.Label("■ TRANSPORTE: IN_MEMORY_RTU   |   COM FÍSICA: OFF   |   AUTORUN: OFF");
-        safety.ForeColor = PlatformUi.Success;
+        grid.SetColumnSpan(actions, 5);
+        Label safety = PlatformUi.Label("■ OFFLINE • IN_MEMORY_RTU • COM FÍSICA BLOQUEADA • AUTORUN OFF");
+        safety.ForeColor = IndustrialTheme.Palette.Warning;
+        safety.AccessibleDescription = "Comunicação física bloqueada; transporte somente em memória";
         grid.Controls.Add(safety, 0, 3);
-        grid.SetColumnSpan(safety, 10);
+        grid.SetColumnSpan(safety, 5);
         group.Controls.Add(grid);
         return group;
     }
@@ -151,14 +207,13 @@ internal sealed class IndustrialTesterControl : UserControl
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             Padding = new Padding(10, 8, 10, 8),
-            BackColor = PlatformUi.Surface
+            BackColor = PlatformUi.Surface,
+            Name = "testerStatus"
         };
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190F));
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360F));
-        _state.Font = new Font("Segoe UI Semibold", 10F);
-        _state.ForeColor = PlatformUi.Success;
-        _state.BackColor = PlatformUi.Field;
+        _state.Font = IndustrialTypography.BodyStrong();
         _state.Dock = DockStyle.Fill;
         _result.Dock = DockStyle.Fill;
         _counters.Dock = DockStyle.Fill;
@@ -170,14 +225,13 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private Control BuildTabs()
     {
-        TabControl tabs = new() { Dock = DockStyle.Fill, Name = "testerTabs", AccessibleName = "Áreas do Testador" };
-        tabs.TabPages.Add(BuildDigitalInputsTab());
-        tabs.TabPages.Add(BuildAnalogInputsTab());
-        tabs.TabPages.Add(BuildOutputsTab());
-        tabs.TabPages.Add(BuildIoMappingTab());
-        tabs.TabPages.Add(BuildDiagnosticsTab());
-        tabs.TabPages.Add(BuildLogTab());
-        return tabs;
+        _tabs.TabPages.Add(BuildDigitalInputsTab());
+        _tabs.TabPages.Add(BuildAnalogInputsTab());
+        _tabs.TabPages.Add(BuildOutputsTab());
+        _tabs.TabPages.Add(BuildIoMappingTab());
+        _tabs.TabPages.Add(BuildDiagnosticsTab());
+        _tabs.TabPages.Add(BuildLogTab());
+        return _tabs;
     }
 
     private TabPage BuildDigitalInputsTab()
@@ -224,7 +278,8 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         TabPage page = Page("Saídas digitais");
         FlowLayoutPanel list = SignalList();
-        _enableOutputs.ForeColor = PlatformUi.Warning;
+        _enableOutputs.ForeColor = IndustrialTheme.Palette.Warning;
+        _enableOutputs.AccessibleDescription = "Autoriza somente saída simulada momentânea; hardware permanece bloqueado";
         _enableOutputs.Margin = new Padding(8, 10, 16, 10);
         list.Controls.Add(_enableOutputs);
         list.Controls.Add(PlatformUi.Label("Duracao ms"));
@@ -283,7 +338,7 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         TabPage page = Page("Log");
         PlatformUi.StyleField(_log);
-        _log.Font = new Font("Consolas", 9F);
+        _log.Font = IndustrialTypography.Technical();
         page.Controls.Add(_log);
         return page;
     }
@@ -301,9 +356,9 @@ internal sealed class IndustrialTesterControl : UserControl
             && _startAddress.Value >= 1
             && _endAddress.Value <= 247
             && _startAddress.Value <= _endAddress.Value;
-        _state.Text = valid ? "✓ OFFLINE_READY" : "× DEVELOPMENT";
-        _state.ForeColor = valid ? PlatformUi.Success : PlatformUi.Danger;
-        _state.BackColor = PlatformUi.Field;
+        SetState(
+            valid ? "PRONTO OFFLINE" : "CONFIGURAÇÃO INVÁLIDA",
+            valid ? PlatformStatusTone.Normal : PlatformStatusTone.Fault);
         _result.Text = valid
             ? "Configuração válida para transporte em memória. Comunicação real permanece OFF."
             : "Configuração RTU inválida.";
@@ -410,8 +465,9 @@ internal sealed class IndustrialTesterControl : UserControl
         }
         catch (Exception ex)
         {
-            _state.Text = "× DEVELOPMENT";
-            _state.ForeColor = PlatformUi.Danger;
+            SetState(
+                "OPERAÇÃO BLOQUEADA",
+                PlatformStatusTone.Fault);
             _result.Text = ex.Message;
         }
         finally
@@ -422,10 +478,13 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private void ShowIdentification(RtuIdentificationResult result)
     {
-        _state.Text = result.State == RtuIdentificationState.Identified
-            ? "✓ SIMULATION_READY"
-            : "! BENCH_PREP_REQUIRED";
-        _state.ForeColor = result.State == RtuIdentificationState.Identified ? PlatformUi.Success : PlatformUi.Warning;
+        SetState(
+            result.State == RtuIdentificationState.Identified
+                ? "SIMULAÇÃO PRONTA"
+                : "PREPARAÇÃO DE BANCADA NECESSÁRIA",
+            result.State == RtuIdentificationState.Identified
+                ? PlatformStatusTone.Normal
+                : PlatformStatusTone.Attention);
         _result.Text = $"Endereco {result.Address} | {result.State} | ID {result.ProgramId?.ToString() ?? "-"} | "
             + $"CRC {result.ProgramCrc?.ToString() ?? "-"} | F21 {result.GeneralFailureStatus?.ToString() ?? "-"}";
     }
@@ -445,17 +504,31 @@ internal sealed class IndustrialTesterControl : UserControl
         _counters.Text = $"SIM C/R/W/CMD: {_session.Counters.SimulatedConnections}/"
             + $"{_session.Counters.SimulatedReads}/{_session.Counters.SimulatedWrites}/{_session.Counters.SimulatedCommands}"
             + "   |   FISICO: 0/0/0/0";
-        _log.Lines = _session.FormatOperationLog().ToArray();
+        UpdateLogIncrementally(_session.FormatOperationLog());
     }
 
-    private static void AddField(TableLayoutPanel grid, string label, Control field, int column)
+    private static void AddField(TableLayoutPanel grid, string label, Control field, int index)
     {
-        grid.Controls.Add(PlatformUi.Label(label), column, 0);
+        TableLayoutPanel fieldContainer = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(IndustrialSpacing.Xs)
+        };
+        fieldContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
+        fieldContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        Label caption = PlatformUi.Label(label);
+        caption.Dock = DockStyle.Fill;
+        caption.AutoEllipsis = true;
+        caption.Margin = Padding.Empty;
+        fieldContainer.Controls.Add(caption, 0, 0);
         field.Dock = DockStyle.Fill;
-        field.Margin = new Padding(3);
+        field.Margin = Padding.Empty;
         field.AccessibleName = label;
         PlatformUi.StyleField(field);
-        grid.Controls.Add(field, column, 1);
+        fieldContainer.Controls.Add(field, 0, 1);
+        grid.Controls.Add(fieldContainer, index % 5, index / 5);
     }
 
     private static ComboBox Combo(params string[] items)
@@ -543,6 +616,8 @@ internal sealed class IndustrialTesterControl : UserControl
         process.Width = 270;
         process.Height = 34;
         process.AutoSize = false;
+        process.AutoEllipsis = true;
+        process.AccessibleDescription = processAlias;
         process.TextAlign = ContentAlignment.MiddleLeft;
         value.Width = 150;
         value.Height = 34;
@@ -553,5 +628,116 @@ internal sealed class IndustrialTesterControl : UserControl
         row.Controls.Add(process);
         row.Controls.Add(value);
         return row;
+    }
+
+    internal void ApplyTheme()
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        BackColor = palette.Background;
+        ForeColor = palette.TextPrimary;
+        ApplyThemeToChildren(this);
+        SetState(_stateText, _stateTone);
+        PlatformUi.UpdateStatusChip(
+            _purposeStatus,
+            "LEITURA • DIAGNÓSTICO • RESULTADOS",
+            PlatformStatusTone.Active);
+        _enableOutputs.ForeColor = palette.Warning;
+        foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
+        {
+            value.ForeColor = value.Text.Contains("ON", StringComparison.Ordinal)
+                ? palette.Success
+                : palette.TextSecondary;
+        }
+
+        _tabs.Invalidate();
+    }
+
+    private void ApplyThemeToChildren(Control root)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        foreach (Control child in root.Controls)
+        {
+            child.ForeColor = child is Label label && label.BorderStyle != BorderStyle.FixedSingle
+                ? palette.TextSecondary
+                : child.ForeColor;
+            switch (child)
+            {
+                case TabPage:
+                    child.BackColor = palette.Background;
+                    break;
+                case FlowLayoutPanel flow:
+                    flow.BackColor = Equals(flow.Tag, "signal-row")
+                        ? palette.SurfaceElevated
+                        : palette.Background;
+                    break;
+                case GroupBox:
+                    child.BackColor = palette.SurfaceElevated;
+                    child.ForeColor = palette.TextPrimary;
+                    break;
+                case TextBox or ComboBox or NumericUpDown:
+                    child.BackColor = palette.Field;
+                    child.ForeColor = palette.TextPrimary;
+                    break;
+                case Button button:
+                    PlatformUi.StyleButton(button, primary: IsPrimaryAction(button));
+                    break;
+                case TableLayoutPanel panel:
+                    panel.BackColor = panel.Name is "testerHero" or "testerStatus"
+                        ? palette.Surface
+                        : panel.Parent is GroupBox
+                            ? palette.SurfaceElevated
+                            : palette.Background;
+                    break;
+            }
+
+            ApplyThemeToChildren(child);
+        }
+    }
+
+    private static bool IsPrimaryAction(Button button) => button.Name is
+        "validateRtuButton" or "readInputsButton"
+        || button.Name.StartsWith("activate", StringComparison.Ordinal);
+
+    private void DrawTab(object? sender, DrawItemEventArgs e)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        bool selected = e.Index == _tabs.SelectedIndex;
+        using SolidBrush background = new(selected ? palette.SelectedSurface : palette.Surface);
+        e.Graphics.FillRectangle(background, e.Bounds);
+        TextRenderer.DrawText(
+            e.Graphics,
+            _tabs.TabPages[e.Index].Text,
+            _tabs.Font,
+            e.Bounds,
+            selected ? palette.SelectedText : palette.TextSecondary,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+    }
+
+    private void UpdateLogIncrementally(IReadOnlyList<string> lines)
+    {
+        string updated = string.Join(Environment.NewLine, lines);
+        if (string.Equals(updated, _renderedLog, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (_renderedLog.Length > 0
+            && updated.StartsWith(_renderedLog + Environment.NewLine, StringComparison.Ordinal))
+        {
+            _log.AppendText(updated[_renderedLog.Length..]);
+        }
+        else
+        {
+            _log.Text = updated;
+        }
+
+        _renderedLog = updated;
+    }
+
+    private void SetState(string text, PlatformStatusTone tone)
+    {
+        _stateText = text;
+        _stateTone = tone;
+        PlatformUi.UpdateStatusChip(_state, text, tone);
     }
 }

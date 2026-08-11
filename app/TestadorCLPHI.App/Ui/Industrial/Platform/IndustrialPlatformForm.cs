@@ -510,6 +510,7 @@ internal sealed class IndustrialPlatformForm : Form
                     : PlatformStatusTone.Disabled);
         PlatformUi.StyleButton(_testerButton, selected: ReferenceEquals(_activeButton, _testerButton));
         PlatformUi.StyleButton(_simulatorButton, selected: ReferenceEquals(_activeButton, _simulatorButton));
+        _tester?.ApplyTheme();
         RefreshGlobalStatus();
         IndustrialTheme.ApplyTitleBar(this);
         Invalidate(true);
