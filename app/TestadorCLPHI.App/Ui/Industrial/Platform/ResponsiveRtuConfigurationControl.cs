@@ -7,7 +7,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     private const int WideBreakpoint = 860;
     private const int CompactBreakpoint = 520;
     private const int FieldRowHeight = 50;
-    private const int ActionRowHeight = 38;
+    private const int ActionRowHeight = IndustrialSpacing.InteractiveHeight;
     private readonly IReadOnlyList<RtuFieldDefinition> _fields;
     private readonly IReadOnlyList<Button> _actions;
     private readonly Control _status;

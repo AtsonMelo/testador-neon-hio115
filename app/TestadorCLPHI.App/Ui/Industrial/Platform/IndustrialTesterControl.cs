@@ -134,7 +134,7 @@ internal sealed class IndustrialTesterControl : UserControl
         };
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 236F));
-        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _rootLayout.Controls.Add(BuildHero(), 0, 0);
         _rootLayout.Controls.Add(BuildConfiguration(), 0, 1);
@@ -756,7 +756,7 @@ internal sealed class IndustrialTesterControl : UserControl
         int configurationHeight = _rtuConfiguration.PreferredLayoutHeight
             + _rtuConfiguration.Margin.Vertical;
         _rootLayout.RowStyles[1].Height = configurationHeight;
-        int contentHeight = 44 + configurationHeight + 40 + minimumTabHeight;
+        int contentHeight = 44 + configurationHeight + 38 + minimumTabHeight;
         _rootLayout.Height = Math.Max(ClientSize.Height, contentHeight);
         AutoScrollMinSize = new Size(0, contentHeight);
     }

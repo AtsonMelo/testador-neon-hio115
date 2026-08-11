@@ -1014,8 +1014,15 @@ internal static class PlatformUi
             Font = IndustrialTypography.BodyStrong(),
             Cursor = Cursors.Hand,
             AccessibleName = text,
+            AccessibleRole = AccessibleRole.PushButton,
             TabStop = true,
-            Tag = primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary
+            Tag = primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Padding = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0),
+            AutoEllipsis = true,
+            UseCompatibleTextRendering = false,
+            UseVisualStyleBackColor = false,
+            MinimumSize = new Size(0, IndustrialSpacing.InteractiveHeight)
         };
         button.FlatAppearance.BorderSize = IndustrialSpacing.BorderWidth;
         button.FlatAppearance.BorderColor = primary
@@ -1037,6 +1044,12 @@ internal static class PlatformUi
             ? assigned
             : primary ? PlatformButtonTone.Primary : PlatformButtonTone.Secondary;
         button.FlatStyle = FlatStyle.Flat;
+        button.TextAlign = ContentAlignment.MiddleCenter;
+        button.Padding = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
+        button.UseCompatibleTextRendering = false;
+        button.UseVisualStyleBackColor = false;
+        button.AutoEllipsis = true;
+        button.MinimumSize = new Size(0, IndustrialSpacing.InteractiveHeight);
         button.ForeColor = selected
             ? palette.SelectedText
             : tone switch
