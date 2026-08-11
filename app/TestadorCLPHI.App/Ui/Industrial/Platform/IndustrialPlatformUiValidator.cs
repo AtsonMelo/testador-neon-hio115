@@ -34,6 +34,7 @@ internal static class IndustrialPlatformUiValidator
             ("SafetyChain permanece visualmente read-only", SafetyChainIsVisuallyReadOnly),
             ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
             ("papeis tipograficos de producao seguem contrato unico", ProductionTypographyUsesSemanticRoles),
+            ("laboratorio visual instancia contratos sem entrar no startup", DesignSystemPreviewIsQaOnly),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
             ("controles industriais expoem estado e acessibilidade", IndustrialControlsExposeAccessibleStates),
@@ -359,6 +360,19 @@ internal static class IndustrialPlatformUiValidator
             && actual.FontFamily.Name == expected.FontFamily.Name
             && Math.Abs(actual.SizeInPoints - expected.SizeInPoints) < 0.1F
             && actual.Style == expected.Style;
+    }
+
+    private static bool DesignSystemPreviewIsQaOnly()
+    {
+        using IndustrialDesignSystemPreviewForm preview = new();
+        using Form startup = Program.CreateStartupForm(StartupMode.Industrial);
+        IndustrialButton[] buttons = FindAll<IndustrialButton>(preview).ToArray();
+        IndustrialGroupBox[] sections = FindAll<IndustrialGroupBox>(preview).ToArray();
+        return preview.Name == "industrialDesignSystemPreview"
+            && buttons.Length >= 8
+            && buttons.Any(button => button.IsNavigation && button.IsSelected)
+            && sections.Length >= 5
+            && startup is IndustrialPlatformForm;
     }
 
     private static bool ThemeContrastIsAccessible(IndustrialPalette palette) =>

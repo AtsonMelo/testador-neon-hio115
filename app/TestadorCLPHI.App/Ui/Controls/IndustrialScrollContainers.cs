@@ -178,6 +178,7 @@ internal sealed class IndustrialScrollChrome
 {
     internal const int ReservedWidth = 10;
     internal const int ThumbWidth = 4;
+    internal const int HoverThumbWidth = 7;
     private const int MinimumThumbHeight = 28;
     private const int ScrollBarBoth = 3;
     private readonly ScrollableControl _owner;
@@ -235,13 +236,13 @@ internal sealed class IndustrialScrollChrome
         }
 
         Rectangle thumb = GetThumbBounds();
-        if (thumb.Contains(e.Location))
+        if (GetThumbHitBounds(thumb).Contains(e.Location))
         {
             _dragging = true;
             _dragOffset = e.Y - thumb.Top;
             _owner.Capture = true;
         }
-        else if (GetTrackBounds().Contains(e.Location))
+        else if (GetHitTrackBounds().Contains(e.Location))
         {
             SetOffset(CurrentOffset + (e.Y < thumb.Top ? -_owner.ClientSize.Height : _owner.ClientSize.Height));
         }
@@ -250,11 +251,13 @@ internal sealed class IndustrialScrollChrome
     internal void MouseMove(MouseEventArgs e)
     {
         Rectangle track = GetTrackBounds();
-        bool hovering = track.Contains(e.Location);
+        Rectangle hitTrack = GetHitTrackBounds();
+        bool hovering = hitTrack.Contains(e.Location);
         if (_hovering != hovering)
         {
             _hovering = hovering;
-            _owner.Invalidate(track);
+            _owner.Invalidate(hitTrack);
+            track = GetTrackBounds();
         }
 
         if (!_dragging)
@@ -273,7 +276,7 @@ internal sealed class IndustrialScrollChrome
     {
         _dragging = false;
         _owner.Capture = false;
-        _owner.Invalidate(GetTrackBounds());
+        _owner.Invalidate(GetHitTrackBounds());
     }
 
     internal bool KeyDown(Keys key)
@@ -313,11 +316,27 @@ internal sealed class IndustrialScrollChrome
         return Math.Max(_owner.DisplayRectangle.Height, controlsBottom + _owner.Padding.Bottom);
     }
 
-    private Rectangle GetTrackBounds() => new(
-        Math.Max(0, _owner.ClientSize.Width - ReservedWidth + ((ReservedWidth - ThumbWidth) / 2)),
+    private int CurrentThumbWidth => _hovering || _dragging ? HoverThumbWidth : ThumbWidth;
+
+    private Rectangle GetHitTrackBounds() => new(
+        Math.Max(0, _owner.ClientSize.Width - ReservedWidth),
         IndustrialSpacing.Xs,
-        ThumbWidth,
+        ReservedWidth,
         Math.Max(0, _owner.ClientSize.Height - (IndustrialSpacing.Xs * 2)));
+
+    private Rectangle GetTrackBounds() => new(
+        Math.Max(0, _owner.ClientSize.Width - ReservedWidth + ((ReservedWidth - CurrentThumbWidth) / 2)),
+        IndustrialSpacing.Xs,
+        CurrentThumbWidth,
+        Math.Max(0, _owner.ClientSize.Height - (IndustrialSpacing.Xs * 2)));
+
+    private Rectangle GetThumbHitBounds(Rectangle thumb)
+    {
+        Rectangle hitTrack = GetHitTrackBounds();
+        return thumb.IsEmpty
+            ? Rectangle.Empty
+            : new Rectangle(hitTrack.Left, thumb.Top, hitTrack.Width, thumb.Height);
+    }
 
     private Rectangle GetThumbBounds()
     {
@@ -335,7 +354,7 @@ internal sealed class IndustrialScrollChrome
             track.Height);
         int travel = Math.Max(0, track.Height - height);
         int top = track.Top + (int)Math.Round(CurrentOffset / (double)maximum * travel);
-        return new Rectangle(track.Left, top, ThumbWidth, height);
+        return new Rectangle(track.Left, top, track.Width, height);
     }
 
     private void SetOffset(int value)

@@ -17,7 +17,7 @@ internal static class IndustrialSpacing
     internal const int InteractiveHeight = 36;
     internal const int CriticalInteractiveHeight = 44;
     internal const int FieldHeight = 36;
-    internal const int TabHeight = 38;
+    internal const int TabHeight = 36;
     internal const int CardMinimumWidth = 280;
     internal const int BorderWidth = 1;
 }

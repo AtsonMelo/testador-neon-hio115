@@ -12,8 +12,8 @@ internal sealed class IndustrialTabControl : TabControl
     {
         DrawMode = TabDrawMode.OwnerDrawFixed;
         SizeMode = TabSizeMode.Fixed;
-        Font = IndustrialTypography.BodyStrong();
-        ItemSize = new Size(150, IndustrialSpacing.TabHeight);
+        Font = IndustrialTypography.Button();
+        ItemSize = new Size(132, IndustrialSpacing.TabHeight);
         Padding = new Point(IndustrialSpacing.Md, IndustrialSpacing.Xs);
     }
 
@@ -23,6 +23,12 @@ internal sealed class IndustrialTabControl : TabControl
     {
         BackColor = IndustrialTheme.Palette.Background;
         ForeColor = IndustrialTheme.Palette.TextPrimary;
+        foreach (TabPage page in TabPages)
+        {
+            page.BackColor = IndustrialTheme.Palette.SurfaceElevated;
+            page.ForeColor = IndustrialTheme.Palette.TextPrimary;
+        }
+
         Invalidate();
     }
 
@@ -103,19 +109,19 @@ internal sealed class IndustrialTabControl : TabControl
     {
         IndustrialPalette palette = IndustrialTheme.Palette;
         bool selected = index == SelectedIndex;
-        using SolidBrush background = new(selected ? palette.SelectedSurface : palette.Surface);
+        using SolidBrush background = new(selected ? palette.SurfaceElevated : palette.Surface);
         graphics.FillRectangle(background, bounds);
         TextRenderer.DrawText(
             graphics,
             TabPages[index].Text,
             Font,
             bounds,
-            selected ? palette.SelectedText : palette.TextSecondary,
+            selected ? palette.TextPrimary : palette.TextSecondary,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         if (selected)
         {
             using SolidBrush accent = new(palette.Accent);
-            graphics.FillRectangle(accent, bounds.Left, bounds.Bottom - 3, bounds.Width, 3);
+            graphics.FillRectangle(accent, bounds.Left, bounds.Bottom - 2, bounds.Width, 2);
         }
 
         if (drawFocus && selected && Focused)

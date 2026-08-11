@@ -1231,7 +1231,7 @@ internal static class PlatformUi
     internal static void StyleTabs(TabControl tabs)
     {
         tabs.Font = IndustrialTypography.Button();
-        tabs.ItemSize = new Size(150, IndustrialSpacing.TabHeight);
+        tabs.ItemSize = new Size(132, IndustrialSpacing.TabHeight);
         tabs.Padding = new Point(IndustrialSpacing.Md, IndustrialSpacing.Xs);
     }
 
