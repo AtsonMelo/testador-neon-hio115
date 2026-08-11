@@ -397,9 +397,7 @@ try {
     if ($RunGuiSmoke) {
         $smokeCases = @(
             [pscustomobject]@{ Flag = '--layout-3-host-readonly'; Title = 'Layout 3 - Host read-only | Testador CLP HI' },
-            [pscustomobject]@{ Flag = '--preview-layout-3'; Title = 'Layout 3 - Preview isolado | Testador CLP HI' },
-            [pscustomobject]@{ Flag = '--preview-layout-3-light'; Title = 'Layout 3 - Preview isolado (tema claro) | Testador CLP HI' },
-            [pscustomobject]@{ Flag = '--preview-layout-3-auto'; Title = 'Layout 3 - Preview isolado (tema automatico) | Testador CLP HI' }
+            [pscustomobject]@{ Flag = '--industrial'; Title = 'Testador Industrial HI' }
         )
 
         $smokeFailures = 0
@@ -410,10 +408,10 @@ try {
         }
 
         if ($smokeFailures -eq 0) {
-            $guiSmokeResultText = 'OK (4/4)'
+            $guiSmokeResultText = "OK ($($smokeCases.Count)/$($smokeCases.Count))"
         }
         else {
-            $guiSmokeResultText = "FALHOU ($smokeFailures/4)"
+            $guiSmokeResultText = "FALHOU ($smokeFailures/$($smokeCases.Count))"
             $criticalFailure = $true
         }
     }

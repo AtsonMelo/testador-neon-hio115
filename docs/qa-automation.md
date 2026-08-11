@@ -106,11 +106,10 @@ aplicação que inicialize comunicação física é usada.
 Com `-RunGuiSmoke`, são verificadas as flags:
 
 - `--layout-3-host-readonly`;
-- `--preview-layout-3`;
-- `--preview-layout-3-light`;
-- `--preview-layout-3-auto`.
+- `--industrial`.
 
-Cada processo deve abrir em até 30 segundos com o título exato previsto. Após a
+O primeiro caso preserva o host técnico read-only; o segundo cobre o shell UI2
+oficial. Cada processo deve abrir em até 30 segundos com o título exato previsto. Após a
 validação, a janela e o processo auxiliar são encerrados, inclusive em caso de
 falha.
 

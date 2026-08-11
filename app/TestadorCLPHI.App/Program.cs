@@ -3,9 +3,7 @@ using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Mapping;
-using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
-using TestadorCLPHI.App.Ui.Industrial;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 using TestadorCLPHI.App.Ui.Industrial.Platform;
 
@@ -41,14 +39,7 @@ internal static class Program
 
     private static readonly string[] AuxiliaryArguments =
     [
-        "--layout-3-host-readonly",
-        "--preview-layout-3-auto",
-        "--preview-layout-3-light",
-        "--preview-layout-3",
-        "--preview-layout-alvo",
-        "--preview-industrial-panel",
-        "--preview-layout-alvo-2",
-        "--preview-layout-alvo-2-compacto"
+        "--layout-3-host-readonly"
     ];
 
     [STAThread]
@@ -167,52 +158,6 @@ internal static class Program
         if (args.Contains("--layout-3-host-readonly", StringComparer.OrdinalIgnoreCase))
         {
             Application.Run(new Layout3HostForm(LoadHardwareCatalogForApp()));
-            return;
-        }
-
-        if (args.Contains("--preview-layout-3-auto", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new Layout3PreviewForm(
-                LoadHardwareCatalogForApp(),
-                Layout3PreviewTheme.Automatic));
-            return;
-        }
-
-        if (args.Contains("--preview-layout-3-light", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new Layout3PreviewForm(
-                LoadHardwareCatalogForApp(),
-                Layout3PreviewTheme.Light));
-            return;
-        }
-
-        if (args.Contains("--preview-layout-3", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new Layout3PreviewForm(LoadHardwareCatalogForApp()));
-            return;
-        }
-
-        if (args.Contains("--preview-layout-alvo", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new IndustrialMainLayoutPreviewForm());
-            return;
-        }
-
-        if (args.Contains("--preview-industrial-panel", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new IndustrialDigitalIoPanelPreviewForm());
-            return;
-        }
-
-        if (args.Contains("--preview-layout-alvo-2", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new IndustrialLayoutAlvo2PreviewForm());
-            return;
-        }
-
-        if (args.Contains("--preview-layout-alvo-2-compacto", StringComparer.OrdinalIgnoreCase))
-        {
-            Application.Run(new IndustrialCompactLayoutAlvo2PreviewForm());
             return;
         }
 
