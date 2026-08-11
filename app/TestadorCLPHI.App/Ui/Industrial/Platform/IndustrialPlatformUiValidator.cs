@@ -104,6 +104,7 @@ internal static class IndustrialPlatformUiValidator
             ("navegacao tema e resize nao ampliam a arvore visual", NavigationThemeAndResizeKeepStructureStable),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
             ("troca de tema preserva sessao, pagina e instancias", ThemeSwitchPreservesUiState),
+            ("seletor de tema reflete o modo efetivamente ativo", ThemeSelectorMatchesActiveTheme),
             ("troca de tema e Pivo mantem recursos GDI estaveis", ThemeAndPivotKeepGdiResourcesStable),
             ("textos operacionais da UI2 permanecem em PT-BR", OperatorTextIsConsistent),
             ("sessao padrao usa endereco fake 1", SessionUsesFakeAddressOne),
@@ -1725,6 +1726,42 @@ internal static class IndustrialPlatformUiValidator
             && simulator.EditableSignalCount == editorCount
             && CountControls(form) == controlCount
             && form.ThemeMode == IndustrialThemeMode.Dark;
+    }
+
+    private static bool ThemeSelectorMatchesActiveTheme()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            using IndustrialPlatformForm form = new();
+            form.ShowSimulator();
+            IndustrialSimulatorControl? simulator = form.SimulatorInstance;
+            IndustrialPlatformSession session = form.Session;
+            foreach ((IndustrialThemeMode mode, string text) in new[]
+                     {
+                         (IndustrialThemeMode.Dark, "Escuro"),
+                         (IndustrialThemeMode.Light, "Claro"),
+                         (IndustrialThemeMode.Dark, "Escuro"),
+                         (IndustrialThemeMode.System, "Sistema"),
+                         (IndustrialThemeMode.Dark, "Escuro")
+                     })
+            {
+                form.SetTheme(mode);
+                if (form.ThemeMode != mode
+                    || form.ThemeSelector.Text != text
+                    || !ReferenceEquals(simulator, form.SimulatorInstance)
+                    || !ReferenceEquals(session, form.Session))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
     }
 
     private static bool ThemeAndPivotKeepGdiResourcesStable()

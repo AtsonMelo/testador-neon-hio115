@@ -124,6 +124,7 @@ internal sealed class IndustrialPlatformForm : Form
         TabStop = true
     };
     private readonly ToolTip _toolTip = new();
+    private bool _synchronizingThemeSelector;
     private readonly Label _profileFooter = BuildFooterLabel("Perfil: aguardando");
     private readonly Label _transportFooter = BuildFooterLabel("Transporte: em memória");
     private readonly Label _addressFooter = BuildFooterLabel("Endereço: 1");
@@ -175,8 +176,8 @@ internal sealed class IndustrialPlatformForm : Form
         _simulatorButton.TabIndex = 2;
         _simulatorButton.AccessibleDescription = "Abre cenários e sinais simulados em memória";
         _themeSelector.TabIndex = 3;
-        _themeSelector.Items.AddRange(["Escuro", "Claro", "Windows"]);
-        _themeSelector.SelectedIndex = 0;
+        _themeSelector.Items.AddRange(["Escuro", "Claro", "Sistema"]);
+        SynchronizeThemeSelector();
         _themeSelector.SelectedIndexChanged += ThemeSelectorChanged;
         ClientSizeChanged += (_, _) => UpdateResponsiveLayout();
         DpiChanged += (_, _) => UpdateResponsiveLayout();
@@ -210,20 +211,13 @@ internal sealed class IndustrialPlatformForm : Form
 
     internal void SetTheme(IndustrialThemeMode mode)
     {
-        int index = mode switch
+        if (IndustrialTheme.Mode != mode)
         {
-            IndustrialThemeMode.Dark => 0,
-            IndustrialThemeMode.Light => 1,
-            IndustrialThemeMode.System => 2,
-            _ => 0
-        };
-        if (_themeSelector.SelectedIndex != index)
-        {
-            _themeSelector.SelectedIndex = index;
+            IndustrialTheme.SetMode(mode);
         }
         else
         {
-            IndustrialTheme.SetMode(mode);
+            SynchronizeThemeSelector();
             ApplyTheme();
         }
     }
@@ -647,6 +641,11 @@ internal sealed class IndustrialPlatformForm : Form
 
     private void ThemeSelectorChanged(object? sender, EventArgs e)
     {
+        if (_synchronizingThemeSelector)
+        {
+            return;
+        }
+
         IndustrialThemeMode mode = _themeSelector.SelectedIndex switch
         {
             1 => IndustrialThemeMode.Light,
@@ -662,7 +661,36 @@ internal sealed class IndustrialPlatformForm : Form
         IndustrialTheme.SetMode(mode);
     }
 
-    private void IndustrialThemeChanged(object? sender, EventArgs e) => ApplyTheme();
+    private void IndustrialThemeChanged(object? sender, EventArgs e)
+    {
+        SynchronizeThemeSelector();
+        ApplyTheme();
+    }
+
+    private void SynchronizeThemeSelector()
+    {
+        int index = IndustrialTheme.Mode switch
+        {
+            IndustrialThemeMode.Dark => 0,
+            IndustrialThemeMode.Light => 1,
+            IndustrialThemeMode.System => 2,
+            _ => 0
+        };
+        if (_themeSelector.SelectedIndex == index)
+        {
+            return;
+        }
+
+        _synchronizingThemeSelector = true;
+        try
+        {
+            _themeSelector.SelectedIndex = index;
+        }
+        finally
+        {
+            _synchronizingThemeSelector = false;
+        }
+    }
 
     private void ApplyTheme()
     {
