@@ -117,12 +117,12 @@ internal sealed class IndustrialIoMapControl : UserControl
         {
             SimulationSignalDefinition? signal = _session.FindSignal(binding.SignalId);
             _grid.Rows.Add(
-                signal?.Label ?? binding.SignalLabel ?? binding.SignalId,
-                binding.RegisterAlias,
+                signal?.Label ?? binding.SignalLabel ?? binding.SignalId ?? string.Empty,
+                binding.RegisterAlias ?? string.Empty,
                 binding.Register,
                 FormatType(binding),
                 "PERFIL DE SIMULAÇÃO",
-                binding.Description);
+                binding.Description ?? string.Empty);
         }
 
         _grid.ClearSelection();

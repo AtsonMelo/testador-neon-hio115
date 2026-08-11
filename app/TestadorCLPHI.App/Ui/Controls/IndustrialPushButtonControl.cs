@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -20,10 +21,13 @@ public sealed class IndustrialPushButtonControl : Control
         Size = new Size(132, 92);
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Title { get; set; } = "D000";
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Description { get; set; } = "D000 -> DI00 + DI04";
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? ButtonImagePath { get; set; }
 
     protected override void OnPaint(PaintEventArgs e)

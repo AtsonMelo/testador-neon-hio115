@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -22,8 +23,10 @@ public sealed class EmergencyStopButtonControl : Control
         Cursor = Cursors.Hand;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string Title { get; set; } = "STOP";
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? ButtonImagePath { get; set; }
 
     protected override void OnPaint(PaintEventArgs e)

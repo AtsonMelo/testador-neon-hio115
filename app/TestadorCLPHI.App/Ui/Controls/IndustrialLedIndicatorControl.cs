@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -25,6 +26,7 @@ public sealed class IndustrialLedIndicatorControl : Control
         Margin = new Padding(0, 0, 14, 0);
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string LabelText
     {
         get => _labelText;
@@ -35,6 +37,7 @@ public sealed class IndustrialLedIndicatorControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsOn
     {
         get => _isOn;

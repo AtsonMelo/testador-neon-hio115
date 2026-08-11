@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -27,6 +28,7 @@ public sealed class AssetPushButtonControl : Control
         Cursor = Cursors.Hand;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsActive
     {
         get => _isActive;
@@ -42,6 +44,7 @@ public sealed class AssetPushButtonControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string LabelText
     {
         get => _labelText;
@@ -52,6 +55,7 @@ public sealed class AssetPushButtonControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color ButtonColor
     {
         get => _buttonColor;
@@ -62,6 +66,7 @@ public sealed class AssetPushButtonControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? ButtonImagePath
     {
         get => _buttonImagePath;

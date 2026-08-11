@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace TestadorCLPHI.App.Ui.Controls;
@@ -27,6 +28,7 @@ public sealed class AssetLedIndicatorControl : Control
         Cursor = Cursors.Default;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsOn
     {
         get => _isOn;
@@ -42,6 +44,7 @@ public sealed class AssetLedIndicatorControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string LabelText
     {
         get => _labelText;
@@ -52,6 +55,7 @@ public sealed class AssetLedIndicatorControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? OnImagePath
     {
         get => _onImagePath;
@@ -63,6 +67,7 @@ public sealed class AssetLedIndicatorControl : Control
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? OffImagePath
     {
         get => _offImagePath;
