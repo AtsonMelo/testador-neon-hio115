@@ -28,7 +28,7 @@ internal static class IndustrialPlatformUiValidator
             ("argumento desconhecido e rejeitado sem abrir MainForm", UnknownArgumentIsRejected),
             ("rejeicao de argumento desconhecido permanece offline", UnknownArgumentStaysOffline),
             ("launcher industrial cria o host da plataforma", IndustrialLauncherCreatesPlatformHost),
-            ("host expoe somente Testador e Simulador", HostHasTwoModes),
+            ("host expoe Home e somente os dois modos operacionais", HostHasHomeAndTwoModes),
             ("navegacao preserva instancias e estado dos modos", NavigationPreservesModeInstances),
             ("shell nao expoe launcher legacy", ShellDoesNotExposeLegacy),
             ("SafetyChain permanece visualmente read-only", SafetyChainIsVisuallyReadOnly),
@@ -68,11 +68,16 @@ internal static class IndustrialPlatformUiValidator
             ("shell responsivo preserva limites em 2560x1440 @150%", () => ResponsiveShellFits(new Size(2560, 1440), 144)),
             ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
             ("titulo do shell permanece integral em Home Testador e Simulador", ShellTitleFitsAllPagesAndThemes),
+            ("contexto e equipamento do header permanecem integrais", ShellSecondaryHeaderTextFits),
             ("titulo do shell possui orcamento vertical seguro em 100 125 e 150%", ShellTitleDpiBudgetIsSafe),
             ("status tema sidebar e footer permanecem contidos", ShellCriticalRegionsRemainContained),
             ("acoes da Home permanecem contidas em modo amplo e compacto", HomeActionsRemainContained),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
+            ("quatro metricas do Simulador permanecem visiveis sem rolagem horizontal", SimulatorMetricsRemainVisible),
+            ("Simulador light preserva contraste efetivo dos sinais", SimulatorLightThemeHasEffectiveContrast),
+            ("Simulador evita regioes de rolagem aninhadas", SimulatorAvoidsNestedScrollRegions),
+            ("acoes primarias preservam alinhamento e texto", PrimaryActionsRemainAligned),
             ("controles criticos expoem nomes acessiveis", CriticalAccessibleNamesArePresent),
             ("navegacao tema e resize nao ampliam a arvore visual", NavigationThemeAndResizeKeepStructureStable),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
@@ -218,10 +223,11 @@ internal static class IndustrialPlatformUiValidator
         return form is IndustrialPlatformForm;
     }
 
-    private static bool HostHasTwoModes()
+    private static bool HostHasHomeAndTwoModes()
     {
         using IndustrialPlatformForm form = new();
-        return form.TesterModeButton.AccessibleName == "TESTADOR"
+        return form.HomeModeButton.AccessibleName == "INÍCIO"
+            && form.TesterModeButton.AccessibleName == "TESTADOR"
             && form.SimulatorModeButton.AccessibleName == "SIMULADOR";
     }
 
@@ -235,6 +241,7 @@ internal static class IndustrialPlatformUiValidator
         int controlCount = CountControls(form);
         for (int index = 0; index < 8; index++)
         {
+            form.ShowHome();
             form.ShowTester();
             form.ShowSimulator();
         }
@@ -647,10 +654,12 @@ internal static class IndustrialPlatformUiValidator
         Rectangle contextBounds = BoundsRelativeTo(context, form.HeaderRegion);
         bool fits = title.Visible
             && IsInsideParent(title)
+            && IsContainedByAllAncestors(title, form.HeaderRegion)
             && measured.Width <= title.ClientSize.Width - title.Padding.Horizontal
             && measured.Height + IndustrialSpacing.Xs <= title.ClientSize.Height - title.Padding.Vertical
             && form.HeaderRegion.ClientRectangle.Contains(titleBounds)
-            && !titleBounds.IntersectsWith(contextBounds);
+            && !titleBounds.IntersectsWith(contextBounds)
+            && (!context.Visible || IsContainedByAllAncestors(context, form.HeaderRegion));
         if (!fits)
         {
             throw new InvalidOperationException(
@@ -809,6 +818,190 @@ internal static class IndustrialPlatformUiValidator
             && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal);
     }
 
+    private static bool ShellSecondaryHeaderTextFits()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            foreach (IndustrialThemeMode mode in new[] { IndustrialThemeMode.Dark, IndustrialThemeMode.Light })
+            {
+                using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+                form.SetTheme(mode);
+                form.Show();
+                foreach (Action showPage in new Action[] { form.ShowHome, form.ShowTester, form.ShowSimulator })
+                {
+                    showPage();
+                    PerformLayoutTree(form);
+                    if (form.BrandContext.Visible
+                        && (!SingleLineTextFits(form.BrandContext)
+                            || !IsContainedByAllAncestors(form.BrandContext, form.HeaderRegion)))
+                    {
+                        return false;
+                    }
+
+                    if (form.EquipmentStatus.Visible
+                        && (!SingleLineTextFits(form.EquipmentStatus)
+                            || !IsContainedByAllAncestors(form.EquipmentStatus, form.HeaderRegion)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static bool SimulatorMetricsRemainVisible()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session) { ClientSize = new Size(1040, 610) };
+        using Form host = new()
+        {
+            ClientSize = simulator.ClientSize,
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        simulator.Dock = DockStyle.Fill;
+        host.Controls.Add(simulator);
+        host.Show();
+        PerformLayoutTree(host);
+        TableLayoutPanel? metrics = simulator.Controls.Find("simulationMetricsGrid", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        return metrics is { Visible: true, AutoScroll: false }
+            && simulator.MetricCount == 4
+            && !simulator.MetricsUseHorizontalScroll
+            && metrics.Controls.Cast<Control>().All(card => card.Visible && IsInsideParent(card));
+    }
+
+    private static bool SimulatorLightThemeHasEffectiveContrast()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            IndustrialTheme.SetMode(IndustrialThemeMode.Light);
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+            using IndustrialSimulatorControl simulator = new(session) { ClientSize = new Size(1040, 610) };
+            simulator.ApplyTheme();
+            IReadOnlyList<CheckBox> editors = FindAll<CheckBox>(simulator);
+            return editors.Count > 0
+                && editors.All(editor =>
+                    IndustrialTheme.ContrastRatio(editor.ForeColor, EffectiveBackground(editor)) >= 4.5D);
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static bool SimulatorAvoidsNestedScrollRegions()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session);
+        ScrollableControl[] scrolling = FindAll<ScrollableControl>(simulator)
+            .Where(control => control.AutoScroll)
+            .ToArray();
+        return scrolling.Length <= 2
+            && scrolling.All(control => !scrolling.Any(other =>
+                !ReferenceEquals(control, other) && IsDescendantOf(control, other)));
+    }
+
+    private static bool PrimaryActionsRemainAligned()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.ShowSimulator();
+        form.ShowHome();
+        form.Show();
+        PerformLayoutTree(form);
+        string[][] groups =
+        [
+            ["welcomeTesterButton", "welcomeSimulatorButton"],
+            ["validateRtuButton", "identifyButton", "discoverButton", "cancelButton"],
+            ["applyScenarioButton", "resetScenarioButton"]
+        ];
+        foreach (string[] group in groups)
+        {
+            Button[] buttons = group
+                .Select(name => form.Controls.Find(name, true).OfType<Button>().SingleOrDefault())
+                .Where(button => button is not null)
+                .Cast<Button>()
+                .ToArray();
+            if (buttons.Length != group.Length
+                || buttons.Select(button => button.Height).Distinct().Count() != 1
+                || buttons.Any(button => button.Height < 36 || !SingleLineTextFits(button)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static Color EffectiveBackground(Control control)
+    {
+        for (Control? current = control; current is not null; current = current.Parent)
+        {
+            Color color = current.BackColor;
+            if (color.A == byte.MaxValue && color != Color.Transparent)
+            {
+                return color;
+            }
+        }
+
+        return IndustrialTheme.Palette.Background;
+    }
+
+    private static bool IsDescendantOf(Control control, Control possibleAncestor)
+    {
+        for (Control? parent = control.Parent; parent is not null; parent = parent.Parent)
+        {
+            if (ReferenceEquals(parent, possibleAncestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsContainedByAllAncestors(Control control, Control stopAt)
+    {
+        for (Control current = control; current.Parent is not null; current = current.Parent)
+        {
+            if (!current.Parent.ClientRectangle.Contains(current.Bounds))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(current.Parent, stopAt))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SingleLineTextFits(Control control)
+    {
+        Size measured = TextRenderer.MeasureText(
+            control.Text,
+            control.Font,
+            Size.Empty,
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+        return measured.Width <= Math.Max(0, control.ClientSize.Width - control.Padding.Horizontal - 8)
+            && measured.Height <= Math.Max(0, control.ClientSize.Height - control.Padding.Vertical);
+    }
+
     private static bool CriticalAccessibleNamesArePresent()
     {
         using IndustrialPlatformForm form = new();
@@ -818,6 +1011,7 @@ internal static class IndustrialPlatformUiValidator
         [
             "industrialBrand",
             "industrialThemeSelector",
+            "modeHomeButton",
             "modeTesterButton",
             "modeSimulatorButton",
             "platformOfflineStatus",

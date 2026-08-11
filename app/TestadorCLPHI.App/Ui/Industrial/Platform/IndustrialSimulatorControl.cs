@@ -49,6 +49,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private readonly Dictionary<string, NumericUpDown> _analogEditors = new(StringComparer.OrdinalIgnoreCase);
     private TableLayoutPanel? _rootLayout;
     private TableLayoutPanel? _pivotOverview;
+    private TableLayoutPanel? _metricGrid;
     private Label? _profileEvidence;
     private PivotProcessControl? _pivotVisual;
     private bool _initializing;
@@ -102,6 +103,8 @@ internal sealed class IndustrialSimulatorControl : UserControl
     internal bool UsesGroupedSignalEditor => _signalGroups.Controls.OfType<GroupBox>().Any();
     internal int SignalStructureBuildCount => _signalStructureBuildCount;
     internal int EditableSignalCount => _digitalEditors.Count + _analogEditors.Count;
+    internal int MetricCount => _metricGrid?.Controls.Count ?? 0;
+    internal bool MetricsUseHorizontalScroll => _metricGrid?.AutoScroll == true;
 
     protected override void Dispose(bool disposing)
     {
@@ -306,41 +309,61 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private Control BuildMetricPanel(bool vertical)
     {
-        FlowLayoutPanel metrics = new()
+        SimulationSignalDefinition[] definitions = _session.Profile.Signals
+            .Where(signal => signal.Kind == SimulationSignalKind.AnalogInput)
+            .ToArray();
+        int columns = vertical ? 1 : Math.Clamp(definitions.Length, 1, 2);
+        int rows = Math.Max(1, (int)Math.Ceiling(definitions.Length / (double)columns));
+        TableLayoutPanel metrics = new()
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
-            FlowDirection = vertical ? FlowDirection.TopDown : FlowDirection.LeftToRight,
-            WrapContents = !vertical,
+            AutoScroll = false,
+            ColumnCount = columns,
+            RowCount = rows,
             BackColor = PlatformUi.Background,
-            Padding = new Padding(0)
+            Padding = Padding.Empty,
+            Margin = Padding.Empty,
+            Name = "simulationMetricsGrid",
+            AccessibleName = "Métricas do processo sem rolagem horizontal"
         };
-        foreach (SimulationSignalDefinition definition in _session.Profile.Signals.Where(signal =>
-                     signal.Kind == SimulationSignalKind.AnalogInput))
+        _metricGrid = metrics;
+        for (int column = 0; column < columns; column++)
         {
+            metrics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / columns));
+        }
+
+        for (int row = 0; row < rows; row++)
+        {
+            metrics.RowStyles.Add(new RowStyle(SizeType.Percent, 100F / rows));
+        }
+
+        for (int index = 0; index < definitions.Length; index++)
+        {
+            SimulationSignalDefinition definition = definitions[index];
             Panel card = PlatformUi.Card($"simulationMetricCard{definition.Id}");
-            card.Width = vertical ? 214 : 180;
-            card.Height = 72;
+            card.Dock = DockStyle.Fill;
             card.MinimumSize = Size.Empty;
             card.Padding = new Padding(
                 IndustrialSpacing.Md,
-                IndustrialSpacing.Sm,
+                IndustrialSpacing.Xs,
                 IndustrialSpacing.Md,
-                IndustrialSpacing.Sm);
-            card.Margin = new Padding(0, 0, IndustrialSpacing.Sm, IndustrialSpacing.Sm);
+                IndustrialSpacing.Xs);
+            card.Margin = new Padding(IndustrialSpacing.Xs);
             card.AccessibleName = $"Métrica {definition.Label ?? definition.Id}";
             Label label = PlatformUi.Label(definition.Label ?? definition.Id!);
             label.Dock = DockStyle.Top;
+            label.AutoEllipsis = true;
             Label value = PlatformUi.Label(string.Empty, heading: true);
             value.Name = $"simulationMetric{definition.Id}";
             value.Dock = DockStyle.Bottom;
             value.AutoSize = false;
             value.Height = 26;
             value.TextAlign = ContentAlignment.MiddleLeft;
+            value.AutoEllipsis = true;
             _metricValues[definition.Id!] = value;
             card.Controls.Add(value);
             card.Controls.Add(label);
-            metrics.Controls.Add(card);
+            metrics.Controls.Add(card, index % columns, index / columns);
         }
 
         return metrics;
@@ -667,7 +690,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
         IndustrialPalette palette = IndustrialTheme.Palette;
         foreach (Control child in root.Controls)
         {
-            if (child is Label label && label.BorderStyle != BorderStyle.FixedSingle)
+            if (child is Label label
+                && label.Tag is not PlatformStatusTone
+                && label.BorderStyle != BorderStyle.FixedSingle)
             {
                 label.ForeColor = palette.TextSecondary;
             }
@@ -680,6 +705,12 @@ internal sealed class IndustrialSimulatorControl : UserControl
                 case TextBox or ComboBox or NumericUpDown:
                     child.BackColor = palette.Field;
                     child.ForeColor = palette.TextPrimary;
+                    break;
+                case CheckBox checkBox:
+                    checkBox.BackColor = checkBox.Parent is GroupBox
+                        ? palette.SurfaceElevated
+                        : palette.Background;
+                    checkBox.ForeColor = palette.TextPrimary;
                     break;
                 case Button button:
                     PlatformUi.StyleButton(

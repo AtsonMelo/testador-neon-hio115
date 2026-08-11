@@ -156,7 +156,7 @@ internal sealed class IndustrialIoMapControl : UserControl
             IndustrialSpacing.Xs);
         _grid.DefaultCellStyle.Font = IndustrialTypography.Body();
         _grid.ColumnHeadersDefaultCellStyle.Font = IndustrialTypography.BodyStrong();
-        _grid.RowTemplate.Height = 42;
+        _grid.RowTemplate.Height = 34;
         _grid.ShowCellToolTips = true;
         _grid.CellToolTipTextNeeded += (_, e) =>
         {
@@ -291,7 +291,9 @@ internal sealed class IndustrialIoMapControl : UserControl
                 : palette.Background;
         }
 
-        if (control is Label label && label.BorderStyle != BorderStyle.FixedSingle)
+        if (control is Label label
+            && label.Tag is not PlatformStatusTone
+            && label.BorderStyle != BorderStyle.FixedSingle)
         {
             label.ForeColor = label.Name == "ioMappingEvidenceLabel"
                 ? palette.Warning

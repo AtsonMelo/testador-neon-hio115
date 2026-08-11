@@ -49,6 +49,7 @@ internal sealed class IndustrialPlatformForm : Form
         Padding = new Padding(IndustrialSpacing.Md),
         AutoScroll = true
     };
+    private readonly Button _homeButton = PlatformUi.Button("INÍCIO", "modeHomeButton");
     private readonly Button _testerButton = PlatformUi.Button("TESTADOR", "modeTesterButton");
     private readonly Button _simulatorButton = PlatformUi.Button("SIMULADOR", "modeSimulatorButton");
     private readonly Label _offlineStatus = PlatformUi.StatusChip(
@@ -63,14 +64,10 @@ internal sealed class IndustrialPlatformForm : Form
         "SAFETYCHAIN • AGUARDANDO",
         PlatformStatusTone.Disabled,
         "platformSafetyStatus");
-    private readonly Label _equipmentStatus = new()
-    {
-        AutoSize = false,
-        Dock = DockStyle.Fill,
-        TextAlign = ContentAlignment.MiddleLeft,
-        AutoEllipsis = true,
-        AccessibleName = "Equipamento e perfil ativos"
-    };
+    private readonly Label _equipmentStatus = PlatformUi.StatusChip(
+        "PERFIL • AGUARDANDO",
+        PlatformStatusTone.Disabled,
+        "industrialEquipmentStatus");
     private readonly Label _brandTitle = new()
     {
         Name = "industrialBrand",
@@ -119,7 +116,7 @@ internal sealed class IndustrialPlatformForm : Form
     private readonly Label _transportFooter = BuildFooterLabel("Transporte: em memória");
     private readonly Label _addressFooter = BuildFooterLabel("Endereço: 1");
     private readonly Label _safetyFooter = BuildFooterLabel("Física: bloqueada");
-    private readonly Label _versionFooter = BuildFooterLabel(".NET 10 • UI2");
+    private readonly Label _versionFooter = BuildFooterLabel(".NET 10");
     private IndustrialPlatformSession? _session;
     private IndustrialTesterControl? _tester;
     private IndustrialSimulatorControl? _simulator;
@@ -156,13 +153,16 @@ internal sealed class IndustrialPlatformForm : Form
         _shell.Controls.Add(BuildStatusBar(), 0, 2);
         Controls.Add(_shell);
 
+        _homeButton.Click += (_, _) => ShowHome();
         _testerButton.Click += (_, _) => ShowTester();
         _simulatorButton.Click += (_, _) => ShowSimulator();
-        _testerButton.TabIndex = 0;
+        _homeButton.TabIndex = 0;
+        _homeButton.AccessibleDescription = "Abre a visão geral da plataforma industrial offline";
+        _testerButton.TabIndex = 1;
         _testerButton.AccessibleDescription = "Abre leitura, diagnóstico e resultados no ambiente offline";
-        _simulatorButton.TabIndex = 1;
+        _simulatorButton.TabIndex = 2;
         _simulatorButton.AccessibleDescription = "Abre cenários e sinais simulados em memória";
-        _themeSelector.TabIndex = 2;
+        _themeSelector.TabIndex = 3;
         _themeSelector.Items.AddRange(["Escuro", "Claro", "Windows"]);
         _themeSelector.SelectedIndex = 0;
         _themeSelector.SelectedIndexChanged += ThemeSelectorChanged;
@@ -170,10 +170,12 @@ internal sealed class IndustrialPlatformForm : Form
         DpiChanged += (_, _) => UpdateResponsiveLayout();
         IndustrialTheme.ThemeChanged += IndustrialThemeChanged;
         ShowWelcome();
+        ShowHome();
         ApplyTheme();
         UpdateResponsiveLayout();
     }
 
+    internal Button HomeModeButton => _homeButton;
     internal Button TesterModeButton => _testerButton;
     internal Button SimulatorModeButton => _simulatorButton;
     internal IndustrialPlatformSession Session => _session ??= CreateSession("pivo-central");
@@ -188,6 +190,7 @@ internal sealed class IndustrialPlatformForm : Form
     internal Control ThemeSelector => _themeSelector;
     internal Label BrandTitle => _brandTitle;
     internal Label BrandContext => _brandContext;
+    internal Label EquipmentStatus => _equipmentStatus;
     internal IReadOnlyList<Label> CriticalHeaderStatuses =>
         [_offlineStatus, _modeStatus, _safetyStatus];
 
@@ -215,6 +218,14 @@ internal sealed class IndustrialPlatformForm : Form
     {
         _tester ??= new IndustrialTesterControl(Session);
         ShowControl(_tester, _testerButton);
+    }
+
+    internal void ShowHome()
+    {
+        if (_welcome is not null)
+        {
+            ShowControl(_welcome, _homeButton);
+        }
     }
 
     internal void ShowSimulator()
@@ -263,54 +274,56 @@ internal sealed class IndustrialPlatformForm : Form
         TableLayoutPanel primary = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 2,
             RowCount = 1,
             Margin = Padding.Empty,
             Name = "industrialHeaderPrimary"
         };
-        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 67F));
-        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         primary.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124F));
+        primary.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         TableLayoutPanel identity = new()
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 2,
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Name = "industrialHeaderIdentity"
         };
-        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 70F));
-        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
+        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
         identity.Controls.Add(_brandTitle, 0, 0);
         identity.Controls.Add(_brandContext, 0, 1);
-        foreach (Label status in new[] { _offlineStatus, _modeStatus, _safetyStatus })
+        foreach (Label status in new[] { _offlineStatus, _modeStatus, _equipmentStatus, _safetyStatus })
         {
             status.AutoSize = false;
             status.Dock = DockStyle.Fill;
             status.Margin = new Padding(IndustrialSpacing.Xs, IndustrialSpacing.Xs, IndustrialSpacing.Xs, 0);
             status.AutoEllipsis = true;
         }
-        _equipmentStatus.Margin = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
-        _equipmentStatus.Font = IndustrialTypography.CaptionStrong();
+        _equipmentStatus.AccessibleDescription = "Perfil e equipamento ativos na sessão offline";
         _themeSelector.Margin = new Padding(IndustrialSpacing.Sm, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
         primary.Controls.Add(identity, 0, 0);
-        primary.Controls.Add(_equipmentStatus, 1, 0);
-        primary.Controls.Add(_themeSelector, 2, 0);
+        primary.Controls.Add(_themeSelector, 1, 0);
 
         TableLayoutPanel statuses = new()
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 4,
             RowCount = 1,
             Margin = Padding.Empty,
             Name = "industrialHeaderStatuses"
         };
-        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
-        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+        statuses.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         statuses.Controls.Add(_offlineStatus, 0, 0);
         statuses.Controls.Add(_modeStatus, 1, 0);
-        statuses.Controls.Add(_safetyStatus, 2, 0);
+        statuses.Controls.Add(_equipmentStatus, 2, 0);
+        statuses.Controls.Add(_safetyStatus, 3, 0);
 
         _header.Controls.Add(primary, 0, 0);
         _header.Controls.Add(statuses, 0, 1);
@@ -322,7 +335,7 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebar.Name = "industrialSidebar";
         _navCaption.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
         _sidebar.Controls.Add(_navCaption);
-        foreach (Button button in new[] { _testerButton, _simulatorButton })
+        foreach (Button button in new[] { _homeButton, _testerButton, _simulatorButton })
         {
             button.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
             button.Height = IndustrialSpacing.CriticalInteractiveHeight;
@@ -338,7 +351,17 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebarMode.Margin = new Padding(0, IndustrialSpacing.Xl, 0, 0);
         _sidebarMode.AccessibleDescription =
             "Status informativo; não é uma ação. A comunicação física permanece bloqueada";
+        Panel divider = new()
+        {
+            Name = "sidebarStatusDivider",
+            Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2),
+            Height = IndustrialSpacing.BorderWidth,
+            Margin = new Padding(0, IndustrialSpacing.Lg, 0, IndustrialSpacing.Sm),
+            BackColor = IndustrialTheme.Palette.Border
+        };
+        _sidebar.Controls.Add(divider);
         _sidebar.Controls.Add(_sidebarMode);
+        _toolTip.SetToolTip(_homeButton, "Abrir a visão geral da plataforma industrial");
         _toolTip.SetToolTip(_testerButton, "Abrir o Testador: leitura, diagnóstico e resultados offline");
         _toolTip.SetToolTip(_simulatorButton, "Abrir o Simulador: cenários e sinais em memória");
         _toolTip.SetToolTip(_sidebarMode, "Nenhuma conexão física está ativa");
@@ -482,16 +505,20 @@ internal sealed class IndustrialPlatformForm : Form
         control.Dock = DockStyle.Fill;
         control.BringToFront();
         _activeButton = activeButton;
+        PlatformUi.StyleButton(_homeButton, selected: ReferenceEquals(activeButton, _homeButton));
         PlatformUi.StyleButton(_testerButton, selected: ReferenceEquals(activeButton, _testerButton));
         PlatformUi.StyleButton(_simulatorButton, selected: ReferenceEquals(activeButton, _simulatorButton));
         bool testerActive = ReferenceEquals(activeButton, _testerButton);
+        bool simulatorActive = ReferenceEquals(activeButton, _simulatorButton);
         PlatformUi.UpdateStatusChip(
             _modeStatus,
-            testerActive ? "MODO: TESTADOR" : "MODO: SIMULADOR",
-            testerActive ? PlatformStatusTone.Active : PlatformStatusTone.Simulated);
+            testerActive ? "MODO: TESTADOR" : simulatorActive ? "MODO: SIMULADOR" : "VISÃO GERAL",
+            testerActive ? PlatformStatusTone.Active : simulatorActive ? PlatformStatusTone.Simulated : PlatformStatusTone.Normal);
         _modeStatus.AccessibleDescription = testerActive
             ? "Modo Testador ativo"
-            : "Modo Simulador ativo";
+            : simulatorActive
+                ? "Modo Simulador ativo"
+                : "Visão geral ativa";
         RefreshGlobalStatus();
         _content.ResumeLayout();
     }
@@ -543,7 +570,10 @@ internal sealed class IndustrialPlatformForm : Form
     {
         if (session is null)
         {
-            _equipmentStatus.Text = "HIO115 • perfil aguardando";
+            PlatformUi.UpdateStatusChip(
+                _equipmentStatus,
+                "PERFIL • AGUARDANDO",
+                PlatformStatusTone.Disabled);
             _profileFooter.Text = "Perfil: aguardando";
             PlatformUi.UpdateStatusChip(
                 _safetyStatus,
@@ -552,7 +582,12 @@ internal sealed class IndustrialPlatformForm : Form
             return;
         }
 
-        _equipmentStatus.Text = $"{session.DeviceProfile.DisplayName}\r\n{session.Profile.DisplayName}";
+        PlatformUi.UpdateStatusChip(
+            _equipmentStatus,
+            $"PERFIL • {session.Profile.DisplayName}",
+            PlatformStatusTone.Active);
+        _equipmentStatus.AccessibleDescription =
+            $"{session.DeviceProfile.DisplayName}; perfil {session.Profile.DisplayName}; sessão offline";
         _profileFooter.Text = $"Perfil: {session.Profile.DisplayName}";
         SimulationSignalDefinition? safety = session.FindSignal("SafetyChain");
         if (safety is null)
@@ -602,6 +637,11 @@ internal sealed class IndustrialPlatformForm : Form
         _body.BackColor = palette.Background;
         _content.BackColor = palette.Background;
         _sidebar.BackColor = palette.Surface;
+        Control? sidebarDivider = _sidebar.Controls.Find("sidebarStatusDivider", true).FirstOrDefault();
+        if (sidebarDivider is not null)
+        {
+            sidebarDivider.BackColor = palette.Border;
+        }
         foreach (Control child in _shell.Controls)
         {
             if (child.Name is "industrialHeader" or "industrialStatusBar")
@@ -611,7 +651,6 @@ internal sealed class IndustrialPlatformForm : Form
         }
 
         _navCaption.ForeColor = palette.TextMuted;
-        _equipmentStatus.ForeColor = palette.TextSecondary;
         _themeSelector.BackColor = palette.Field;
         _themeSelector.ForeColor = palette.TextPrimary;
         _themeSelector.ApplyTheme();
@@ -629,19 +668,24 @@ internal sealed class IndustrialPlatformForm : Form
         }
 
         PlatformUi.UpdateStatusChip(_offlineStatus, "OFFLINE • EM MEMÓRIA", PlatformStatusTone.Offline);
-        PlatformUi.UpdateStatusChip(_sidebarMode, _compactNavigation ? "OFF" : "OFFLINE • FÍSICA BLOQUEADA", PlatformStatusTone.Offline);
+        PlatformUi.UpdateStatusChip(_sidebarMode, _compactNavigation ? "OFF" : "FÍSICA BLOQUEADA", PlatformStatusTone.Offline);
         PlatformUi.UpdateStatusChip(
             _modeStatus,
-            ReferenceEquals(_activeButton, _testerButton)
+            ReferenceEquals(_activeButton, _homeButton)
+                ? "VISÃO GERAL"
+                : ReferenceEquals(_activeButton, _testerButton)
                 ? "MODO: TESTADOR"
                 : ReferenceEquals(_activeButton, _simulatorButton)
                     ? "MODO: SIMULADOR"
                     : "MODO NÃO SELECIONADO",
-            ReferenceEquals(_activeButton, _testerButton)
+            ReferenceEquals(_activeButton, _homeButton)
+                ? PlatformStatusTone.Normal
+                : ReferenceEquals(_activeButton, _testerButton)
                 ? PlatformStatusTone.Active
                 : ReferenceEquals(_activeButton, _simulatorButton)
                     ? PlatformStatusTone.Simulated
                     : PlatformStatusTone.Disabled);
+        PlatformUi.StyleButton(_homeButton, selected: ReferenceEquals(_activeButton, _homeButton));
         PlatformUi.StyleButton(_testerButton, selected: ReferenceEquals(_activeButton, _testerButton));
         PlatformUi.StyleButton(_simulatorButton, selected: ReferenceEquals(_activeButton, _simulatorButton));
         _tester?.ApplyTheme();
@@ -663,11 +707,38 @@ internal sealed class IndustrialPlatformForm : Form
         if (_header.Controls.Find("industrialHeaderPrimary", searchAllChildren: true)
                 .FirstOrDefault() is TableLayoutPanel primary)
         {
-            primary.ColumnStyles[0].Width = compact ? 100F : 67F;
-            primary.ColumnStyles[1].Width = compact ? 0F : 33F;
+            primary.ColumnStyles[0].Width = 100F;
+        }
+
+        if (_header.Controls.Find("industrialHeaderStatuses", searchAllChildren: true)
+                .FirstOrDefault() is TableLayoutPanel statuses)
+        {
+            statuses.ColumnStyles[0].Width = compact ? 33.33F : 25F;
+            statuses.ColumnStyles[1].Width = compact ? 33.33F : 25F;
+            statuses.ColumnStyles[2].Width = compact ? 0F : 25F;
+            statuses.ColumnStyles[3].Width = compact ? 33.34F : 25F;
         }
 
         HeaderLayoutMetrics headerMetrics = CalculateHeaderLayoutMetrics(dpi, compact);
+        if (_header.Controls.Find("industrialHeaderIdentity", searchAllChildren: true)
+                .FirstOrDefault() is TableLayoutPanel identity)
+        {
+            int titleRowHeight = Math.Min(
+                headerMetrics.PrimaryHeight,
+                TextRenderer.MeasureText(
+                    _brandTitle.Text,
+                    _brandTitle.Font,
+                    Size.Empty,
+                    TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Height
+                    + ScaleLogicalMetric(IndustrialSpacing.Xs, dpi));
+            identity.RowStyles[0].SizeType = SizeType.Absolute;
+            identity.RowStyles[0].Height = titleRowHeight;
+            identity.RowStyles[1].SizeType = SizeType.Absolute;
+            identity.RowStyles[1].Height = compact
+                ? 0F
+                : Math.Max(0, headerMetrics.PrimaryHeight - titleRowHeight);
+        }
+
         _header.RowStyles[0].SizeType = SizeType.Absolute;
         _header.RowStyles[0].Height = headerMetrics.PrimaryHeight;
         _header.RowStyles[1].SizeType = SizeType.Absolute;
@@ -680,10 +751,15 @@ internal sealed class IndustrialPlatformForm : Form
             ? new Padding(IndustrialSpacing.Sm)
             : new Padding(IndustrialSpacing.Md);
         _navCaption.Visible = !compact;
+        ConfigureNavigationButton(_homeButton, compact ? "H" : "INÍCIO", width);
         ConfigureNavigationButton(_testerButton, compact ? "T" : "TESTADOR", width);
         ConfigureNavigationButton(_simulatorButton, compact ? "S" : "SIMULADOR", width);
         _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
-        _sidebarMode.Text = compact ? "OFF" : "■ OFFLINE • FÍSICA BLOQUEADA";
+        if (_sidebar.Controls.Find("sidebarStatusDivider", true).FirstOrDefault() is Control divider)
+        {
+            divider.Width = Math.Max(40, width - _sidebar.Padding.Horizontal);
+        }
+        _sidebarMode.Text = compact ? "OFF" : "FÍSICA BLOQUEADA";
 
         UpdateWelcomeLayout(logicalWidth);
 
@@ -750,7 +826,8 @@ internal sealed class IndustrialPlatformForm : Form
         }
 
         foreach (Label label in EnumerateControls(_welcome).OfType<Label>()
-                     .Where(label => label.BorderStyle != BorderStyle.FixedSingle))
+                     .Where(label => label.Tag is not PlatformStatusTone
+                         && label.BorderStyle != BorderStyle.FixedSingle))
         {
             label.ForeColor = label.Font.Bold ? palette.TextPrimary : palette.TextSecondary;
         }
@@ -804,7 +881,7 @@ internal sealed class IndustrialPlatformForm : Form
                 _brandContext.Font,
                 Size.Empty,
                 TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Height;
-        int identityHeight = titleHeight + contextHeight;
+        int identityHeight = titleHeight + contextHeight + ScaleLogicalMetric(IndustrialSpacing.Xs, dpi);
         int themeHeight = Math.Max(_themeSelector.Height, _themeSelector.PreferredHeight)
             + _themeSelector.Margin.Vertical;
         int primaryHeight = Math.Max(
@@ -998,19 +1075,20 @@ internal static class PlatformUi
         label.BackColor = background;
         label.ForeColor = foreground;
         label.AccessibleName = text;
+        label.Tag = tone;
     }
 
     private static (string Symbol, Color Background, Color Foreground) StatusAppearance(
         PlatformStatusTone tone) => tone switch
         {
-            PlatformStatusTone.Normal => ("OK", IndustrialTheme.Palette.SuccessSurface, Success),
-            PlatformStatusTone.Attention => ("!", IndustrialTheme.Palette.WarningSurface, Warning),
-            PlatformStatusTone.Fault => ("X", IndustrialTheme.Palette.DangerSurface, Danger),
-            PlatformStatusTone.Active => (">", IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
-            PlatformStatusTone.Disabled => ("-", Surface, IndustrialTheme.Palette.Disabled),
-            PlatformStatusTone.Simulated => ("S", IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
-            PlatformStatusTone.Offline => ("■", IndustrialTheme.Palette.OfflineSurface, IndustrialTheme.Palette.Offline),
-            _ => ("•", ButtonSurface, Text)
+            PlatformStatusTone.Normal => (string.Empty, IndustrialTheme.Palette.SuccessSurface, Success),
+            PlatformStatusTone.Attention => (string.Empty, IndustrialTheme.Palette.WarningSurface, Warning),
+            PlatformStatusTone.Fault => (string.Empty, IndustrialTheme.Palette.DangerSurface, Danger),
+            PlatformStatusTone.Active => (string.Empty, IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
+            PlatformStatusTone.Disabled => (string.Empty, Surface, IndustrialTheme.Palette.Disabled),
+            PlatformStatusTone.Simulated => (string.Empty, IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
+            PlatformStatusTone.Offline => (string.Empty, IndustrialTheme.Palette.OfflineSurface, IndustrialTheme.Palette.Offline),
+            _ => (string.Empty, ButtonSurface, Text)
         };
 
     internal static Label Label(string text, bool heading = false) => new()

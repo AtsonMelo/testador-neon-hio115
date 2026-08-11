@@ -197,7 +197,7 @@ internal sealed class IndustrialTesterControl : UserControl
             WrapContents = true,
             AccessibleName = "Ações do Testador"
         };
-        Button refreshPorts = PlatformUi.Button("PORTAS BLOQUEADAS", "refreshPortsButton");
+        Button refreshPorts = PlatformUi.Button("PORTAS", "refreshPortsButton");
         refreshPorts.Enabled = false;
         _toolTip.SetToolTip(refreshPorts, "Indisponível no host estritamente offline.");
         _toolTip.SetToolTip(_port, "Valor informativo do perfil. Nenhuma porta é enumerada ou aberta.");
@@ -209,7 +209,7 @@ internal sealed class IndustrialTesterControl : UserControl
         PlatformUi.SetButtonTone(cancel, PlatformButtonTone.Danger);
         foreach (Button button in new[] { refreshPorts, validate, identify, discover, cancel })
         {
-            button.Width = 148;
+            button.Width = 172;
             button.Height = IndustrialSpacing.FieldHeight;
             button.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
             actions.Controls.Add(button);
@@ -668,28 +668,28 @@ internal sealed class IndustrialTesterControl : UserControl
         FlowLayoutPanel row = new()
         {
             Width = 900,
-            Height = 50,
+            Height = 44,
             BackColor = PlatformUi.Surface,
             Margin = new Padding(3, 3, 3, 6),
-            Padding = new Padding(10, 5, 10, 5),
+            Padding = new Padding(10, 4, 10, 4),
             WrapContents = false,
             Tag = "signal-row"
         };
         Label name = PlatformUi.Label(registerAlias, heading: true);
         name.Width = 100;
-        name.Height = 34;
+        name.Height = 28;
         name.AutoSize = false;
         name.TextAlign = ContentAlignment.MiddleLeft;
         Label process = PlatformUi.Label(processAlias);
         process.Name = processAliasControlName;
         process.Width = 270;
-        process.Height = 34;
+        process.Height = 28;
         process.AutoSize = false;
         process.AutoEllipsis = true;
         process.AccessibleDescription = processAlias;
         process.TextAlign = ContentAlignment.MiddleLeft;
         value.Width = 150;
-        value.Height = 34;
+        value.Height = 28;
         value.AutoSize = false;
         value.TextAlign = ContentAlignment.MiddleLeft;
         value.ForeColor = PlatformUi.Success;
@@ -731,7 +731,9 @@ internal sealed class IndustrialTesterControl : UserControl
         IndustrialPalette palette = IndustrialTheme.Palette;
         foreach (Control child in root.Controls)
         {
-            child.ForeColor = child is Label label && label.BorderStyle != BorderStyle.FixedSingle
+            child.ForeColor = child is Label label
+                && label.Tag is not PlatformStatusTone
+                && label.BorderStyle != BorderStyle.FixedSingle
                 ? palette.TextSecondary
                 : child.ForeColor;
             switch (child)
@@ -788,6 +790,12 @@ internal sealed class IndustrialTesterControl : UserControl
             e.Bounds,
             selected ? palette.SelectedText : palette.TextSecondary,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        if (selected)
+        {
+            using SolidBrush accent = new(palette.Accent);
+            e.Graphics.FillRectangle(accent, e.Bounds.Left, e.Bounds.Bottom - 3, e.Bounds.Width, 3);
+        }
+
         if (selected && _tabs.Focused)
         {
             e.DrawFocusRectangle();
