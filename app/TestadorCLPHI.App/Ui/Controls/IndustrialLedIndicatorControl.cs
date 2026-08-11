@@ -1,29 +1,32 @@
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Controls;
 
 public sealed class IndustrialLedIndicatorControl : Control
 {
-    private Image? _onImage;
-    private Image? _offImage;
     private bool _isOn;
     private string _labelText = "DI";
+    private string? _onImagePath;
+    private string? _offImagePath;
 
     public IndustrialLedIndicatorControl()
     {
         SetStyle(
             ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.ApplyThemingImplicitly |
             ControlStyles.OptimizedDoubleBuffer |
             ControlStyles.ResizeRedraw |
             ControlStyles.UserPaint,
             true);
-
-        Width = 64;
-        Height = 72;
-        BackColor = Color.FromArgb(24, 32, 42);
-        ForeColor = Color.FromArgb(203, 213, 225);
+        Size = new Size(72, 80);
+        MinimumSize = new Size(64, 72);
         Margin = new Padding(0, 0, 14, 0);
+        Font = IndustrialTypography.CaptionStrong();
+        TabStop = false;
+        AccessibleRole = AccessibleRole.Graphic;
+        UpdateAccessibility();
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -33,6 +36,7 @@ public sealed class IndustrialLedIndicatorControl : Control
         set
         {
             _labelText = string.IsNullOrWhiteSpace(value) ? "DI" : value.Trim();
+            UpdateAccessibility();
             Invalidate();
         }
     }
@@ -49,64 +53,55 @@ public sealed class IndustrialLedIndicatorControl : Control
             }
 
             _isOn = value;
+            UpdateAccessibility();
             Invalidate();
         }
     }
 
     public void LoadImages(string onImagePath, string offImagePath)
     {
-        _onImage?.Dispose();
-        _offImage?.Dispose();
-
-        _onImage = File.Exists(onImagePath) ? new Bitmap(onImagePath) : null;
-        _offImage = File.Exists(offImagePath) ? new Bitmap(offImagePath) : null;
-
+        _onImagePath = onImagePath;
+        _offImagePath = offImagePath;
+        _ = IndustrialAssetCache.Get(onImagePath);
+        _ = IndustrialAssetCache.Get(offImagePath);
         Invalidate();
     }
 
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-
         Graphics graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.HighQuality;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
         graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
         graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        graphics.CompositingQuality = CompositingQuality.HighQuality;
+        graphics.Clear(IndustrialTheme.Palette.Surface);
 
-        graphics.Clear(BackColor);
-
-        Image? image = _isOn ? _onImage : _offImage;
-
-        int imageSize = Math.Min(52, Math.Max(40, Height - 20));
-        Rectangle imageRect = new((Width - imageSize) / 2, 0, imageSize, imageSize);
-
-        if (image is not null)
+        Rectangle led = IndustrialControlDrawing.CenteredSquare(ClientRectangle, 3, 24, 50);
+        Image? image = IndustrialAssetCache.Get(_isOn ? _onImagePath : _offImagePath);
+        if (image is null)
         {
-            graphics.DrawImage(image, imageRect);
+            IndustrialControlDrawing.DrawLed(graphics, led, _isOn, Enabled);
+        }
+        else
+        {
+            graphics.DrawImage(image, led);
         }
 
-        using Font labelFont = new(Font.FontFamily, 8.0f, FontStyle.Bold);
-        using Brush labelBrush = new SolidBrush(ForeColor);
-        using StringFormat center = new()
-        {
-            Alignment = StringAlignment.Center,
-            LineAlignment = StringAlignment.Center
-        };
-
-        graphics.DrawString(_labelText, labelFont, labelBrush, new RectangleF(0, Height - 18, Width, 16), center);
+        Rectangle label = new(2, Height - 20, Math.Max(1, Width - 4), 18);
+        TextRenderer.DrawText(
+            graphics,
+            $"{_labelText} {(_isOn ? "ON" : "OFF")}",
+            Font,
+            label,
+            Enabled
+                ? (_isOn ? IndustrialTheme.Palette.Success : IndustrialTheme.Palette.TextSecondary)
+                : IndustrialTheme.Palette.Disabled,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
     }
 
-    protected override void Dispose(bool disposing)
+    private void UpdateAccessibility()
     {
-        if (disposing)
-        {
-            _onImage?.Dispose();
-            _offImage?.Dispose();
-            _onImage = null;
-            _offImage = null;
-        }
-
-        base.Dispose(disposing);
+        AccessibleName = $"Indicador {_labelText}";
+        AccessibleDescription = $"{_labelText}: {(_isOn ? "ligado" : "desligado")}";
     }
 }

@@ -1,103 +1,217 @@
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Controls;
 
 public sealed class IndustrialPushButtonControl : Control
 {
-    private Image? _buttonImage;
+    private bool _active;
+    private bool _hovered;
+    private bool _pressed;
+    private string _title = "DO00";
+    private string _description = "DO00 -> DI00 + DI04";
+    private string? _buttonImagePath;
 
     public IndustrialPushButtonControl()
     {
         SetStyle(
             ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.ApplyThemingImplicitly |
             ControlStyles.OptimizedDoubleBuffer |
             ControlStyles.ResizeRedraw |
+            ControlStyles.Selectable |
             ControlStyles.UserPaint,
             true);
-
-        BackColor = Color.FromArgb(42, 52, 64);
-        ForeColor = Color.FromArgb(226, 232, 240);
-        Size = new Size(132, 92);
+        Size = new Size(148, 108);
+        MinimumSize = new Size(132, 92);
+        Font = IndustrialTypography.BodyStrong();
+        Cursor = Cursors.Hand;
+        TabStop = true;
+        AccessibleRole = AccessibleRole.PushButton;
+        UpdateAccessibility();
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string Title { get; set; } = "D000";
+    public string Title
+    {
+        get => _title;
+        set
+        {
+            _title = string.IsNullOrWhiteSpace(value) ? "DO00" : value.Trim();
+            UpdateAccessibility();
+            Invalidate();
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string Description { get; set; } = "D000 -> DI00 + DI04";
+    public string Description
+    {
+        get => _description;
+        set
+        {
+            _description = value?.Trim() ?? string.Empty;
+            UpdateAccessibility();
+            Invalidate();
+        }
+    }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string? ButtonImagePath { get; set; }
+    public bool IsActive
+    {
+        get => _active;
+        set
+        {
+            if (_active == value)
+            {
+                return;
+            }
+
+            _active = value;
+            UpdateAccessibility();
+            Invalidate();
+        }
+    }
+
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public string? ButtonImagePath
+    {
+        get => _buttonImagePath;
+        set
+        {
+            _buttonImagePath = value;
+            Invalidate();
+        }
+    }
+
+    protected override bool IsInputKey(Keys keyData) =>
+        keyData is Keys.Space or Keys.Enter || base.IsInputKey(keyData);
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        _hovered = true;
+        Invalidate();
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _hovered = false;
+        _pressed = false;
+        Invalidate();
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+        if (Enabled && e.Button == MouseButtons.Left)
+        {
+            Focus();
+            _pressed = true;
+            Invalidate();
+        }
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        _pressed = false;
+        Invalidate();
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (Enabled && e.KeyCode is Keys.Space or Keys.Enter)
+        {
+            _pressed = true;
+            e.Handled = true;
+            Invalidate();
+        }
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+        if (_pressed && e.KeyCode is Keys.Space or Keys.Enter)
+        {
+            _pressed = false;
+            e.Handled = true;
+            Invalidate();
+            OnClick(EventArgs.Empty);
+        }
+    }
+
+    protected override void OnGotFocus(EventArgs e)
+    {
+        base.OnGotFocus(e);
+        Invalidate();
+    }
+
+    protected override void OnLostFocus(EventArgs e)
+    {
+        base.OnLostFocus(e);
+        _pressed = false;
+        Invalidate();
+    }
 
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-
         Graphics graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.HighQuality;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
         graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
         graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        graphics.Clear(BackColor);
+        graphics.Clear(IndustrialTheme.Palette.Background);
+        Rectangle card = ClientRectangle;
+        card.Inflate(-1, -1);
+        IndustrialControlDrawing.DrawCard(graphics, card, _hovered, _pressed, Enabled);
 
-        using Font titleFont = new(Font.FontFamily, 9.0f, FontStyle.Bold);
-        using Font descFont = new(Font.FontFamily, 7.2f, FontStyle.Regular);
-        using Brush titleBrush = new SolidBrush(Color.White);
-        using Brush descBrush = new SolidBrush(Color.FromArgb(205, 225, 235, 245));
-        using Pen borderPen = new(Color.FromArgb(72, 96, 116, 136));
-        using Brush cardBrush = new SolidBrush(Color.FromArgb(32, 42, 52, 64));
-
-        Rectangle cardRect = new(0, 0, Width - 1, Height - 1);
-        graphics.FillRectangle(cardBrush, cardRect);
-        graphics.DrawRectangle(borderPen, cardRect);
-
-        using StringFormat center = new()
+        Rectangle title = new(5, 6, Math.Max(1, Width - 10), 20);
+        TextRenderer.DrawText(
+            graphics,
+            $"{_title}{(_active ? " • ATIVO" : string.Empty)}",
+            Font,
+            title,
+            Enabled ? IndustrialTheme.Palette.TextPrimary : IndustrialTheme.Palette.Disabled,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        Rectangle button = IndustrialControlDrawing.CenteredSquare(
+            ClientRectangle,
+            _pressed ? 31 : 29,
+            28,
+            50);
+        Image? image = IndustrialAssetCache.Get(_buttonImagePath);
+        if (image is null)
         {
-            Alignment = StringAlignment.Center,
-            LineAlignment = StringAlignment.Center
-        };
-
-        graphics.DrawString(Title, titleFont, titleBrush, new RectangleF(0, 5, Width, 16), center);
-
-        Image? image = GetImage();
-        int imageSize = Math.Min(52, Math.Max(36, Height - 44));
-        Rectangle imageRect = new((Width - imageSize) / 2, 24, imageSize, imageSize);
-
-        if (image is not null)
+            IndustrialControlDrawing.DrawPushButton(
+                graphics,
+                button,
+                IndustrialTheme.Palette.Accent,
+                _active,
+                _hovered,
+                _pressed,
+                Enabled);
+        }
+        else
         {
-            graphics.DrawImage(image, imageRect);
+            graphics.DrawImage(image, button);
         }
 
-        graphics.DrawString(Description, descFont, descBrush, new RectangleF(0, Height - 17, Width, 14), center);
+        Rectangle description = new(6, Height - 24, Math.Max(1, Width - 12), 18);
+        TextRenderer.DrawText(
+            graphics,
+            _description,
+            Font,
+            description,
+            IndustrialTheme.Palette.TextSecondary,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        IndustrialControlDrawing.DrawFocus(graphics, card, Focused);
     }
 
-    protected override void Dispose(bool disposing)
+    private void UpdateAccessibility()
     {
-        if (disposing)
-        {
-            _buttonImage?.Dispose();
-            _buttonImage = null;
-        }
-
-        base.Dispose(disposing);
-    }
-
-    private Image? GetImage()
-    {
-        if (_buttonImage is not null)
-        {
-            return _buttonImage;
-        }
-
-        if (string.IsNullOrWhiteSpace(ButtonImagePath) || !File.Exists(ButtonImagePath))
-        {
-            return null;
-        }
-
-        using FileStream stream = File.OpenRead(ButtonImagePath);
-        using Image image = Image.FromStream(stream);
-        _buttonImage = new Bitmap(image);
-
-        return _buttonImage;
+        AccessibleName = $"Botoeira {_title}";
+        AccessibleDescription = $"{_description}; estado {(_active ? "ativo" : "inativo")}";
     }
 }

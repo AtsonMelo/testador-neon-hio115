@@ -1,9 +1,12 @@
 using System.Reflection;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -31,6 +34,8 @@ internal static class IndustrialPlatformUiValidator
             ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
+            ("controles industriais expoem estado e acessibilidade", IndustrialControlsExposeAccessibleStates),
+            ("controles industriais nao apresentam crescimento GDI continuo", IndustrialControlsKeepGdiResourcesStable),
             ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
             ("ciclo de vida do launcher industrial permanece offline", IndustrialLauncherLifecycleStaysOffline),
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
@@ -237,6 +242,69 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool ThemeContrastIsAccessible(IndustrialPalette palette) =>
         IndustrialTheme.CriticalContrastRatios(palette).Values.All(ratio => ratio >= 4.5D);
+
+    private static bool IndustrialControlsExposeAccessibleStates()
+    {
+        using AssetLedIndicatorControl assetLed = new() { LabelText = "DI00", IsOn = true };
+        using IndustrialLedIndicatorControl led = new() { LabelText = "DI01", IsOn = false };
+        using AssetPushButtonControl assetButton = new() { LabelText = "DO00", IsActive = true };
+        using IndustrialPushButtonControl button = new() { Title = "DO01", IsActive = false };
+        using EmergencyStopButtonControl emergency = new();
+        int clicks = 0;
+        assetButton.Click += (_, _) => clicks++;
+        InvokeKey(assetButton, "OnKeyDown", Keys.Space);
+        InvokeKey(assetButton, "OnKeyUp", Keys.Space);
+        return assetLed.AccessibleDescription?.Contains("ligado", StringComparison.OrdinalIgnoreCase) == true
+            && led.AccessibleDescription?.Contains("desligado", StringComparison.OrdinalIgnoreCase) == true
+            && assetButton.TabStop
+            && button.TabStop
+            && emergency.TabStop
+            && !assetLed.TabStop
+            && !led.TabStop
+            && clicks == 1;
+    }
+
+    private static bool IndustrialControlsKeepGdiResourcesStable()
+    {
+        RenderIndustrialControls(12);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        int afterWarmup = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
+        RenderIndustrialControls(12);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        int afterRepeat = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
+        return afterWarmup > 0 && afterRepeat - afterWarmup <= 4;
+    }
+
+    private static void RenderIndustrialControls(int iterations)
+    {
+        for (int index = 0; index < iterations; index++)
+        {
+            using AssetLedIndicatorControl assetLed = new() { IsOn = index % 2 == 0 };
+            using IndustrialLedIndicatorControl led = new() { IsOn = index % 2 != 0 };
+            using AssetPushButtonControl assetButton = new() { IsActive = index % 2 == 0 };
+            using IndustrialPushButtonControl button = new() { IsActive = index % 2 != 0 };
+            using EmergencyStopButtonControl emergency = new();
+            foreach (Control control in new Control[] { assetLed, led, assetButton, button, emergency })
+            {
+                control.Size = new Size(control.Width + (index % 3), control.Height + (index % 2));
+                using Bitmap bitmap = new(Math.Max(1, control.Width), Math.Max(1, control.Height));
+                control.DrawToBitmap(bitmap, control.ClientRectangle);
+            }
+        }
+    }
+
+    private static void InvokeKey(Control control, string methodName, Keys key)
+    {
+        MethodInfo? method = control.GetType().GetMethod(
+            methodName,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        method?.Invoke(control, [new KeyEventArgs(key)]);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern int GetGuiResources(IntPtr process, int flags);
 
     private static bool Layout3HostLoadsLayout3HostControl()
     {
