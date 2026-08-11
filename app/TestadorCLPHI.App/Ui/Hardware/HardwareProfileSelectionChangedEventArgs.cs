@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Hardware;
+
 namespace TestadorCLPHI.App.Ui.Hardware;
 
 public sealed class HardwareProfileSelectionChangedEventArgs : EventArgs

@@ -1,6 +1,4 @@
-using TestadorCLPHI.App.Hardware;
-
-namespace TestadorCLPHI.App.Ui.Hardware;
+namespace TestadorCLPHI.App.Hardware;
 
 public sealed class SelectedHardwareProfile
 {
