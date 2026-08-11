@@ -611,7 +611,13 @@ internal sealed class IndustrialTesterControl : UserControl
         Height = 30
     };
 
-    private static TabPage Page(string text) => new(text) { BackColor = PlatformUi.Background, ForeColor = PlatformUi.Text, Padding = new Padding(10) };
+    private static TabPage Page(string text) => new(text)
+    {
+        BackColor = PlatformUi.Background,
+        ForeColor = PlatformUi.Text,
+        Padding = new Padding(IndustrialSpacing.Md),
+        AccessibleName = text
+    };
 
     private string GetProcessAlias(
         SimulationIoDirection direction,
@@ -776,6 +782,10 @@ internal sealed class IndustrialTesterControl : UserControl
             e.Bounds,
             selected ? palette.SelectedText : palette.TextSecondary,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        if (selected && _tabs.Focused)
+        {
+            e.DrawFocusRectangle();
+        }
     }
 
     private void UpdateLogIncrementally(IReadOnlyList<string> lines)

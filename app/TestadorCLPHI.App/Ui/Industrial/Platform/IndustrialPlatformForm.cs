@@ -89,14 +89,16 @@ internal sealed class IndustrialPlatformForm : Form
         Dock = DockStyle.Fill,
         Margin = Padding.Empty,
         TextAlign = ContentAlignment.MiddleLeft,
-        Font = IndustrialTypography.Caption()
+        Font = IndustrialTypography.Caption(),
+        AccessibleName = "Contexto operacional offline"
     };
     private readonly Label _navCaption = new()
     {
         Text = "NAVEGAÇÃO",
         AutoSize = false,
         Height = 30,
-        TextAlign = ContentAlignment.MiddleLeft
+        TextAlign = ContentAlignment.MiddleLeft,
+        AccessibleName = "Navegação principal"
     };
     private readonly Label _sidebarMode = PlatformUi.StatusChip(
         "OFFLINE",
@@ -333,6 +335,8 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebarMode.AutoSize = false;
         _sidebarMode.Height = 34;
         _sidebarMode.Margin = new Padding(0, IndustrialSpacing.Xl, 0, 0);
+        _sidebarMode.AccessibleDescription =
+            "Status informativo; não é uma ação. A comunicação física permanece bloqueada";
         _sidebar.Controls.Add(_sidebarMode);
         _toolTip.SetToolTip(_testerButton, "Abrir o Testador: leitura, diagnóstico e resultados offline");
         _toolTip.SetToolTip(_simulatorButton, "Abrir o Simulador: cenários e sinais em memória");
@@ -839,7 +843,8 @@ internal sealed class IndustrialPlatformForm : Form
         TextAlign = ContentAlignment.MiddleLeft,
         AutoEllipsis = true,
         Font = IndustrialTypography.Caption(),
-        Padding = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0)
+        Padding = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0),
+        AccessibleName = text
     };
 }
 

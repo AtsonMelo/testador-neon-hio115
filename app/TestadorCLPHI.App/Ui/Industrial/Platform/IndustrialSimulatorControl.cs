@@ -8,8 +8,20 @@ namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 internal sealed class IndustrialSimulatorControl : UserControl
 {
     private readonly IndustrialPlatformSession _session;
-    private readonly ComboBox _profiles = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-    private readonly ComboBox _scenarios = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
+    private readonly ComboBox _profiles = new()
+    {
+        DropDownStyle = ComboBoxStyle.DropDownList,
+        Width = 220,
+        AccessibleName = "Perfil de simulação",
+        AccessibleDescription = "Seleciona o processo simulado sem habilitar transporte físico"
+    };
+    private readonly ComboBox _scenarios = new()
+    {
+        DropDownStyle = ComboBoxStyle.DropDownList,
+        Width = 220,
+        AccessibleName = "Cenário de simulação",
+        AccessibleDescription = "Seleciona um cenário offline do perfil ativo"
+    };
     private readonly Label _state = PlatformUi.StatusChip(
         "AGUARDANDO ESTADO",
         PlatformStatusTone.Disabled,
@@ -147,6 +159,8 @@ internal sealed class IndustrialSimulatorControl : UserControl
         apply.Margin = new Padding(3, 12, 3, 3);
         apply.Click += (_, _) => ApplyScenario();
         reset.Click += (_, _) => ResetSimulation();
+        apply.AccessibleDescription = "Aplica o cenário selecionado somente à simulação em memória";
+        reset.AccessibleDescription = "Restaura os valores simulados do perfil ativo";
         sidebar.Controls.Add(apply);
         sidebar.Controls.Add(reset);
         Label ready = PlatformUi.StatusChip(
@@ -154,11 +168,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
             PlatformStatusTone.Simulated,
             "simulationReadyStatus");
         ready.Margin = new Padding(3, 14, 3, 6);
+        ready.AccessibleDescription = "Simulação pronta; nenhuma comunicação física ativa";
         sidebar.Controls.Add(ready);
         sidebar.Controls.Add(PlatformUi.Label("Estado", heading: true));
         _state.Width = 240;
         _state.Height = 32;
         _state.AutoSize = false;
+        _state.AccessibleDescription = "Estado operacional projetado pela simulação";
         sidebar.Controls.Add(_state);
         sidebar.Controls.Add(PlatformUi.Label("Segurança derivada", heading: true));
         _safety.Width = 240;
