@@ -396,7 +396,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
             hierarchy.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
             hierarchy.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
             hierarchy.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            Label label = PlatformUi.Label((definition.Label ?? definition.Id!).ToUpperInvariant());
+            Label label = PlatformUi.Label(definition.Label ?? definition.Id!);
             label.Dock = DockStyle.Fill;
             label.Margin = Padding.Empty;
             label.AutoEllipsis = true;
