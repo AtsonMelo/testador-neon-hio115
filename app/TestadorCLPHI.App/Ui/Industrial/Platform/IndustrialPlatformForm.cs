@@ -753,8 +753,12 @@ internal static class PlatformUi
         {
             Name = name ?? string.Empty,
             AutoSize = true,
-            Padding = new Padding(8, 4, 8, 4),
-            Margin = new Padding(4),
+            Padding = new Padding(
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Xs,
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Xs),
+            Margin = new Padding(IndustrialSpacing.Xs),
             BorderStyle = BorderStyle.FixedSingle,
             Font = IndustrialTypography.CaptionStrong(),
             TextAlign = ContentAlignment.MiddleCenter,
@@ -792,7 +796,11 @@ internal static class PlatformUi
         AutoSize = true,
         ForeColor = heading ? Text : Muted,
         Font = heading ? IndustrialTypography.Section() : IndustrialTypography.Body(),
-        Margin = new Padding(3, 6, 3, 4)
+        Margin = new Padding(
+            IndustrialSpacing.Xs,
+            IndustrialSpacing.Sm,
+            IndustrialSpacing.Xs,
+            IndustrialSpacing.Xs)
     };
 
     internal static GroupBox Group(string text) => new()
@@ -800,9 +808,41 @@ internal static class PlatformUi
         Text = text,
         ForeColor = Text,
         BackColor = Surface,
-        Padding = new Padding(10),
-        Margin = new Padding(5)
+        Padding = new Padding(IndustrialSpacing.Md),
+        Margin = new Padding(IndustrialSpacing.Xs)
     };
+
+    internal static Panel Card(string name)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        return new Panel
+        {
+            Name = name,
+            BackColor = palette.SurfaceElevated,
+            ForeColor = palette.TextPrimary,
+            Padding = new Padding(IndustrialSpacing.Xl),
+            Margin = new Padding(IndustrialSpacing.Sm),
+            MinimumSize = new Size(IndustrialSpacing.CardMinimumWidth, 0),
+            AccessibleRole = AccessibleRole.Grouping
+        };
+    }
+
+    internal static Label PageTitle(string text, string accessibleName) => new()
+    {
+        Text = text,
+        AutoSize = true,
+        Font = IndustrialTypography.Title(),
+        ForeColor = IndustrialTheme.Palette.TextPrimary,
+        Margin = Padding.Empty,
+        AccessibleName = accessibleName
+    };
+
+    internal static void StyleTabs(TabControl tabs)
+    {
+        tabs.Font = IndustrialTypography.BodyStrong();
+        tabs.ItemSize = new Size(150, IndustrialSpacing.TabHeight);
+        tabs.Padding = new Point(IndustrialSpacing.Md, IndustrialSpacing.Xs);
+    }
 
     internal static void StyleField(Control control)
     {
