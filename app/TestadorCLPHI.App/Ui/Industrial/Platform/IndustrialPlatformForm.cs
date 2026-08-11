@@ -1,5 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
@@ -201,17 +202,17 @@ internal enum PlatformStatusTone
 
 internal static class PlatformUi
 {
-    internal static readonly Color Background = Color.FromArgb(18, 24, 32);
-    internal static readonly Color Header = Color.FromArgb(24, 32, 42);
-    internal static readonly Color Surface = Color.FromArgb(31, 41, 52);
-    internal static readonly Color Field = Color.FromArgb(22, 30, 39);
-    internal static readonly Color ButtonSurface = Color.FromArgb(46, 58, 71);
-    internal static readonly Color Accent = Color.FromArgb(0, 122, 138);
-    internal static readonly Color Success = Color.FromArgb(58, 166, 102);
-    internal static readonly Color Warning = Color.FromArgb(225, 163, 46);
-    internal static readonly Color Danger = Color.FromArgb(210, 73, 73);
-    internal static readonly Color Text = Color.FromArgb(229, 235, 241);
-    internal static readonly Color Muted = Color.FromArgb(160, 174, 190);
+    internal static Color Background => IndustrialTheme.Palette.Background;
+    internal static Color Header => IndustrialTheme.Palette.Surface;
+    internal static Color Surface => IndustrialTheme.Palette.SurfaceElevated;
+    internal static Color Field => IndustrialTheme.Palette.Field;
+    internal static Color ButtonSurface => IndustrialTheme.Palette.SurfaceInteractive;
+    internal static Color Accent => IndustrialTheme.Palette.Accent;
+    internal static Color Success => IndustrialTheme.Palette.Success;
+    internal static Color Warning => IndustrialTheme.Palette.Warning;
+    internal static Color Danger => IndustrialTheme.Palette.Danger;
+    internal static Color Text => IndustrialTheme.Palette.TextPrimary;
+    internal static Color Muted => IndustrialTheme.Palette.TextSecondary;
 
     internal static Button Button(string text, string name, bool primary = false)
     {
@@ -219,21 +220,26 @@ internal static class PlatformUi
         {
             Text = text,
             Name = name,
-            Height = 36,
+            Height = IndustrialSpacing.InteractiveHeight,
             AutoSize = false,
             FlatStyle = FlatStyle.Flat,
             BackColor = primary ? Accent : ButtonSurface,
             ForeColor = Text,
-            Font = new Font("Segoe UI Semibold", 9F),
+            Font = IndustrialTypography.BodyStrong(),
             Cursor = Cursors.Hand,
             AccessibleName = text,
             TabStop = true
         };
-        button.FlatAppearance.BorderSize = 1;
-        button.FlatAppearance.BorderColor = primary ? Color.FromArgb(48, 169, 184) : Color.FromArgb(83, 99, 116);
+        button.FlatAppearance.BorderSize = IndustrialSpacing.BorderWidth;
+        button.FlatAppearance.BorderColor = primary
+            ? IndustrialTheme.Palette.AccentHover
+            : IndustrialTheme.Palette.BorderStrong;
         button.FlatAppearance.MouseOverBackColor = primary
-            ? Color.FromArgb(0, 143, 160)
-            : Color.FromArgb(58, 72, 87);
+            ? IndustrialTheme.Palette.AccentHover
+            : IndustrialTheme.Palette.SurfaceElevated;
+        button.FlatAppearance.MouseDownBackColor = primary
+            ? IndustrialTheme.Palette.AccentPressed
+            : IndustrialTheme.Palette.Surface;
         return button;
     }
 
@@ -242,16 +248,16 @@ internal static class PlatformUi
         PlatformStatusTone tone,
         string? name = null)
     {
-        (string symbol, Color color) = tone switch
+        (string symbol, Color background, Color foreground) = tone switch
         {
-            PlatformStatusTone.Normal => ("✓", Success),
-            PlatformStatusTone.Attention => ("!", Warning),
-            PlatformStatusTone.Fault => ("×", Danger),
-            PlatformStatusTone.Active => ("●", Accent),
-            PlatformStatusTone.Disabled => ("○", Muted),
-            PlatformStatusTone.Simulated => ("S", Accent),
-            PlatformStatusTone.Offline => ("■", ButtonSurface),
-            _ => ("•", ButtonSurface)
+            PlatformStatusTone.Normal => ("OK", IndustrialTheme.Palette.SuccessSurface, Success),
+            PlatformStatusTone.Attention => ("!", IndustrialTheme.Palette.WarningSurface, Warning),
+            PlatformStatusTone.Fault => ("X", IndustrialTheme.Palette.DangerSurface, Danger),
+            PlatformStatusTone.Active => (">", IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
+            PlatformStatusTone.Disabled => ("-", Surface, IndustrialTheme.Palette.Disabled),
+            PlatformStatusTone.Simulated => ("S", IndustrialTheme.Palette.SelectedSurface, IndustrialTheme.Palette.SelectedText),
+            PlatformStatusTone.Offline => ("■", IndustrialTheme.Palette.OfflineSurface, IndustrialTheme.Palette.Offline),
+            _ => ("•", ButtonSurface, Text)
         };
         return new Label
         {
@@ -261,9 +267,9 @@ internal static class PlatformUi
             Padding = new Padding(8, 4, 8, 4),
             Margin = new Padding(4),
             BorderStyle = BorderStyle.FixedSingle,
-            BackColor = color,
-            ForeColor = Text,
-            Font = new Font("Segoe UI Semibold", 8.5F),
+            BackColor = background,
+            ForeColor = foreground,
+            Font = IndustrialTypography.CaptionStrong(),
             TextAlign = ContentAlignment.MiddleCenter,
             AccessibleName = text
         };
@@ -274,7 +280,7 @@ internal static class PlatformUi
         Text = text,
         AutoSize = true,
         ForeColor = heading ? Text : Muted,
-        Font = heading ? new Font("Segoe UI Semibold", 11F) : new Font("Segoe UI", 9F),
+        Font = heading ? IndustrialTypography.Section() : IndustrialTypography.Body(),
         Margin = new Padding(3, 6, 3, 4)
     };
 

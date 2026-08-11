@@ -4,6 +4,7 @@ using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
@@ -24,6 +25,9 @@ internal static class IndustrialPlatformUiValidator
             ("rejeicao de argumento desconhecido permanece offline", UnknownArgumentStaysOffline),
             ("launcher industrial cria o host da plataforma", IndustrialLauncherCreatesPlatformHost),
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
+            ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
+            ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
+            ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
             ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
             ("ciclo de vida do launcher industrial permanece offline", IndustrialLauncherLifecycleStaysOffline),
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
@@ -178,6 +182,15 @@ internal static class IndustrialPlatformUiValidator
         return form.TesterModeButton.Text == "TESTADOR"
             && form.SimulatorModeButton.Text == "SIMULADOR";
     }
+
+    private static bool Ui2ThemeProvidesDarkAndLight() =>
+        IndustrialPalette.Dark.IsDark
+        && !IndustrialPalette.Light.IsDark
+        && IndustrialPalette.Dark.Background != IndustrialPalette.Light.Background
+        && IndustrialPalette.Dark.Accent != IndustrialPalette.Light.Accent;
+
+    private static bool ThemeContrastIsAccessible(IndustrialPalette palette) =>
+        IndustrialTheme.CriticalContrastRatios(palette).Values.All(ratio => ratio >= 4.5D);
 
     private static bool Layout3HostLoadsLayout3HostControl()
     {
