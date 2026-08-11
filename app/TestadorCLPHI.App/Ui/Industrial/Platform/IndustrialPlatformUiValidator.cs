@@ -77,6 +77,8 @@ internal static class IndustrialPlatformUiValidator
             ("Testador identifica fake sem transporte fisico", TesterIdentifiesFake),
             ("saida simulada usa contrato fechado e retorna OFF", SimulatedOutputIsMomentary),
             ("novas camadas nao dependem de API serial ou TCP", NewLayersHaveNoPhysicalTransportTypes),
+            ("grafo Core Application Desktop permanece aciclico", SharedAssemblyGraphIsAcyclic),
+            ("Desktop referencia explicitamente as camadas compartilhadas", DesktopReferencesSharedLayers),
             ("contadores simulados do ciclo canonico sao deterministicos", () =>
             {
                 canonicalCounters = CaptureCanonicalCounters();
@@ -798,6 +800,40 @@ internal static class IndustrialPlatformUiValidator
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
+    }
+
+    private static bool SharedAssemblyGraphIsAcyclic()
+    {
+        string coreName = typeof(SimulationEngine).Assembly.GetName().Name!;
+        string applicationName = typeof(IndustrialPlatformSession).Assembly.GetName().Name!;
+        string desktopName = typeof(IndustrialPlatformUiValidator).Assembly.GetName().Name!;
+        string[] coreReferences = typeof(SimulationEngine).Assembly
+            .GetReferencedAssemblies()
+            .Select(name => name.Name!)
+            .ToArray();
+        string[] applicationReferences = typeof(IndustrialPlatformSession).Assembly
+            .GetReferencedAssemblies()
+            .Select(name => name.Name!)
+            .ToArray();
+
+        return !coreReferences.Contains(applicationName, StringComparer.Ordinal)
+            && !coreReferences.Contains(desktopName, StringComparer.Ordinal)
+            && applicationReferences.Contains(coreName, StringComparer.Ordinal)
+            && !applicationReferences.Contains(desktopName, StringComparer.Ordinal);
+    }
+
+    private static bool DesktopReferencesSharedLayers()
+    {
+        string[] references = typeof(IndustrialPlatformUiValidator).Assembly
+            .GetReferencedAssemblies()
+            .Select(name => name.Name!)
+            .ToArray();
+        return references.Contains(
+                typeof(SimulationEngine).Assembly.GetName().Name!,
+                StringComparer.Ordinal)
+            && references.Contains(
+                typeof(IndustrialPlatformSession).Assembly.GetName().Name!,
+                StringComparer.Ordinal);
     }
 
     private static bool PivotRendererUsesUi2VisualLanguage()
