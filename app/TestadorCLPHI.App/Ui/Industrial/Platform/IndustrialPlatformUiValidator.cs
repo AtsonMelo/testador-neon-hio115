@@ -25,6 +25,9 @@ internal static class IndustrialPlatformUiValidator
             ("rejeicao de argumento desconhecido permanece offline", UnknownArgumentStaysOffline),
             ("launcher industrial cria o host da plataforma", IndustrialLauncherCreatesPlatformHost),
             ("host expoe somente Testador e Simulador", HostHasTwoModes),
+            ("navegacao preserva instancias e estado dos modos", NavigationPreservesModeInstances),
+            ("shell nao expoe launcher legacy", ShellDoesNotExposeLegacy),
+            ("SafetyChain permanece visualmente read-only", SafetyChainIsVisuallyReadOnly),
             ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
@@ -179,8 +182,51 @@ internal static class IndustrialPlatformUiValidator
     private static bool HostHasTwoModes()
     {
         using IndustrialPlatformForm form = new();
-        return form.TesterModeButton.Text == "TESTADOR"
-            && form.SimulatorModeButton.Text == "SIMULADOR";
+        return form.TesterModeButton.AccessibleName == "TESTADOR"
+            && form.SimulatorModeButton.AccessibleName == "SIMULADOR";
+    }
+
+    private static bool NavigationPreservesModeInstances()
+    {
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        IndustrialTesterControl? tester = form.TesterInstance;
+        form.ShowSimulator();
+        IndustrialSimulatorControl? simulator = form.SimulatorInstance;
+        int controlCount = CountControls(form);
+        for (int index = 0; index < 8; index++)
+        {
+            form.ShowTester();
+            form.ShowSimulator();
+        }
+
+        return tester is not null
+            && simulator is not null
+            && ReferenceEquals(tester, form.TesterInstance)
+            && ReferenceEquals(simulator, form.SimulatorInstance)
+            && FindAll<IndustrialTesterControl>(form).Count == 1
+            && FindAll<IndustrialSimulatorControl>(form).Count == 1
+            && CountControls(form) == controlCount;
+    }
+
+    private static bool ShellDoesNotExposeLegacy()
+    {
+        using IndustrialPlatformForm form = new();
+        return FindAll<Button>(form).All(button =>
+            !button.Text.Contains("LEGACY", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(button.AccessibleName, "LEGACY", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool SafetyChainIsVisuallyReadOnly()
+    {
+        using IndustrialPlatformForm form = new();
+        _ = form.Session;
+        Label? safety = form.Controls.Find("platformSafetyStatus", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        return safety is not null
+            && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal)
+            && safety.AccessibleDescription?.Contains("derivada", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private static bool Ui2ThemeProvidesDarkAndLight() =>
@@ -466,6 +512,30 @@ internal static class IndustrialPlatformUiValidator
 
         return null;
     }
+
+    private static IReadOnlyList<T> FindAll<T>(Control root)
+        where T : Control
+    {
+        List<T> matches = [];
+        Collect(root, matches);
+        return matches;
+
+        static void Collect(Control control, List<T> items)
+        {
+            if (control is T match)
+            {
+                items.Add(match);
+            }
+
+            foreach (Control child in control.Controls)
+            {
+                Collect(child, items);
+            }
+        }
+    }
+
+    private static int CountControls(Control root) =>
+        1 + root.Controls.Cast<Control>().Sum(CountControls);
 
     private sealed record CanonicalCounters(
         int RtuConnections,
