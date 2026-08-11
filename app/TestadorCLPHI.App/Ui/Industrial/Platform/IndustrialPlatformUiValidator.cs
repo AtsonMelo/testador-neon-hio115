@@ -256,21 +256,16 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool IndustrialControlsExposeAccessibleStates()
     {
-        using AssetLedIndicatorControl assetLed = new() { LabelText = "DI00", IsOn = true };
         using IndustrialLedIndicatorControl led = new() { LabelText = "DI01", IsOn = false };
-        using AssetPushButtonControl assetButton = new() { LabelText = "DO00", IsActive = true };
         using IndustrialPushButtonControl button = new() { Title = "DO01", IsActive = false };
         using EmergencyStopButtonControl emergency = new();
         int clicks = 0;
-        assetButton.Click += (_, _) => clicks++;
-        InvokeKey(assetButton, "OnKeyDown", Keys.Space);
-        InvokeKey(assetButton, "OnKeyUp", Keys.Space);
-        return assetLed.AccessibleDescription?.Contains("ligado", StringComparison.OrdinalIgnoreCase) == true
-            && led.AccessibleDescription?.Contains("desligado", StringComparison.OrdinalIgnoreCase) == true
-            && assetButton.TabStop
+        button.Click += (_, _) => clicks++;
+        InvokeKey(button, "OnKeyDown", Keys.Space);
+        InvokeKey(button, "OnKeyUp", Keys.Space);
+        return led.AccessibleDescription?.Contains("desligado", StringComparison.OrdinalIgnoreCase) == true
             && button.TabStop
             && emergency.TabStop
-            && !assetLed.TabStop
             && !led.TabStop
             && clicks == 1;
     }
@@ -292,12 +287,10 @@ internal static class IndustrialPlatformUiValidator
     {
         for (int index = 0; index < iterations; index++)
         {
-            using AssetLedIndicatorControl assetLed = new() { IsOn = index % 2 == 0 };
             using IndustrialLedIndicatorControl led = new() { IsOn = index % 2 != 0 };
-            using AssetPushButtonControl assetButton = new() { IsActive = index % 2 == 0 };
             using IndustrialPushButtonControl button = new() { IsActive = index % 2 != 0 };
             using EmergencyStopButtonControl emergency = new();
-            foreach (Control control in new Control[] { assetLed, led, assetButton, button, emergency })
+            foreach (Control control in new Control[] { led, button, emergency })
             {
                 control.Size = new Size(control.Width + (index % 3), control.Height + (index % 2));
                 using Bitmap bitmap = new(Math.Max(1, control.Width), Math.Max(1, control.Height));

@@ -4,7 +4,7 @@ Este diretório concentra os assets visuais usados pela interface do TestadorCLP
 
 ## Objetivo
 
-Aproximar a UI do visual industrial definido na Issue #16, evitando desenhar componentes realistas complexos diretamente via GDI+ dentro dos controles WinForms.
+Fornecer imagens reutilizáveis para a UI industrial e para a contingência Legacy, com fallback GDI+ compatível com DPI.
 
 ## Estratégia
 
@@ -16,7 +16,7 @@ Usar imagens próprias em PNG/SVG para componentes visuais industriais, mantendo
 - disparar eventos de clique;
 - respeitar o tema claro/escuro.
 
-## Assets planejados
+## Assets atuais
 
 - stop_emergency.png
 - push_button_red.png
@@ -26,11 +26,12 @@ Usar imagens próprias em PNG/SVG para componentes visuais industriais, mantendo
 - led_on_green.png
 - led_off_gray.png
 
-## Controles planejados
+## Controles consumidores
 
-- AssetPushButtonControl
-- AssetLedIndicatorControl
-- AssetEmergencyStopControl
+- IndustrialPushButtonControl
+- IndustrialLedIndicatorControl
+- EmergencyStopButtonControl
+- painéis Legacy e Layout3 read-only que usam os mesmos nomes de arquivo
 
 ## Regra arquitetural
 
