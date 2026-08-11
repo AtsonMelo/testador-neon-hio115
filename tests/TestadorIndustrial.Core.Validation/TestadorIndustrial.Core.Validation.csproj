@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\app\TestadorIndustrial.Core\TestadorIndustrial.Core.csproj" />
+    <ProjectReference Include="..\..\app\TestadorIndustrial.Application\TestadorIndustrial.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\app\TestadorCLPHI.App\Data\Hardware\hi-hardware-catalog.json"
+          Link="Data\Hardware\hi-hardware-catalog.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\app\TestadorCLPHI.App\Data\Simulation\Profiles\*.json"
+          Link="Data\Simulation\Profiles\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

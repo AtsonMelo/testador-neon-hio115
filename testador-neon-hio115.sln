@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestadorIndustrial.Core", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestadorIndustrial.Application", "app\TestadorIndustrial.Application\TestadorIndustrial.Application.csproj", "{C5B64BE8-0F9D-4A93-94F0-1D275C16D4C7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0A7C6D12-7F5A-44BE-AEF8-45275C9E49E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestadorIndustrial.Core.Validation", "tests\TestadorIndustrial.Core.Validation\TestadorIndustrial.Core.Validation.csproj", "{8F3E9A7C-3B0D-4D17-A799-61F64C24445F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +33,10 @@ Global
 		{C5B64BE8-0F9D-4A93-94F0-1D275C16D4C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5B64BE8-0F9D-4A93-94F0-1D275C16D4C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5B64BE8-0F9D-4A93-94F0-1D275C16D4C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F3E9A7C-3B0D-4D17-A799-61F64C24445F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F3E9A7C-3B0D-4D17-A799-61F64C24445F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F3E9A7C-3B0D-4D17-A799-61F64C24445F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F3E9A7C-3B0D-4D17-A799-61F64C24445F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,5 +45,6 @@ Global
 		{43167752-6671-40C8-8F92-D843578FF8B7} = {68D5E966-3F54-43B6-B221-4AFF84113D6B}
 		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4} = {68D5E966-3F54-43B6-B221-4AFF84113D6B}
 		{C5B64BE8-0F9D-4A93-94F0-1D275C16D4C7} = {68D5E966-3F54-43B6-B221-4AFF84113D6B}
+		{8F3E9A7C-3B0D-4D17-A799-61F64C24445F} = {0A7C6D12-7F5A-44BE-AEF8-45275C9E49E4}
 	EndGlobalSection
 EndGlobal
