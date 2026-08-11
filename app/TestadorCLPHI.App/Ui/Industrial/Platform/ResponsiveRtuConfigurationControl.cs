@@ -60,11 +60,12 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
 
         Label title = new()
         {
-            Text = "PARÂMETROS RTU  •  REFERÊNCIA OFFLINE",
+            Name = "rtuConfigurationTitle",
+            Text = "Parâmetros RTU  •  Referência offline",
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
             TextAlign = ContentAlignment.MiddleLeft,
-            Font = IndustrialTypography.CaptionStrong(),
+            Font = IndustrialTypography.SectionTitle(),
             AccessibleName = "Parâmetros RTU; referência offline"
         };
         _fieldGrid = new TableLayoutPanel
@@ -221,6 +222,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
             fieldContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
             fieldContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             Label caption = PlatformUi.Label(definition.Label);
+            caption.Font = IndustrialTypography.FieldLabel();
             caption.Dock = DockStyle.Fill;
             caption.AutoEllipsis = true;
             caption.Margin = Padding.Empty;

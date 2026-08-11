@@ -21,29 +21,29 @@ internal sealed class IndustrialTesterControl : UserControl
     private readonly NumericUpDown _startAddress = Number(1, 1, 247);
     private readonly NumericUpDown _endAddress = Number(247, 1, 247);
     private readonly Label _state = PlatformUi.StatusChip(
-        "PRONTO OFFLINE",
+        "Pronto offline",
         PlatformStatusTone.Normal,
         "testerStateStatus");
     private readonly Label _purposeStatus = PlatformUi.StatusChip(
-        "LEITURA • DIAGNÓSTICO • RESULTADOS",
+        "Leitura • diagnóstico • resultados",
         PlatformStatusTone.Active,
         "testerPurposeStatus");
     private readonly Label _offlineSafety = PlatformUi.StatusChip(
-        "OFFLINE • RTU EM MEMÓRIA • FÍSICA BLOQUEADA",
+        "Offline • RTU em memória • física bloqueada",
         PlatformStatusTone.Offline,
         "testerOfflineSafetyStatus");
     private readonly Label _result = PlatformUi.Label("Equipamento ainda nao identificado.");
     private readonly Label _counters = PlatformUi.Label(string.Empty);
     private readonly Label[] _digitalValues = Enumerable.Range(0, 8)
-        .Select(_ => PlatformUi.StatusChip("DESCONHECIDO", PlatformStatusTone.Disabled))
+        .Select(_ => PlatformUi.StatusChip("Desconhecido", PlatformStatusTone.Disabled))
         .ToArray();
     private readonly Label[] _analogValues = Enumerable.Range(0, 3)
-        .Select(_ => PlatformUi.StatusChip("DESCONHECIDO", PlatformStatusTone.Disabled))
+        .Select(_ => PlatformUi.StatusChip("Desconhecido", PlatformStatusTone.Disabled))
         .ToArray();
     private readonly Label[] _outputValues = Enumerable.Range(0, 4)
         .Select(_ => PlatformUi.StatusChip("○ OFF", PlatformStatusTone.Disabled))
         .ToArray();
-    private readonly CheckBox _enableOutputs = new() { Text = "MODO SUPERVISIONADO SIMULADO", AutoSize = true };
+    private readonly CheckBox _enableOutputs = new() { Text = "Modo supervisionado simulado", AutoSize = true };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
     private readonly TextBox _log = new()
     {
@@ -167,10 +167,11 @@ internal sealed class IndustrialTesterControl : UserControl
         hero.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 280F));
         Label title = new()
         {
-            Text = "TESTADOR",
+            Name = "testerPageTitle",
+            Text = "Testador",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
-            Font = IndustrialTypography.Title(),
+            Font = IndustrialTypography.PageTitle(),
             AccessibleName = "Modo Testador"
         };
         _purposeStatus.Anchor = AnchorStyles.None;
@@ -181,14 +182,14 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private Control BuildConfiguration()
     {
-        Button refreshPorts = PlatformUi.Button("PORTAS", "refreshPortsButton");
+        Button refreshPorts = PlatformUi.Button("Portas", "refreshPortsButton");
         refreshPorts.Enabled = false;
         _toolTip.SetToolTip(refreshPorts, "Indisponível no host estritamente offline.");
         _toolTip.SetToolTip(_port, "Valor informativo do perfil. Nenhuma porta é enumerada ou aberta.");
-        Button validate = PlatformUi.Button("VALIDAR", "validateRtuButton", primary: true);
-        Button identify = PlatformUi.Button("IDENTIFICAR", "identifyButton");
-        Button discover = PlatformUi.Button("PROCURAR ENDEREÇO", "discoverButton");
-        Button cancel = PlatformUi.Button("CANCELAR", "cancelButton");
+        Button validate = PlatformUi.Button("Validar", "validateRtuButton", primary: true);
+        Button identify = PlatformUi.Button("Identificar", "identifyButton");
+        Button discover = PlatformUi.Button("Procurar endereço", "discoverButton");
+        Button cancel = PlatformUi.Button("Cancelar", "cancelButton");
         PlatformUi.SetButtonTone(cancel, PlatformButtonTone.Danger);
         validate.Click += (_, _) => ValidateConfiguration();
         identify.Click += async (_, _) => await IdentifyAsync();
@@ -235,7 +236,7 @@ internal sealed class IndustrialTesterControl : UserControl
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190F));
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         status.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 360F));
-        _state.Font = IndustrialTypography.BodyStrong();
+        _state.Font = IndustrialTypography.Status();
         _state.Dock = DockStyle.Fill;
         _result.Dock = DockStyle.Fill;
         _counters.Dock = DockStyle.Fill;
@@ -697,7 +698,7 @@ internal sealed class IndustrialTesterControl : UserControl
         _rtuConfiguration?.ApplyTheme();
         foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
         {
-            PlatformStatusTone tone = value.Text.Contains("DESCONHECIDO", StringComparison.Ordinal)
+            PlatformStatusTone tone = value.Text.Contains("Desconhecido", StringComparison.OrdinalIgnoreCase)
                 ? PlatformStatusTone.Disabled
                 : value.Text.Contains("ON", StringComparison.Ordinal)
                     ? PlatformStatusTone.Normal

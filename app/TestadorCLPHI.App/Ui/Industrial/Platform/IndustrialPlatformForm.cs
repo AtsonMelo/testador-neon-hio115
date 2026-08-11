@@ -49,9 +49,9 @@ internal sealed class IndustrialPlatformForm : Form
         Padding = new Padding(IndustrialSpacing.Md),
         AutoScroll = true
     };
-    private readonly Button _homeButton = PlatformUi.Button("INÍCIO", "modeHomeButton");
-    private readonly Button _testerButton = PlatformUi.Button("TESTADOR", "modeTesterButton");
-    private readonly Button _simulatorButton = PlatformUi.Button("SIMULADOR", "modeSimulatorButton");
+    private readonly Button _homeButton = PlatformUi.Button("Início", "modeHomeButton");
+    private readonly Button _testerButton = PlatformUi.Button("Testador", "modeTesterButton");
+    private readonly Button _simulatorButton = PlatformUi.Button("Simulador", "modeSimulatorButton");
     private readonly Label _offlineStatus = PlatformUi.StatusChip(
         "OFFLINE • EM MEMÓRIA",
         PlatformStatusTone.Offline,
@@ -71,12 +71,12 @@ internal sealed class IndustrialPlatformForm : Form
     private readonly Label _brandTitle = new()
     {
         Name = "industrialBrand",
-        Text = "TESTADOR INDUSTRIAL HI",
+        Text = "Testador Industrial HI",
         AutoSize = false,
         Dock = DockStyle.Fill,
         Margin = Padding.Empty,
         TextAlign = ContentAlignment.MiddleLeft,
-        Font = IndustrialTypography.Title(),
+        Font = IndustrialTypography.ProductTitle(),
         AccessibleName = "Testador Industrial HI"
     };
     private readonly Label _brandContext = new()
@@ -92,7 +92,7 @@ internal sealed class IndustrialPlatformForm : Form
     };
     private readonly Label _navCaption = new()
     {
-        Text = "NAVEGAÇÃO",
+        Text = "Navegação",
         AutoSize = false,
         Height = 30,
         TextAlign = ContentAlignment.MiddleLeft,
@@ -100,7 +100,7 @@ internal sealed class IndustrialPlatformForm : Form
     };
     private readonly Label _connectionCaption = new()
     {
-        Text = "ESTADO / CONEXÃO",
+        Text = "Estado / conexão",
         AutoSize = false,
         Height = 24,
         TextAlign = ContentAlignment.MiddleLeft,
@@ -354,6 +354,7 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebar.Controls.Add(_navCaption);
         foreach (Button button in new[] { _homeButton, _testerButton, _simulatorButton })
         {
+            button.Font = IndustrialTypography.Navigation();
             button.Width = contentWidth;
             button.Height = IndustrialSpacing.CriticalInteractiveHeight;
             button.Margin = new Padding(0, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
@@ -424,18 +425,18 @@ internal sealed class IndustrialPlatformForm : Form
         };
         _welcomeHeader = BuildWelcomeHeader();
         _welcomeTesterCard = BuildWelcomeCard(
-            "TESTADOR",
+            "Testador",
             "Diagnóstico, identificação e testes supervisionados usando somente o transporte em memória.",
-            "LEITURA • DIAGNÓSTICO",
-            "ABRIR TESTADOR",
+            "Leitura • diagnóstico",
+            "Abrir Testador",
             "welcomeTesterButton",
             ShowTester,
             out _welcomeTesterStatus);
         _welcomeSimulatorCard = BuildWelcomeCard(
-            "SIMULADOR",
+            "Simulador",
             "Simulação offline do processo, das torres, da SafetyChain e dos sinais industriais.",
-            "SIMULAÇÃO OFFLINE",
-            "ABRIR SIMULADOR",
+            "Simulação offline",
+            "Abrir Simulador",
             "welcomeSimulatorButton",
             ShowSimulator,
             out _welcomeSimulatorStatus);
@@ -459,7 +460,7 @@ internal sealed class IndustrialPlatformForm : Form
             RowCount = 2,
             Margin = new Padding(IndustrialSpacing.Sm)
         };
-        Label title = PlatformUi.PageTitle("SELECIONE O MODO DE OPERAÇÃO", "Seleção do modo industrial");
+        Label title = PlatformUi.PageTitle("Selecione o modo de operação", "Seleção do modo industrial");
         Label context = PlatformUi.Label(
             "Ambiente estritamente offline. Nenhuma comunicação física está habilitada.");
         context.AutoSize = true;
@@ -542,7 +543,7 @@ internal sealed class IndustrialPlatformForm : Form
         bool simulatorActive = ReferenceEquals(activeButton, _simulatorButton);
         PlatformUi.UpdateStatusChip(
             _modeStatus,
-            testerActive ? "MODO: TESTADOR" : simulatorActive ? "MODO: SIMULADOR" : "VISÃO GERAL",
+            testerActive ? "Modo: Testador" : simulatorActive ? "Modo: Simulador" : "Visão geral",
             testerActive ? PlatformStatusTone.Active : simulatorActive ? PlatformStatusTone.Simulated : PlatformStatusTone.Active);
         _modeStatus.AccessibleDescription = testerActive
             ? "Modo Testador ativo"
@@ -706,9 +707,9 @@ internal sealed class IndustrialPlatformForm : Form
             ReferenceEquals(_activeButton, _homeButton)
                 ? "VISÃO GERAL"
                 : ReferenceEquals(_activeButton, _testerButton)
-                ? "MODO: TESTADOR"
+                ? "Modo: Testador"
                 : ReferenceEquals(_activeButton, _simulatorButton)
-                    ? "MODO: SIMULADOR"
+                    ? "Modo: Simulador"
                     : "MODO NÃO SELECIONADO",
             ReferenceEquals(_activeButton, _homeButton)
                 ? PlatformStatusTone.Active
@@ -784,9 +785,9 @@ internal sealed class IndustrialPlatformForm : Form
             : new Padding(IndustrialSpacing.Md);
         _navCaption.Visible = !compact;
         _connectionCaption.Visible = !compact;
-        ConfigureNavigationButton(_homeButton, compact ? "H" : "INÍCIO", width);
-        ConfigureNavigationButton(_testerButton, compact ? "T" : "TESTADOR", width);
-        ConfigureNavigationButton(_simulatorButton, compact ? "S" : "SIMULADOR", width);
+        ConfigureNavigationButton(_homeButton, compact ? "H" : "Início", width);
+        ConfigureNavigationButton(_testerButton, compact ? "T" : "Testador", width);
+        ConfigureNavigationButton(_simulatorButton, compact ? "S" : "Simulador", width);
         int sidebarContentWidth = Math.Max(
             40,
             width - _sidebar.Padding.Horizontal - IndustrialScrollChrome.ReservedWidth);
@@ -1019,7 +1020,7 @@ internal static class PlatformUi
             FlatStyle = FlatStyle.Flat,
             BackColor = primary ? Accent : ButtonSurface,
             ForeColor = primary ? IndustrialTheme.Palette.AccentText : Text,
-            Font = IndustrialTypography.BodyStrong(),
+            Font = IndustrialTypography.Button(),
             Cursor = Cursors.Hand,
             AccessibleName = text,
             AccessibleRole = AccessibleRole.PushButton,
@@ -1120,7 +1121,7 @@ internal static class PlatformUi
                 IndustrialSpacing.Xs),
             Margin = new Padding(IndustrialSpacing.Xs),
             BorderStyle = BorderStyle.None,
-            Font = IndustrialTypography.CaptionStrong(),
+            Font = IndustrialTypography.Status(),
             TextAlign = ContentAlignment.MiddleCenter,
             AccessibleName = text,
             AccessibleRole = AccessibleRole.StaticText,
@@ -1160,7 +1161,7 @@ internal static class PlatformUi
         Text = text,
         AutoSize = true,
         ForeColor = heading ? Text : Muted,
-        Font = heading ? IndustrialTypography.Section() : IndustrialTypography.Body(),
+        Font = heading ? IndustrialTypography.SectionTitle() : IndustrialTypography.Body(),
         Margin = new Padding(
             IndustrialSpacing.Xs,
             IndustrialSpacing.Sm,
@@ -1196,7 +1197,7 @@ internal static class PlatformUi
     {
         Text = text,
         AutoSize = true,
-        Font = IndustrialTypography.Title(),
+        Font = IndustrialTypography.PageTitle(),
         ForeColor = IndustrialTheme.Palette.TextPrimary,
         Margin = Padding.Empty,
         AccessibleName = accessibleName
@@ -1204,7 +1205,7 @@ internal static class PlatformUi
 
     internal static void StyleTabs(TabControl tabs)
     {
-        tabs.Font = IndustrialTypography.BodyStrong();
+        tabs.Font = IndustrialTypography.Button();
         tabs.ItemSize = new Size(150, IndustrialSpacing.TabHeight);
         tabs.Padding = new Point(IndustrialSpacing.Md, IndustrialSpacing.Xs);
     }

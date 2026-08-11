@@ -33,6 +33,7 @@ internal static class IndustrialPlatformUiValidator
             ("shell nao expoe launcher legacy", ShellDoesNotExposeLegacy),
             ("SafetyChain permanece visualmente read-only", SafetyChainIsVisuallyReadOnly),
             ("fundacao UI2 fornece temas dark e light", Ui2ThemeProvidesDarkAndLight),
+            ("papeis tipograficos de producao seguem contrato unico", ProductionTypographyUsesSemanticRoles),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
             ("controles industriais expoem estado e acessibilidade", IndustrialControlsExposeAccessibleStates),
@@ -262,9 +263,9 @@ internal static class IndustrialPlatformUiValidator
     private static bool HostHasHomeAndTwoModes()
     {
         using IndustrialPlatformForm form = new();
-        return form.HomeModeButton.AccessibleName == "INÍCIO"
-            && form.TesterModeButton.AccessibleName == "TESTADOR"
-            && form.SimulatorModeButton.AccessibleName == "SIMULADOR";
+        return form.HomeModeButton.AccessibleName == "Início"
+            && form.TesterModeButton.AccessibleName == "Testador"
+            && form.SimulatorModeButton.AccessibleName == "Simulador";
     }
 
     private static bool NavigationPreservesModeInstances()
@@ -316,6 +317,47 @@ internal static class IndustrialPlatformUiValidator
         && !IndustrialPalette.Light.IsDark
         && IndustrialPalette.Dark.Background != IndustrialPalette.Light.Background
         && IndustrialPalette.Dark.Accent != IndustrialPalette.Light.Accent;
+
+    private static bool ProductionTypographyUsesSemanticRoles()
+    {
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        Label? brand = form.Controls.Find("industrialBrand", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        Label? pageTitle = form.Controls.Find("testerPageTitle", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        Label? rtuTitle = form.Controls.Find("rtuConfigurationTitle", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        Button? navigation = form.Controls.Find("modeTesterButton", searchAllChildren: true)
+            .OfType<Button>()
+            .FirstOrDefault();
+        Button? action = form.Controls.Find("validateRtuButton", searchAllChildren: true)
+            .OfType<Button>()
+            .FirstOrDefault();
+        Label? status = form.Controls.Find("platformOfflineStatus", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        using Font productFont = IndustrialTypography.ProductTitle();
+        using Font pageFont = IndustrialTypography.PageTitle();
+        using Font sectionFont = IndustrialTypography.SectionTitle();
+        using Font navigationFont = IndustrialTypography.Navigation();
+        using Font buttonFont = IndustrialTypography.Button();
+        using Font statusFont = IndustrialTypography.Status();
+        return Matches(brand?.Font, productFont)
+            && Matches(pageTitle?.Font, pageFont)
+            && Matches(rtuTitle?.Font, sectionFont)
+            && Matches(navigation?.Font, navigationFont)
+            && Matches(action?.Font, buttonFont)
+            && Matches(status?.Font, statusFont);
+
+        static bool Matches(Font? actual, Font expected) => actual is not null
+            && actual.FontFamily.Name == expected.FontFamily.Name
+            && Math.Abs(actual.SizeInPoints - expected.SizeInPoints) < 0.1F
+            && actual.Style == expected.Style;
+    }
 
     private static bool ThemeContrastIsAccessible(IndustrialPalette palette) =>
         IndustrialTheme.CriticalContrastRatios(palette).Values.All(ratio => ratio >= 4.5D);
@@ -808,7 +850,7 @@ internal static class IndustrialPlatformUiValidator
             form.ShowHome();
             form.Show();
             PerformLayoutTree(form);
-            Panel[] cards = new[] { "welcomeTESTADORCard", "welcomeSIMULADORCard" }
+            Panel[] cards = new[] { "welcomeTestadorCard", "welcomeSimuladorCard" }
                 .Select(name => form.Controls.Find(name, true).OfType<Panel>().SingleOrDefault())
                 .Where(card => card is not null)
                 .Cast<Panel>()
@@ -1114,7 +1156,7 @@ internal static class IndustrialPlatformUiValidator
         using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialTesterControl tester = new(session);
         Label[] unknown = FindAll<Label>(tester)
-            .Where(label => label.Text.Contains("DESCONHECIDO", StringComparison.Ordinal))
+            .Where(label => label.Text.Contains("Desconhecido", StringComparison.Ordinal))
             .ToArray();
         return unknown.Length == 11
             && unknown.All(label => label.Tag is PlatformStatusTone.Disabled
@@ -1691,7 +1733,7 @@ internal static class IndustrialPlatformUiValidator
             "\n",
             FindAll<Control>(form)
                 .Select(control => control.Text));
-        return visibleText.Contains("TESTADOR INDUSTRIAL HI", StringComparison.Ordinal)
+        return visibleText.Contains("Testador Industrial HI", StringComparison.Ordinal)
             && visibleText.Contains("SIMULAÇÃO", StringComparison.Ordinal)
             && !visibleText.Contains("TESTADOR CLP", StringComparison.OrdinalIgnoreCase)
             && !visibleText.Contains("SIMULATION_READY", StringComparison.OrdinalIgnoreCase)

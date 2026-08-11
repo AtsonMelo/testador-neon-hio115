@@ -275,13 +275,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         Label title = PlatformUi.PageTitle(
-            $"SIMULADOR INDUSTRIAL • {_session.Profile.DisplayName ?? _session.Profile.Id!}",
+            $"Simulador industrial • {_session.Profile.DisplayName ?? _session.Profile.Id!}",
             "Simulador industrial e perfil ativo");
         title.Dock = DockStyle.Fill;
         title.TextAlign = ContentAlignment.MiddleLeft;
-        Label simulated = PlatformUi.StatusChip("SIMULADO", PlatformStatusTone.Simulated, "simulatedProcessStatus");
+        Label simulated = PlatformUi.StatusChip("Simulado", PlatformStatusTone.Simulated, "simulatedProcessStatus");
         _profileEvidence = PlatformUi.StatusChip(
-            "PERFIL DE SIMULAÇÃO",
+            "Perfil de simulação",
             PlatformStatusTone.Offline,
             "simulationProfileEvidenceStatus");
         simulated.Anchor = AnchorStyles.None;
