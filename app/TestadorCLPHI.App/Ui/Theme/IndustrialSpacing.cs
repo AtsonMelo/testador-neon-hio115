@@ -9,8 +9,8 @@ internal static class IndustrialSpacing
     internal const int Xl = 24;
     internal const int Xxl = 32;
 
-    internal const int HeaderHeight = 92;
-    internal const int HeaderCompactHeight = 100;
+    internal const int HeaderHeight = 76;
+    internal const int HeaderCompactHeight = 76;
     internal const int SidebarWidth = 224;
     internal const int SidebarCompactWidth = 56;
     internal const int StatusBarHeight = 36;

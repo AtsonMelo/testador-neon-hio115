@@ -80,6 +80,7 @@ internal static class IndustrialPlatformUiValidator
             ("sidebar compacta trata conexao offline como informacao passiva", SidebarUsesCompactPassiveConnectionEvidence),
             ("sidebar usa selecao plana com indicador de acento", NavigationUsesTaskManagerSelectionContract),
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
+            ("resumo global usa estados passivos compactos", GlobalSummaryUsesPassiveCompactStatuses),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
             ("header RTU usa titulo subtitulo e divisor sem legenda de GroupBox", TesterRtuHeaderUsesFlatSectionComposition),
@@ -605,7 +606,7 @@ internal static class IndustrialPlatformUiValidator
             && simulator is not null
             && form.TesterModeButton.Visible
             && form.SimulatorModeButton.Visible
-            && safety is { Visible: true, Width: > 120, Height: > 24 }
+            && safety is { Visible: true, Width: > 120, Height: >= 16 }
             && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal);
     }
 
@@ -790,8 +791,9 @@ internal static class IndustrialPlatformUiValidator
                 int verticalPadding = IndustrialPlatformForm.ScaleLogicalMetric(
                     IndustrialSpacing.Xs * 2,
                     dpi);
-                int primaryHeight = (int)Math.Floor((headerHeight - verticalPadding) * 0.64D);
-                int titleBudget = (int)Math.Floor(primaryHeight * 0.70D);
+                int titleBudget = headerHeight
+                    - verticalPadding
+                    - IndustrialPlatformForm.ScaleLogicalMetric(24, dpi);
                 int requiredHeight = IndustrialPlatformForm.ScaleLogicalMetric(
                     measured.Height + IndustrialSpacing.Xs,
                     dpi);
@@ -886,7 +888,7 @@ internal static class IndustrialPlatformUiValidator
             if (cards.Length != 2
                 || actions.Length != 2
                 || cards.Select(card => card.Height).Distinct().Count() != 1
-                || cards.Any(card => card.Height > 280 || card.Height < 200)
+                || cards.Any(card => card.Height > 240 || card.Height < 200)
                 || actions.Select(action => BoundsRelativeTo(action, form).Top).Distinct().Count() != 1)
             {
                 return false;
@@ -952,8 +954,27 @@ internal static class IndustrialPlatformUiValidator
         PerformLayoutTree(form);
         Label? mode = form.Controls.Find("platformModeStatus", true).OfType<Label>().SingleOrDefault();
         return mode?.Tag is PlatformStatusTone.Active
-            && mode.BackColor == IndustrialTheme.Palette.SelectedSurface
+            && mode.BackColor == IndustrialTheme.Palette.SurfaceInteractive
             && mode.BackColor != IndustrialTheme.Palette.SuccessSurface;
+    }
+
+    private static bool GlobalSummaryUsesPassiveCompactStatuses()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        _ = form.Session;
+        form.ShowTester();
+        form.Show();
+        PerformLayoutTree(form);
+        Label[] statuses =
+        [
+            .. form.CriticalHeaderStatuses,
+            form.EquipmentStatus
+        ];
+        return statuses.Length == 4
+            && statuses.All(status => !status.TabStop
+                && status.Cursor == Cursors.Default
+                && status.BackColor == IndustrialTheme.Palette.SurfaceInteractive
+                && status.Height <= IndustrialPlatformForm.ScaleLogicalMetric(28, status.DeviceDpi));
     }
 
     private static bool TesterControlsRemainContained()
@@ -1293,6 +1314,10 @@ internal static class IndustrialPlatformUiValidator
             palette.Field
         ];
         return surfaces.Distinct().Count() == surfaces.Length
+            && palette.Background.R < palette.Surface.R
+            && palette.Surface.R < palette.SurfaceElevated.R
+            && palette.SurfaceInteractive.R < palette.Surface.R
+            && palette.Field.R >= palette.SurfaceElevated.R
             && IndustrialTheme.ContrastRatio(palette.AccentText, palette.Accent) >= 4.5D
             && IndustrialTheme.ContrastRatio(palette.TextPrimary, palette.Background) >= 4.5D;
     }

@@ -307,7 +307,8 @@ internal sealed class IndustrialPlatformForm : Form
         {
             status.AutoSize = false;
             status.Dock = DockStyle.Fill;
-            status.Margin = new Padding(IndustrialSpacing.Xs, IndustrialSpacing.Xs, IndustrialSpacing.Xs, 0);
+            status.Margin = new Padding(IndustrialSpacing.Xs, 2, IndustrialSpacing.Xs, 0);
+            status.Padding = new Padding(IndustrialSpacing.Sm, 0, IndustrialSpacing.Sm, 0);
             status.AutoEllipsis = true;
         }
         _equipmentStatus.AccessibleDescription = "Perfil e equipamento ativos na sessão offline";
@@ -364,8 +365,8 @@ internal sealed class IndustrialPlatformForm : Form
 
         _sidebarMode.Width = contentWidth;
         _sidebarMode.AutoSize = false;
-        _sidebarMode.Height = 28;
-        _sidebarMode.Margin = new Padding(0, IndustrialSpacing.Xs, 0, 0);
+        _sidebarMode.Height = 24;
+        _sidebarMode.Margin = Padding.Empty;
         _sidebarMode.AccessibleDescription =
             "Status informativo; não é uma ação. A comunicação física permanece bloqueada";
         Panel divider = new()
@@ -382,8 +383,8 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebar.Controls.Add(_connectionCaption);
         _sidebarOffline.Width = contentWidth;
         _sidebarOffline.AutoSize = false;
-        _sidebarOffline.Height = 28;
-        _sidebarOffline.Margin = new Padding(0, 0, 0, IndustrialSpacing.Xs);
+        _sidebarOffline.Height = 24;
+        _sidebarOffline.Margin = Padding.Empty;
         _sidebarOffline.AccessibleDescription =
             "Sessão offline executada somente em memória, sem conexão física";
         _sidebar.Controls.Add(_sidebarOffline);
@@ -480,7 +481,7 @@ internal sealed class IndustrialPlatformForm : Form
     {
         Panel card = PlatformUi.Card($"welcome{titleText}Card");
         card.Dock = DockStyle.Fill;
-        card.MaximumSize = new Size(0, 280);
+        card.MaximumSize = new Size(0, 240);
         card.AccessibleName = $"Modo {titleText}";
         TableLayoutPanel layout = new()
         {
@@ -609,6 +610,7 @@ internal sealed class IndustrialPlatformForm : Form
                 _safetyStatus,
                 "SAFETYCHAIN • AGUARDANDO",
                 PlatformStatusTone.Disabled);
+            StyleGlobalSummaryStatuses();
             return;
         }
 
@@ -626,6 +628,7 @@ internal sealed class IndustrialPlatformForm : Form
                 _safetyStatus,
                 "SAFETYCHAIN • N/A",
                 PlatformStatusTone.Disabled);
+            StyleGlobalSummaryStatuses();
             return;
         }
 
@@ -637,6 +640,7 @@ internal sealed class IndustrialPlatformForm : Form
         _safetyStatus.AccessibleDescription = closed
             ? "SafetyChain derivada fechada e segura"
             : "SafetyChain derivada aberta; saídas bloqueadas";
+        StyleGlobalSummaryStatuses();
     }
 
     private void ThemeSelectorChanged(object? sender, EventArgs e)
@@ -733,8 +737,8 @@ internal sealed class IndustrialPlatformForm : Form
         }
 
         PlatformUi.UpdateStatusChip(_offlineStatus, "OFFLINE • EM MEMÓRIA", PlatformStatusTone.Offline);
-        PlatformUi.UpdateStatusChip(_sidebarOffline, _compactNavigation ? "OFF" : "OFFLINE • EM MEMÓRIA", PlatformStatusTone.Offline);
-        PlatformUi.UpdateStatusChip(_sidebarMode, _compactNavigation ? "OFF" : "FÍSICA BLOQUEADA", PlatformStatusTone.Offline);
+        PlatformUi.UpdateStatusChip(_sidebarOffline, _compactNavigation ? "●" : "●  Offline • em memória", PlatformStatusTone.Offline);
+        PlatformUi.UpdateStatusChip(_sidebarMode, _compactNavigation ? "■" : "■  Física bloqueada", PlatformStatusTone.Offline);
         StylePassiveSidebarStatus(_sidebarOffline);
         StylePassiveSidebarStatus(_sidebarMode);
         PlatformUi.UpdateStatusChip(
@@ -834,11 +838,11 @@ internal sealed class IndustrialPlatformForm : Form
         }
         PlatformUi.UpdateStatusChip(
             _sidebarOffline,
-            compact ? "OFF" : "OFFLINE • EM MEMÓRIA",
+            compact ? "●" : "●  Offline • em memória",
             PlatformStatusTone.Offline);
         PlatformUi.UpdateStatusChip(
             _sidebarMode,
-            compact ? "BLOQ" : "FÍSICA BLOQUEADA",
+            compact ? "■" : "■  Física bloqueada",
             PlatformStatusTone.Offline);
         StylePassiveSidebarStatus(_sidebarOffline);
         StylePassiveSidebarStatus(_sidebarMode);
@@ -855,6 +859,18 @@ internal sealed class IndustrialPlatformForm : Form
         status.ForeColor = IndustrialTheme.Palette.TextSecondary;
         status.Padding = new Padding(IndustrialSpacing.Sm, 0, 0, 0);
         status.TextAlign = ContentAlignment.MiddleLeft;
+    }
+
+    private void StyleGlobalSummaryStatuses()
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        foreach (Label status in new[] { _offlineStatus, _modeStatus, _equipmentStatus, _safetyStatus })
+        {
+            status.BackColor = palette.SurfaceInteractive;
+            status.Padding = new Padding(IndustrialSpacing.Sm, 0, IndustrialSpacing.Sm, 0);
+            status.Cursor = Cursors.Default;
+            status.TabStop = false;
+        }
     }
 
     private void UpdateWelcomeLayout(float logicalWidth)
@@ -889,7 +905,7 @@ internal sealed class IndustrialPlatformForm : Form
             _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 280F));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 240F));
             _welcomeLayout.SetCellPosition(_welcomeHeader, new TableLayoutPanelCellPosition(0, 0));
             _welcomeLayout.SetColumnSpan(_welcomeHeader, 2);
             _welcomeLayout.SetCellPosition(_welcomeTesterCard, new TableLayoutPanelCellPosition(0, 1));
