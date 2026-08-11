@@ -4,7 +4,6 @@ using TestadorCLPHI.App.Plc;
 using TestadorCLPHI.App.Ui;
 using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Hardware;
-using TestadorCLPHI.App.Ui.Industrial;
 
 namespace TestadorCLPHI.App;
 
@@ -17,8 +16,6 @@ public sealed class MainForm : Form
     private readonly PlcDigitalIoManualService _digitalIoManualService;
     private readonly MainFormCommandUiService _commandUiService;
     private readonly MainFormDigitalIoUiService _digitalIoUiService;
-    private readonly bool _useIndustrialHost;
-
     private readonly Label _tituloLabel;
     private readonly Label _statusLabel;
     private readonly EmergencyStopButtonControl _pararTudoButton;
@@ -48,9 +45,8 @@ public sealed class MainForm : Form
     private readonly TerminalLogPanelControl _terminalLogPanel;
     private readonly HardwareProfileSelectionControl _hardwareProfileSelectionControl;
 
-    public MainForm(bool useIndustrialHost = false, HardwareCatalog? hardwareCatalog = null)
+    public MainForm(HardwareCatalog? hardwareCatalog = null)
     {
-        _useIndustrialHost = useIndustrialHost;
         HardwareCatalog = hardwareCatalog ?? HardwareCatalog.Empty;
 
         Text = "Testador CLP HI";
@@ -129,20 +125,11 @@ public sealed class MainForm : Form
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        IndustrialMainHostControl? industrialHost = null;
-        IDigitalIoManualPanel activeManualIoPanel = _digitalIoManualPanel;
-
-        if (_useIndustrialHost)
-        {
-            industrialHost = new IndustrialMainHostControl();
-            activeManualIoPanel = industrialHost.ManualIoPanel;
-        }
-
         _digitalIoUiService = new MainFormDigitalIoUiService(
             this,
             _digitalIoManualService,
             _plcService,
-            activeManualIoPanel,
+            _digitalIoManualPanel,
             _statusLabel,
             TryUpdateConnectionSettingsFromUi,
             AtualizarEstadoConexao);
@@ -277,8 +264,8 @@ public sealed class MainForm : Form
         _connectionStatePanel.ReadMw70Clicked += LerMw70Button_Click;
         _testerCommandPanel.EnableTestClicked += HabilitarTesteButton_Click;
         _testerCommandPanel.ResetOutputsClicked += ResetarSaidasButton_Click;
-        activeManualIoPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
-        activeManualIoPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
+        _digitalIoManualPanel.OutputCommandClicked += AcionarSaidaDigitalManual;
+        _digitalIoManualPanel.RefreshInputsClicked += AtualizarEntradasDigitaisButton_Click;
 
         _conexaoGroupBox.Controls.Add(_portaTituloLabel);
         _conexaoGroupBox.Controls.Add(_portaComboBox);
@@ -292,19 +279,6 @@ public sealed class MainForm : Form
         _conexaoGroupBox.Controls.Add(_slaveIdTextBox);
         _conexaoGroupBox.Controls.Add(_detectarClpButton);
         _conexaoGroupBox.Controls.Add(_conexaoResumoLabel);
-        if (_useIndustrialHost)
-        {
-            industrialHost!.EnableTestClicked += HabilitarTesteButton_Click;
-            industrialHost.ResetOutputsClicked += ResetarSaidasButton_Click;
-
-            Controls.Add(industrialHost);
-            AtualizarListaDePortas();
-            AtualizarResumoConexao();
-            AtualizarEstadoConexao();
-            AplicarTemaSelecionado();
-            return;
-        }
-
         TableLayoutPanel rootLayout = new()
         {
             Dock = DockStyle.Fill,

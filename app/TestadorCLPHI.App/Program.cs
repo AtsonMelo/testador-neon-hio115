@@ -205,7 +205,6 @@ internal static class Program
     {
         StartupMode.Industrial => new IndustrialPlatformForm(),
         StartupMode.Legacy => new MainForm(
-            useIndustrialHost: false,
             hardwareCatalog: LoadHardwareCatalogForApp()),
         _ => throw new ArgumentOutOfRangeException(
             nameof(startupMode),
