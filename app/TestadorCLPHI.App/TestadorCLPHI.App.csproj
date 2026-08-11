@@ -12,6 +12,10 @@
     <PackageReference Include="System.IO.Ports" Version="10.0.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TestadorIndustrial.Core\TestadorIndustrial.Core.csproj" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <Content Include="Assets\Ui\*.png">

@@ -7,21 +7,28 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{68D5E966-3F5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestadorCLPHI.App", "app\TestadorCLPHI.App\TestadorCLPHI.App.csproj", "{43167752-6671-40C8-8F92-D843578FF8B7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestadorIndustrial.Core", "app\TestadorIndustrial.Core\TestadorIndustrial.Core.csproj", "{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{43167752-6671-40C8-8F92-D843578FF8B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{43167752-6671-40C8-8F92-D843578FF8B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43167752-6671-40C8-8F92-D843578FF8B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43167752-6671-40C8-8F92-D843578FF8B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{43167752-6671-40C8-8F92-D843578FF8B7} = {68D5E966-3F54-43B6-B221-4AFF84113D6B}
+		{F5A48FD6-6D84-4F24-A5C1-B051D1D5AAE4} = {68D5E966-3F54-43B6-B221-4AFF84113D6B}
 	EndGlobalSection
 EndGlobal
