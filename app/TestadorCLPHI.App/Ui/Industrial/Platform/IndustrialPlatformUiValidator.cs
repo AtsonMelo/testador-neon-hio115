@@ -79,6 +79,7 @@ internal static class IndustrialPlatformUiValidator
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
             ("layout RTU preserva ordem e breakpoints de cinco duas e uma coluna", TesterRtuLayoutIsResponsive),
+            ("configuracao RTU usa altura compacta orientada ao conteudo", TesterRtuUsesContentDrivenHeight),
             ("acoes RTU compartilham metrica tipografica e semantica visual", TesterRtuActionsUseOneVisualSpecification),
             ("botoes e superficies principais usam cantos modernos moderados", ProductionActionsAndCardsUseModerateRoundedCorners),
             ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
@@ -150,7 +151,25 @@ internal static class IndustrialPlatformUiValidator
         }
 
         output.WriteLine("PhysicalConnections=0 PhysicalReads=0 PhysicalWrites=0 PhysicalCommands=0");
-        return passed == scenarios.Count ? 0 : 1;
+        if (passed != scenarios.Count)
+        {
+            return 1;
+        }
+
+        try
+        {
+            if (IndustrialVisualProofCapture.CaptureRequested())
+            {
+                output.WriteLine("VisualProofCapture=PASS");
+            }
+        }
+        catch (Exception ex)
+        {
+            error.WriteLine($"VisualProofCapture=FAIL: {ex.Message}");
+            return 1;
+        }
+
+        return 0;
     }
 
     private static bool StartupWithoutArgumentsSelectsIndustrial() =>
@@ -1033,6 +1052,42 @@ internal static class IndustrialPlatformUiValidator
                 && !button.UseCompatibleTextRendering
                 && button.Tag is PlatformButtonTone tone
                 && tone == expected[button.Name]);
+    }
+
+    private static bool TesterRtuUsesContentDrivenHeight()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session) { Dock = DockStyle.Fill };
+        using Form host = new()
+        {
+            ClientSize = new Size(1112, 610),
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        host.Controls.Add(tester);
+        host.Show();
+        PerformLayoutTree(host);
+        ResponsiveRtuConfigurationControl? rtu = Find<ResponsiveRtuConfigurationControl>(tester);
+        TableLayoutPanel? root = tester.Controls.Find("rtuConfigurationLayout", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        TableLayoutPanel? fields = tester.Controls.Find("rtuFieldGrid", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        TableLayoutPanel? actions = tester.Controls.Find("rtuActionGrid", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        return rtu is not null
+            && root is { AutoSize: true, AutoSizeMode: AutoSizeMode.GrowAndShrink }
+            && root.RowStyles.Cast<RowStyle>().All(style => style.SizeType != SizeType.Percent)
+            && fields is { AutoSize: true }
+            && actions is { AutoSize: true }
+            && fields.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.Absolute)
+            && actions.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.Absolute)
+            && Math.Abs(rtu.Height - rtu.PreferredLayoutHeight) <= IndustrialSpacing.Sm;
     }
 
     private static bool ProductionActionsAndCardsUseModerateRoundedCorners()
