@@ -64,12 +64,12 @@ internal sealed record IndustrialPalette(
 
     internal static IndustrialPalette Light { get; } = new(
         IsDark: false,
-        Background: Color.FromArgb(243, 243, 243),
-        Surface: Color.FromArgb(249, 249, 249),
+        Background: Color.FromArgb(239, 239, 239),
+        Surface: Color.FromArgb(246, 246, 246),
         SurfaceElevated: Color.FromArgb(255, 255, 255),
-        SurfaceInteractive: Color.FromArgb(236, 236, 236),
-        Field: Color.FromArgb(253, 253, 253),
-        Border: Color.FromArgb(216, 216, 216),
+        SurfaceInteractive: Color.FromArgb(232, 232, 232),
+        Field: Color.FromArgb(252, 252, 252),
+        Border: Color.FromArgb(207, 207, 207),
         BorderStrong: Color.FromArgb(183, 183, 183),
         TextPrimary: Color.FromArgb(31, 31, 31),
         TextSecondary: Color.FromArgb(82, 82, 82),

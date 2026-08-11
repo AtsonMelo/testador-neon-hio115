@@ -355,8 +355,8 @@ internal sealed class IndustrialPlatformForm : Form
                 navigation.IsNavigation = true;
             }
             button.Width = contentWidth;
-            button.Height = IndustrialSpacing.CriticalInteractiveHeight;
-            button.Margin = new Padding(0, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
+            button.Height = 40;
+            button.Margin = new Padding(0, 2, 0, 2);
             button.TextAlign = ContentAlignment.MiddleLeft;
             button.Padding = new Padding(IndustrialSpacing.Md, 0, 0, 0);
             _sidebar.Controls.Add(button);
@@ -364,7 +364,7 @@ internal sealed class IndustrialPlatformForm : Form
 
         _sidebarMode.Width = contentWidth;
         _sidebarMode.AutoSize = false;
-        _sidebarMode.Height = 34;
+        _sidebarMode.Height = 28;
         _sidebarMode.Margin = new Padding(0, IndustrialSpacing.Xs, 0, 0);
         _sidebarMode.AccessibleDescription =
             "Status informativo; não é uma ação. A comunicação física permanece bloqueada";
@@ -382,7 +382,7 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebar.Controls.Add(_connectionCaption);
         _sidebarOffline.Width = contentWidth;
         _sidebarOffline.AutoSize = false;
-        _sidebarOffline.Height = 32;
+        _sidebarOffline.Height = 28;
         _sidebarOffline.Margin = new Padding(0, 0, 0, IndustrialSpacing.Xs);
         _sidebarOffline.AccessibleDescription =
             "Sessão offline executada somente em memória, sem conexão física";
@@ -480,7 +480,7 @@ internal sealed class IndustrialPlatformForm : Form
     {
         Panel card = PlatformUi.Card($"welcome{titleText}Card");
         card.Dock = DockStyle.Fill;
-        card.MaximumSize = new Size(0, 340);
+        card.MaximumSize = new Size(0, 280);
         card.AccessibleName = $"Modo {titleText}";
         TableLayoutPanel layout = new()
         {
@@ -735,6 +735,8 @@ internal sealed class IndustrialPlatformForm : Form
         PlatformUi.UpdateStatusChip(_offlineStatus, "OFFLINE • EM MEMÓRIA", PlatformStatusTone.Offline);
         PlatformUi.UpdateStatusChip(_sidebarOffline, _compactNavigation ? "OFF" : "OFFLINE • EM MEMÓRIA", PlatformStatusTone.Offline);
         PlatformUi.UpdateStatusChip(_sidebarMode, _compactNavigation ? "OFF" : "FÍSICA BLOQUEADA", PlatformStatusTone.Offline);
+        StylePassiveSidebarStatus(_sidebarOffline);
+        StylePassiveSidebarStatus(_sidebarMode);
         PlatformUi.UpdateStatusChip(
             _modeStatus,
             ReferenceEquals(_activeButton, _homeButton)
@@ -838,11 +840,21 @@ internal sealed class IndustrialPlatformForm : Form
             _sidebarMode,
             compact ? "BLOQ" : "FÍSICA BLOQUEADA",
             PlatformStatusTone.Offline);
+        StylePassiveSidebarStatus(_sidebarOffline);
+        StylePassiveSidebarStatus(_sidebarMode);
 
         UpdateWelcomeLayout(logicalWidth);
 
         _header.PerformLayout();
         _statusBar.PerformLayout();
+    }
+
+    private void StylePassiveSidebarStatus(Label status)
+    {
+        status.BackColor = _sidebar.BackColor;
+        status.ForeColor = IndustrialTheme.Palette.TextSecondary;
+        status.Padding = new Padding(IndustrialSpacing.Sm, 0, 0, 0);
+        status.TextAlign = ContentAlignment.MiddleLeft;
     }
 
     private void UpdateWelcomeLayout(float logicalWidth)
@@ -877,7 +889,7 @@ internal sealed class IndustrialPlatformForm : Form
             _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 320F));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 280F));
             _welcomeLayout.SetCellPosition(_welcomeHeader, new TableLayoutPanelCellPosition(0, 0));
             _welcomeLayout.SetColumnSpan(_welcomeHeader, 2);
             _welcomeLayout.SetCellPosition(_welcomeTesterCard, new TableLayoutPanelCellPosition(0, 1));

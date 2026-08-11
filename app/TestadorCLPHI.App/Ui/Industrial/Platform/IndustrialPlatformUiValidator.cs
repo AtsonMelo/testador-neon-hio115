@@ -77,6 +77,7 @@ internal static class IndustrialPlatformUiValidator
             ("cards da Home usam altura orientada a conteudo e acoes alinhadas", HomeCardsUseContentDrivenHeight),
             ("status da Home permanece informativo e nao parece botao", HomeStatusIsNotButtonLike),
             ("sidebar separa navegacao de estado fisico nao interativo", SidebarSeparatesNavigationFromPhysicalStatus),
+            ("sidebar compacta trata conexao offline como informacao passiva", SidebarUsesCompactPassiveConnectionEvidence),
             ("sidebar usa selecao plana com indicador de acento", NavigationUsesTaskManagerSelectionContract),
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
@@ -86,6 +87,7 @@ internal static class IndustrialPlatformUiValidator
             ("acoes RTU compartilham metrica tipografica e semantica visual", TesterRtuActionsUseOneVisualSpecification),
             ("botoes e superficies principais usam cantos modernos moderados", ProductionActionsAndCardsUseModerateRoundedCorners),
             ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
+            ("linhas do Testador preservam densidade operacional compacta", TesterSignalRowsUseCompactDensity),
             ("tema light preserva profundidade entre superficies", LightThemePreservesSurfaceDepth),
             ("footer permanece compacto e sem marcadores de iteracao UI", FooterHasOnlyProductRuntimeEvidence),
             ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
@@ -882,7 +884,7 @@ internal static class IndustrialPlatformUiValidator
             if (cards.Length != 2
                 || actions.Length != 2
                 || cards.Select(card => card.Height).Distinct().Count() != 1
-                || cards.Any(card => card.Height > 340 || card.Height < 200)
+                || cards.Any(card => card.Height > 280 || card.Height < 200)
                 || actions.Select(action => BoundsRelativeTo(action, form).Top).Distinct().Count() != 1)
             {
                 return false;
@@ -925,6 +927,19 @@ internal static class IndustrialPlatformUiValidator
             && offline.Cursor != Cursors.Hand
             && navigation.All(button => button.TabStop && button.Cursor == Cursors.Hand)
             && BoundsRelativeTo(offline, form).Top > navigation.Max(button => BoundsRelativeTo(button, form).Bottom);
+    }
+
+    private static bool SidebarUsesCompactPassiveConnectionEvidence()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.Show();
+        PerformLayoutTree(form);
+        Label[] statuses = [form.SidebarOfflineStatus, form.SidebarPhysicalStatus];
+        return statuses.All(status => status.Parent is not null
+            && status.Height <= IndustrialPlatformForm.ScaleLogicalMetric(28, status.DeviceDpi)
+            && status.BackColor == status.Parent.BackColor
+            && status.TextAlign == ContentAlignment.MiddleLeft
+            && !status.TabStop);
     }
 
     private static bool OverviewUsesInformationalTone()
@@ -1199,6 +1214,18 @@ internal static class IndustrialPlatformUiValidator
             && unknown.All(label => label.Tag is PlatformStatusTone.Disabled
                 && label.BackColor != IndustrialTheme.Palette.SuccessSurface
                 && label.ForeColor != IndustrialTheme.Palette.Success);
+    }
+
+    private static bool TesterSignalRowsUseCompactDensity()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session);
+        FlowLayoutPanel[] rows = FindAll<FlowLayoutPanel>(tester)
+            .Where(row => string.Equals(row.Tag as string, "signal-row", StringComparison.Ordinal))
+            .ToArray();
+        return rows.Length >= 11
+            && rows.All(row => row.Height <= IndustrialPlatformForm.ScaleLogicalMetric(38, row.DeviceDpi)
+                && row.Margin.Bottom <= IndustrialPlatformForm.ScaleLogicalMetric(4, row.DeviceDpi));
     }
 
     private static bool LightThemePreservesSurfaceDepth()

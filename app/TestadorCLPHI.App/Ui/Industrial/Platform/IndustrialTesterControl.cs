@@ -646,10 +646,10 @@ internal sealed class IndustrialTesterControl : UserControl
         FlowLayoutPanel row = new()
         {
             Width = 900,
-            Height = 44,
+            Height = 38,
             BackColor = PlatformUi.Surface,
-            Margin = new Padding(3, 3, 3, 6),
-            Padding = new Padding(10, 4, 10, 4),
+            Margin = new Padding(3, 2, 3, 4),
+            Padding = new Padding(10, 2, 10, 2),
             WrapContents = false,
             Tag = "signal-row"
         };
