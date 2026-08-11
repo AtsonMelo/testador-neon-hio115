@@ -6,6 +6,14 @@ namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
 internal sealed class IndustrialPlatformForm : Form
 {
+    private readonly TableLayoutPanel _header = new()
+    {
+        Dock = DockStyle.Fill,
+        ColumnCount = 1,
+        RowCount = 2,
+        Margin = Padding.Empty,
+        Name = "industrialHeader"
+    };
     private readonly TableLayoutPanel _shell = new()
     {
         Dock = DockStyle.Fill,
@@ -16,12 +24,21 @@ internal sealed class IndustrialPlatformForm : Form
     {
         Dock = DockStyle.Fill,
         ColumnCount = 2,
-        RowCount = 1
+        RowCount = 1,
+        Margin = Padding.Empty
     };
     private readonly Panel _content = new()
     {
         Dock = DockStyle.Fill,
         Padding = new Padding(IndustrialSpacing.Md)
+    };
+    private readonly TableLayoutPanel _statusBar = new()
+    {
+        Dock = DockStyle.Fill,
+        ColumnCount = 5,
+        RowCount = 1,
+        Margin = Padding.Empty,
+        Name = "industrialStatusBar"
     };
     private readonly FlowLayoutPanel _sidebar = new()
     {
@@ -133,6 +150,13 @@ internal sealed class IndustrialPlatformForm : Form
     internal IndustrialSimulatorControl? SimulatorInstance => _simulator;
     internal bool IsCompactNavigation => _compactNavigation;
     internal IndustrialThemeMode ThemeMode => IndustrialTheme.Mode;
+    internal Control HeaderRegion => _header;
+    internal Control BodyRegion => _body;
+    internal Control ContentRegion => _content;
+    internal Control FooterRegion => _statusBar;
+    internal Control ThemeSelector => _themeSelector;
+    internal IReadOnlyList<Label> CriticalHeaderStatuses =>
+        [_offlineStatus, _modeStatus, _safetyStatus];
 
     internal void SetTheme(IndustrialThemeMode mode)
     {
@@ -195,20 +219,25 @@ internal sealed class IndustrialPlatformForm : Form
 
     private Control BuildHeader()
     {
-        TableLayoutPanel header = new()
+        _header.Padding = new Padding(
+            IndustrialSpacing.Lg,
+            IndustrialSpacing.Sm,
+            IndustrialSpacing.Lg,
+            IndustrialSpacing.Sm);
+        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
+        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
+
+        TableLayoutPanel primary = new()
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(IndustrialSpacing.Lg, IndustrialSpacing.Md, IndustrialSpacing.Lg, IndustrialSpacing.Sm),
-            ColumnCount = 6,
+            ColumnCount = 3,
             RowCount = 1,
-            Name = "industrialHeader"
+            Margin = Padding.Empty,
+            Name = "industrialHeaderPrimary"
         };
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 230F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 188F));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112F));
+        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 67F));
+        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+        primary.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124F));
 
         TableLayoutPanel identity = new()
         {
@@ -221,6 +250,7 @@ internal sealed class IndustrialPlatformForm : Form
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
         Label brand = new()
         {
+            Name = "industrialBrand",
             Text = "TESTADOR INDUSTRIAL HI",
             AutoSize = false,
             Dock = DockStyle.Fill,
@@ -230,6 +260,7 @@ internal sealed class IndustrialPlatformForm : Form
         };
         Label context = new()
         {
+            Name = "industrialContext",
             Text = "PLATAFORMA OFFLINE • TRANSPORTE EM MEMÓRIA",
             AutoSize = false,
             Dock = DockStyle.Fill,
@@ -242,16 +273,34 @@ internal sealed class IndustrialPlatformForm : Form
         {
             status.AutoSize = false;
             status.Dock = DockStyle.Fill;
-            status.Margin = new Padding(IndustrialSpacing.Xs, IndustrialSpacing.Sm, IndustrialSpacing.Xs, IndustrialSpacing.Sm);
+            status.Margin = new Padding(IndustrialSpacing.Xs, IndustrialSpacing.Xs, IndustrialSpacing.Xs, 0);
             status.AutoEllipsis = true;
         }
-        header.Controls.Add(identity, 0, 0);
-        header.Controls.Add(_equipmentStatus, 1, 0);
-        header.Controls.Add(_offlineStatus, 2, 0);
-        header.Controls.Add(_modeStatus, 3, 0);
-        header.Controls.Add(_safetyStatus, 4, 0);
-        header.Controls.Add(_themeSelector, 5, 0);
-        return header;
+        _equipmentStatus.Margin = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
+        _equipmentStatus.Font = IndustrialTypography.CaptionStrong();
+        _themeSelector.Margin = new Padding(IndustrialSpacing.Sm, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
+        primary.Controls.Add(identity, 0, 0);
+        primary.Controls.Add(_equipmentStatus, 1, 0);
+        primary.Controls.Add(_themeSelector, 2, 0);
+
+        TableLayoutPanel statuses = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 1,
+            Margin = Padding.Empty,
+            Name = "industrialHeaderStatuses"
+        };
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+        statuses.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
+        statuses.Controls.Add(_offlineStatus, 0, 0);
+        statuses.Controls.Add(_modeStatus, 1, 0);
+        statuses.Controls.Add(_safetyStatus, 2, 0);
+
+        _header.Controls.Add(primary, 0, 0);
+        _header.Controls.Add(statuses, 0, 1);
+        return _header;
     }
 
     private Control BuildSidebar()
@@ -282,25 +331,18 @@ internal sealed class IndustrialPlatformForm : Form
 
     private Control BuildStatusBar()
     {
-        TableLayoutPanel status = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 5,
-            RowCount = 1,
-            Padding = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0),
-            Name = "industrialStatusBar"
-        };
-        status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 29F));
-        status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
-        status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 14F));
-        status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-        status.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12F));
-        status.Controls.Add(_profileFooter, 0, 0);
-        status.Controls.Add(_transportFooter, 1, 0);
-        status.Controls.Add(_addressFooter, 2, 0);
-        status.Controls.Add(_safetyFooter, 3, 0);
-        status.Controls.Add(_versionFooter, 4, 0);
-        return status;
+        _statusBar.Padding = new Padding(IndustrialSpacing.Md, 0, IndustrialSpacing.Md, 0);
+        _statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 29F));
+        _statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+        _statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 14F));
+        _statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+        _statusBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12F));
+        _statusBar.Controls.Add(_profileFooter, 0, 0);
+        _statusBar.Controls.Add(_transportFooter, 1, 0);
+        _statusBar.Controls.Add(_addressFooter, 2, 0);
+        _statusBar.Controls.Add(_safetyFooter, 3, 0);
+        _statusBar.Controls.Add(_versionFooter, 4, 0);
+        return _statusBar;
     }
 
     private void ShowWelcome()
@@ -530,12 +572,11 @@ internal sealed class IndustrialPlatformForm : Form
     {
         float logicalWidth = ClientSize.Width * 96F / Math.Max(DeviceDpi, 96);
         bool compact = logicalWidth < 1180F;
-        if (_compactNavigation == compact && _body.ColumnStyles[0].Width > 0)
-        {
-            return;
-        }
-
         _compactNavigation = compact;
+        _shell.RowStyles[0].Height = compact
+            ? IndustrialSpacing.HeaderCompactHeight
+            : IndustrialSpacing.HeaderHeight;
+        _shell.RowStyles[2].Height = IndustrialSpacing.StatusBarHeight;
         int width = compact ? IndustrialSpacing.SidebarCompactWidth : IndustrialSpacing.SidebarWidth;
         _body.ColumnStyles[0].Width = width;
         _sidebar.Padding = compact
@@ -547,18 +588,9 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
         _sidebarMode.Text = compact ? "OFF" : "■ OFFLINE • FÍSICA BLOQUEADA";
 
-        TableLayoutPanel? header = Controls.Find("industrialHeader", searchAllChildren: true)
-            .OfType<TableLayoutPanel>()
-            .FirstOrDefault();
-        if (header is not null)
-        {
-            header.ColumnStyles[1].Width = compact ? 0F : 230F;
-            header.ColumnStyles[2].Width = compact ? 132F : 150F;
-            header.ColumnStyles[3].Width = compact ? 148F : 170F;
-            header.ColumnStyles[4].Width = compact ? 176F : 188F;
-            header.ColumnStyles[5].Width = compact ? 104F : 112F;
-            _equipmentStatus.Visible = !compact;
-        }
+        _equipmentStatus.Visible = true;
+        _header.PerformLayout();
+        _statusBar.PerformLayout();
     }
 
     private void ConfigureNavigationButton(Button button, string text, int sidebarWidth)

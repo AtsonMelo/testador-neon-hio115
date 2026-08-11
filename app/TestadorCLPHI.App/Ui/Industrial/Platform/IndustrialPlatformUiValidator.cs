@@ -53,6 +53,18 @@ internal static class IndustrialPlatformUiValidator
             ("layout estrutural permanece utilizavel em 1600x900", () => LayoutFits(new Size(1600, 900))),
             ("layout estrutural permanece utilizavel em 1920x1080", () => LayoutFits(new Size(1920, 1080))),
             ("layout estrutural permanece utilizavel em 2560x1440", () => LayoutFits(new Size(2560, 1440))),
+            ("shell responsivo preserva limites em 1366x768 @100%", () => ResponsiveShellFits(new Size(1366, 768), 96)),
+            ("shell responsivo preserva limites em 1366x768 @125%", () => ResponsiveShellFits(new Size(1366, 768), 120)),
+            ("shell responsivo preserva limites em 1366x768 @150%", () => ResponsiveShellFits(new Size(1366, 768), 144)),
+            ("shell responsivo preserva limites em 1600x900 @100%", () => ResponsiveShellFits(new Size(1600, 900), 96)),
+            ("shell responsivo preserva limites em 1600x900 @125%", () => ResponsiveShellFits(new Size(1600, 900), 120)),
+            ("shell responsivo preserva limites em 1600x900 @150%", () => ResponsiveShellFits(new Size(1600, 900), 144)),
+            ("shell responsivo preserva limites em 1920x1080 @100%", () => ResponsiveShellFits(new Size(1920, 1080), 96)),
+            ("shell responsivo preserva limites em 1920x1080 @125%", () => ResponsiveShellFits(new Size(1920, 1080), 120)),
+            ("shell responsivo preserva limites em 1920x1080 @150%", () => ResponsiveShellFits(new Size(1920, 1080), 144)),
+            ("shell responsivo preserva limites em 2560x1440 @100%", () => ResponsiveShellFits(new Size(2560, 1440), 96)),
+            ("shell responsivo preserva limites em 2560x1440 @125%", () => ResponsiveShellFits(new Size(2560, 1440), 120)),
+            ("shell responsivo preserva limites em 2560x1440 @150%", () => ResponsiveShellFits(new Size(2560, 1440), 144)),
             ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
             ("troca de tema preserva sessao, pagina e instancias", ThemeSwitchPreservesUiState),
@@ -476,6 +488,110 @@ internal static class IndustrialPlatformUiValidator
             && form.SimulatorModeButton.Visible
             && safety is { Visible: true, Width: > 120, Height: > 24 }
             && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal);
+    }
+
+    private static bool ResponsiveShellFits(Size physicalViewport, int dpi)
+    {
+        Size logicalViewport = new(
+            Math.Max(760, (int)Math.Floor(physicalViewport.Width * 96D / dpi)),
+            Math.Max(500, (int)Math.Floor(physicalViewport.Height * 96D / dpi)));
+        using IndustrialPlatformForm form = new()
+        {
+            MinimumSize = Size.Empty,
+            ClientSize = logicalViewport,
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        _ = form.Session;
+        form.Show();
+        form.ClientSize = logicalViewport;
+        PerformLayoutTree(form);
+
+        Control[] primaryRegions =
+        [
+            form.HeaderRegion,
+            form.BodyRegion,
+            form.ContentRegion,
+            form.FooterRegion,
+            form.ThemeSelector
+        ];
+        Control? outside = primaryRegions.FirstOrDefault(control => !IsInsideParent(control));
+        if (outside is not null)
+        {
+            throw new InvalidOperationException(
+                $"{physicalViewport.Width}x{physicalViewport.Height}@{dpi}: "
+                + $"{outside.Name} fora do parent; bounds={outside.Bounds}; "
+                + $"parent={outside.Parent?.ClientRectangle}.");
+        }
+
+        Rectangle headerBounds = BoundsRelativeTo(form.HeaderRegion, form);
+        Rectangle bodyBounds = BoundsRelativeTo(form.BodyRegion, form);
+        Rectangle footerBounds = BoundsRelativeTo(form.FooterRegion, form);
+        if (headerBounds.Height < IndustrialSpacing.HeaderHeight
+            || headerBounds.Bottom > bodyBounds.Top
+            || bodyBounds.Bottom > footerBounds.Top
+            || footerBounds.Bottom > form.ClientRectangle.Bottom)
+        {
+            throw new InvalidOperationException(
+                $"{physicalViewport.Width}x{physicalViewport.Height}@{dpi}: "
+                + $"header={headerBounds}; body={bodyBounds}; footer={footerBounds}; "
+                + $"client={form.ClientRectangle}.");
+        }
+
+        IReadOnlyList<Label> statuses = form.CriticalHeaderStatuses;
+        Rectangle[] statusBounds = statuses
+            .Select(status => BoundsRelativeTo(status, form))
+            .ToArray();
+        bool statusTextFits = statuses.All(StatusTextFits);
+        bool statusesDoNotOverlap = statusBounds
+            .SelectMany((left, index) => statusBounds.Skip(index + 1)
+                .Select(right => !left.IntersectsWith(right)))
+            .All(value => value);
+        bool result = statuses.All(status => status.Visible && IsInsideParent(status))
+            && statusTextFits
+            && statusesDoNotOverlap
+            && form.ThemeSelector.Visible
+            && form.ThemeSelector.Width >= 96
+            && form.TesterModeButton.Visible
+            && form.SimulatorModeButton.Visible;
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"{physicalViewport.Width}x{physicalViewport.Height}@{dpi}: "
+                + $"compact={form.IsCompactNavigation}; statusText={statusTextFits}; "
+                + $"statusOverlap={!statusesDoNotOverlap}; theme={form.ThemeSelector.Bounds}; "
+                + $"statuses={string.Join(", ", statuses.Select(status => $"{status.Name}:{status.Bounds}:{StatusTextFits(status)}"))}.");
+        }
+
+        return true;
+    }
+
+    private static bool StatusTextFits(Label label)
+    {
+        Size measured = TextRenderer.MeasureText(
+            label.Text,
+            label.Font,
+            Size.Empty,
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+        return measured.Width <= label.ClientSize.Width - label.Padding.Horizontal;
+    }
+
+    private static bool IsInsideParent(Control control) =>
+        control.Parent is not null
+        && control.Parent.ClientRectangle.Contains(control.Bounds);
+
+    private static Rectangle BoundsRelativeTo(Control control, Control root)
+    {
+        Point location = control.Location;
+        for (Control? parent = control.Parent; parent is not null && !ReferenceEquals(parent, root); parent = parent.Parent)
+        {
+            location.Offset(parent.Location);
+        }
+
+        return new Rectangle(location, control.Size);
     }
 
     private static bool Ui2ControlsRespectDpiScalingContract()
