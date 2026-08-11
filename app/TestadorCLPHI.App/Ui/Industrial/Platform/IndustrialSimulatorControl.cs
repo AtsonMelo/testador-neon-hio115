@@ -34,6 +34,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private readonly Dictionary<string, Label> _metricValues = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, CheckBox> _digitalEditors = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, NumericUpDown> _analogEditors = new(StringComparer.OrdinalIgnoreCase);
+    private TableLayoutPanel? _rootLayout;
+    private TableLayoutPanel? _pivotOverview;
+    private Label? _profileEvidence;
     private PivotProcessControl? _pivotVisual;
     private bool _initializing;
     private bool _updatingEditors;
@@ -67,12 +70,14 @@ internal sealed class IndustrialSimulatorControl : UserControl
         }
 
         Controls.Add(BuildLayout());
+        ClientSizeChanged += (_, _) => UpdateResponsiveLayout();
         BuildSignals();
         RefreshSnapshot();
         _session.Changed += SessionChanged;
         _profiles.SelectedIndexChanged += ProfileChanged;
         _initializing = false;
         ApplyTheme();
+        UpdateResponsiveLayout();
     }
 
     internal event EventHandler<string>? ProfileRequested;
@@ -98,18 +103,19 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private Control BuildLayout()
     {
-        TableLayoutPanel root = new()
+        _rootLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 1,
-            BackColor = PlatformUi.Background
+            BackColor = PlatformUi.Background,
+            Name = "simulatorRoot"
         };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 286F));
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        root.Controls.Add(BuildSidebar(), 0, 0);
-        root.Controls.Add(BuildProcessPanel(), 1, 0);
-        return root;
+        _rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 286F));
+        _rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        _rootLayout.Controls.Add(BuildSidebar(), 0, 0);
+        _rootLayout.Controls.Add(BuildProcessPanel(), 1, 0);
+        return _rootLayout;
     }
 
     private Control BuildSidebar()
@@ -120,8 +126,14 @@ internal sealed class IndustrialSimulatorControl : UserControl
             AutoScroll = true,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            Padding = new Padding(14, 12, 10, 12),
-            BackColor = PlatformUi.Surface
+            Padding = new Padding(
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Md),
+            BackColor = PlatformUi.Surface,
+            Name = "simulatorConfigurationSidebar",
+            AccessibleName = "Configuração e estado da simulação"
         };
         PlatformUi.StyleField(_profiles);
         PlatformUi.StyleField(_scenarios);
@@ -158,11 +170,18 @@ internal sealed class IndustrialSimulatorControl : UserControl
         _alarms.Width = 240;
         _alarms.Height = 80;
         _alarms.AutoSize = false;
+        _alarms.AccessibleName = "Alarmes simulados";
         sidebar.Controls.Add(_alarms);
         _counters.Width = 240;
         _counters.Height = 94;
         _counters.AutoSize = false;
-        _counters.Margin = new Padding(3, 12, 3, 3);
+        _counters.Margin = new Padding(
+            IndustrialSpacing.Xs,
+            IndustrialSpacing.Md,
+            IndustrialSpacing.Xs,
+            IndustrialSpacing.Xs);
+        _counters.Font = IndustrialTypography.Technical();
+        _counters.AccessibleName = "Contadores da simulação e bloqueio físico";
         sidebar.Controls.Add(_counters);
         return sidebar;
     }
@@ -175,8 +194,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
             Dock = DockStyle.Fill,
             RowCount = 3,
             ColumnCount = 1,
-            Padding = new Padding(12),
-            BackColor = PlatformUi.Background
+            Padding = new Padding(IndustrialSpacing.Md),
+            BackColor = PlatformUi.Background,
+            Name = "simulatorProcessPanel"
         };
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, isPivot ? 292F : 166F));
@@ -199,28 +219,27 @@ internal sealed class IndustrialSimulatorControl : UserControl
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        Label title = PlatformUi.Label(
+        Label title = PlatformUi.PageTitle(
             $"SIMULADOR INDUSTRIAL • {_session.Profile.DisplayName ?? _session.Profile.Id!}",
-            heading: true);
-        title.Font = IndustrialTypography.Title();
+            "Simulador industrial e perfil ativo");
         title.Dock = DockStyle.Fill;
         title.TextAlign = ContentAlignment.MiddleLeft;
         Label simulated = PlatformUi.StatusChip("SIMULADO", PlatformStatusTone.Simulated, "simulatedProcessStatus");
-        Label evidence = PlatformUi.StatusChip(
+        _profileEvidence = PlatformUi.StatusChip(
             "PERFIL DE SIMULAÇÃO",
             PlatformStatusTone.Offline,
             "simulationProfileEvidenceStatus");
         simulated.Anchor = AnchorStyles.None;
-        evidence.Anchor = AnchorStyles.None;
+        _profileEvidence.Anchor = AnchorStyles.None;
         header.Controls.Add(title, 0, 0);
         header.Controls.Add(simulated, 1, 0);
-        header.Controls.Add(evidence, 2, 0);
+        header.Controls.Add(_profileEvidence, 2, 0);
         return header;
     }
 
     private Control BuildPivotOverview()
     {
-        TableLayoutPanel overview = new()
+        _pivotOverview = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
@@ -228,12 +247,12 @@ internal sealed class IndustrialSimulatorControl : UserControl
             BackColor = PlatformUi.Background,
             Margin = new Padding(0, 0, 0, 8)
         };
-        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 232F));
+        _pivotOverview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        _pivotOverview.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 232F));
         _pivotVisual = new PivotProcessControl { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 8, 0) };
-        overview.Controls.Add(_pivotVisual, 0, 0);
-        overview.Controls.Add(BuildMetricPanel(vertical: true), 1, 0);
-        return overview;
+        _pivotOverview.Controls.Add(_pivotVisual, 0, 0);
+        _pivotOverview.Controls.Add(BuildMetricPanel(vertical: true), 1, 0);
+        return _pivotOverview;
     }
 
     private Control BuildWellOverview()
@@ -281,14 +300,17 @@ internal sealed class IndustrialSimulatorControl : UserControl
         foreach (SimulationSignalDefinition definition in _session.Profile.Signals.Where(signal =>
                      signal.Kind == SimulationSignalKind.AnalogInput))
         {
-            Panel card = new()
-            {
-                Width = vertical ? 214 : 180,
-                Height = 68,
-                BackColor = PlatformUi.Surface,
-                Padding = new Padding(12, 8, 12, 8),
-                Margin = new Padding(0, 0, 8, 8)
-            };
+            Panel card = PlatformUi.Card($"simulationMetricCard{definition.Id}");
+            card.Width = vertical ? 214 : 180;
+            card.Height = 72;
+            card.MinimumSize = Size.Empty;
+            card.Padding = new Padding(
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Sm,
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Sm);
+            card.Margin = new Padding(0, 0, IndustrialSpacing.Sm, IndustrialSpacing.Sm);
+            card.AccessibleName = $"Métrica {definition.Label ?? definition.Id}";
             Label label = PlatformUi.Label(definition.Label ?? definition.Id!);
             label.Dock = DockStyle.Top;
             Label value = PlatformUi.Label(string.Empty, heading: true);
@@ -599,6 +621,27 @@ internal sealed class IndustrialSimulatorControl : UserControl
         _pivotVisual?.ApplyTheme();
         RefreshSnapshot();
         Invalidate(true);
+    }
+
+    private void UpdateResponsiveLayout()
+    {
+        if (_rootLayout is null)
+        {
+            return;
+        }
+
+        float logicalWidth = ClientSize.Width * 96F / Math.Max(DeviceDpi, 96);
+        bool compact = logicalWidth < 900F;
+        _rootLayout.ColumnStyles[0].Width = compact ? 248F : 286F;
+        if (_pivotOverview is not null)
+        {
+            _pivotOverview.ColumnStyles[1].Width = compact ? 190F : 232F;
+        }
+
+        if (_profileEvidence is not null)
+        {
+            _profileEvidence.Visible = !compact;
+        }
     }
 
     private void ApplyThemeToChildren(Control root)
