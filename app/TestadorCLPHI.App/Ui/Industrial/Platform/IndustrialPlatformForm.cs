@@ -70,6 +70,27 @@ internal sealed class IndustrialPlatformForm : Form
         AutoEllipsis = true,
         AccessibleName = "Equipamento e perfil ativos"
     };
+    private readonly Label _brandTitle = new()
+    {
+        Name = "industrialBrand",
+        Text = "TESTADOR INDUSTRIAL HI",
+        AutoSize = false,
+        Dock = DockStyle.Fill,
+        Margin = Padding.Empty,
+        TextAlign = ContentAlignment.MiddleLeft,
+        Font = IndustrialTypography.Title(),
+        AccessibleName = "Testador Industrial HI"
+    };
+    private readonly Label _brandContext = new()
+    {
+        Name = "industrialContext",
+        Text = "PLATAFORMA OFFLINE • TRANSPORTE EM MEMÓRIA",
+        AutoSize = false,
+        Dock = DockStyle.Fill,
+        Margin = Padding.Empty,
+        TextAlign = ContentAlignment.MiddleLeft,
+        Font = IndustrialTypography.Caption()
+    };
     private readonly Label _navCaption = new()
     {
         Text = "NAVEGAÇÃO",
@@ -137,6 +158,7 @@ internal sealed class IndustrialPlatformForm : Form
         _themeSelector.SelectedIndex = 0;
         _themeSelector.SelectedIndexChanged += ThemeSelectorChanged;
         ClientSizeChanged += (_, _) => UpdateResponsiveLayout();
+        DpiChanged += (_, _) => UpdateResponsiveLayout();
         IndustrialTheme.ThemeChanged += IndustrialThemeChanged;
         ShowWelcome();
         ApplyTheme();
@@ -155,6 +177,8 @@ internal sealed class IndustrialPlatformForm : Form
     internal Control ContentRegion => _content;
     internal Control FooterRegion => _statusBar;
     internal Control ThemeSelector => _themeSelector;
+    internal Label BrandTitle => _brandTitle;
+    internal Label BrandContext => _brandContext;
     internal IReadOnlyList<Label> CriticalHeaderStatuses =>
         [_offlineStatus, _modeStatus, _safetyStatus];
 
@@ -221,11 +245,11 @@ internal sealed class IndustrialPlatformForm : Form
     {
         _header.Padding = new Padding(
             IndustrialSpacing.Lg,
-            IndustrialSpacing.Sm,
+            IndustrialSpacing.Xs,
             IndustrialSpacing.Lg,
-            IndustrialSpacing.Sm);
-        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
-        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
+            IndustrialSpacing.Xs);
+        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 64F));
+        _header.RowStyles.Add(new RowStyle(SizeType.Percent, 36F));
 
         TableLayoutPanel primary = new()
         {
@@ -246,29 +270,10 @@ internal sealed class IndustrialPlatformForm : Form
             RowCount = 2,
             Margin = Padding.Empty
         };
-        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
-        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
-        Label brand = new()
-        {
-            Name = "industrialBrand",
-            Text = "TESTADOR INDUSTRIAL HI",
-            AutoSize = false,
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.BottomLeft,
-            Font = IndustrialTypography.Title(),
-            AccessibleName = "Testador Industrial HI"
-        };
-        Label context = new()
-        {
-            Name = "industrialContext",
-            Text = "PLATAFORMA OFFLINE • TRANSPORTE EM MEMÓRIA",
-            AutoSize = false,
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.TopLeft,
-            Font = IndustrialTypography.Caption()
-        };
-        identity.Controls.Add(brand, 0, 0);
-        identity.Controls.Add(context, 0, 1);
+        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 70F));
+        identity.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+        identity.Controls.Add(_brandTitle, 0, 0);
+        identity.Controls.Add(_brandContext, 0, 1);
         foreach (Label status in new[] { _offlineStatus, _modeStatus, _safetyStatus })
         {
             status.AutoSize = false;
@@ -573,10 +578,11 @@ internal sealed class IndustrialPlatformForm : Form
         float logicalWidth = ClientSize.Width * 96F / Math.Max(DeviceDpi, 96);
         bool compact = logicalWidth < 1180F;
         _compactNavigation = compact;
-        _shell.RowStyles[0].Height = compact
-            ? IndustrialSpacing.HeaderCompactHeight
-            : IndustrialSpacing.HeaderHeight;
-        _shell.RowStyles[2].Height = IndustrialSpacing.StatusBarHeight;
+        int dpi = Math.Max(DeviceDpi, 96);
+        _shell.RowStyles[0].Height = ScaleLogicalMetric(
+            compact ? IndustrialSpacing.HeaderCompactHeight : IndustrialSpacing.HeaderHeight,
+            dpi);
+        _shell.RowStyles[2].Height = ScaleLogicalMetric(IndustrialSpacing.StatusBarHeight, dpi);
         int width = compact ? IndustrialSpacing.SidebarCompactWidth : IndustrialSpacing.SidebarWidth;
         _body.ColumnStyles[0].Width = width;
         _sidebar.Padding = compact
@@ -592,6 +598,9 @@ internal sealed class IndustrialPlatformForm : Form
         _header.PerformLayout();
         _statusBar.PerformLayout();
     }
+
+    internal static int ScaleLogicalMetric(int logicalPixels, int dpi) =>
+        Math.Max(1, (int)Math.Ceiling(logicalPixels * Math.Max(dpi, 96) / 96D));
 
     private void ConfigureNavigationButton(Button button, string text, int sidebarWidth)
     {

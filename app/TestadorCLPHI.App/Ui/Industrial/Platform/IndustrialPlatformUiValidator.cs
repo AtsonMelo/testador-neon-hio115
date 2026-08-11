@@ -67,6 +67,8 @@ internal static class IndustrialPlatformUiValidator
             ("shell responsivo preserva limites em 2560x1440 @125%", () => ResponsiveShellFits(new Size(2560, 1440), 120)),
             ("shell responsivo preserva limites em 2560x1440 @150%", () => ResponsiveShellFits(new Size(2560, 1440), 144)),
             ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
+            ("titulo do shell permanece integral em Home Testador e Simulador", ShellTitleFitsAllPagesAndThemes),
+            ("titulo do shell possui orcamento vertical seguro em 100 125 e 150%", ShellTitleDpiBudgetIsSafe),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
             ("troca de tema preserva sessao, pagina e instancias", ThemeSwitchPreservesUiState),
             ("troca de tema e Pivo mantem recursos GDI estaveis", ThemeAndPivotKeepGdiResourcesStable),
@@ -580,6 +582,113 @@ internal static class IndustrialPlatformUiValidator
             Size.Empty,
             TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
         return measured.Width <= label.ClientSize.Width - label.Padding.Horizontal;
+    }
+
+    private static bool ShellTitleFitsAllPagesAndThemes()
+    {
+        IndustrialThemeMode originalMode = IndustrialTheme.Mode;
+        try
+        {
+            foreach (Size viewport in new[] { new Size(1366, 768), new Size(1920, 1080) })
+            {
+                foreach (IndustrialThemeMode mode in new[] { IndustrialThemeMode.Dark, IndustrialThemeMode.Light })
+                {
+                    using IndustrialPlatformForm form = new()
+                    {
+                        ClientSize = viewport,
+                        Opacity = 0,
+                        ShowInTaskbar = false,
+                        StartPosition = FormStartPosition.Manual,
+                        Location = new Point(-32000, -32000)
+                    };
+                    form.SetTheme(mode);
+                    form.Show();
+                    PerformLayoutTree(form);
+                    EnsureShellTitleFits(form, viewport, mode, "Home");
+
+                    form.ShowTester();
+                    PerformLayoutTree(form);
+                    EnsureShellTitleFits(form, viewport, mode, "Testador");
+
+                    form.ShowSimulator();
+                    PerformLayoutTree(form);
+                    EnsureShellTitleFits(form, viewport, mode, "Simulador");
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(originalMode);
+        }
+    }
+
+    private static void EnsureShellTitleFits(
+        IndustrialPlatformForm form,
+        Size viewport,
+        IndustrialThemeMode mode,
+        string page)
+    {
+        Label title = form.BrandTitle;
+        Label context = form.BrandContext;
+        Size measured = TextRenderer.MeasureText(
+            title.Text,
+            title.Font,
+            Size.Empty,
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+        Rectangle titleBounds = BoundsRelativeTo(title, form.HeaderRegion);
+        Rectangle contextBounds = BoundsRelativeTo(context, form.HeaderRegion);
+        bool fits = title.Visible
+            && IsInsideParent(title)
+            && measured.Width <= title.ClientSize.Width - title.Padding.Horizontal
+            && measured.Height + IndustrialSpacing.Xs <= title.ClientSize.Height - title.Padding.Vertical
+            && form.HeaderRegion.ClientRectangle.Contains(titleBounds)
+            && !titleBounds.IntersectsWith(contextBounds);
+        if (!fits)
+        {
+            throw new InvalidOperationException(
+                $"{viewport.Width}x{viewport.Height} {mode} {page}: "
+                + $"titulo={titleBounds}; contexto={contextBounds}; medido={measured}; "
+                + $"clienteTitulo={title.ClientSize}; header={form.HeaderRegion.ClientRectangle}.");
+        }
+    }
+
+    private static bool ShellTitleDpiBudgetIsSafe()
+    {
+        using IndustrialPlatformForm form = new();
+        Size measured = TextRenderer.MeasureText(
+            form.BrandTitle.Text,
+            form.BrandTitle.Font,
+            Size.Empty,
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+        foreach (Size viewport in new[] { new Size(1366, 768), new Size(1920, 1080) })
+        {
+            foreach (int dpi in new[] { 96, 120, 144 })
+            {
+                double logicalWidth = viewport.Width * 96D / dpi;
+                bool compact = logicalWidth < 1180D;
+                int headerHeight = IndustrialPlatformForm.ScaleLogicalMetric(
+                    compact ? IndustrialSpacing.HeaderCompactHeight : IndustrialSpacing.HeaderHeight,
+                    dpi);
+                int verticalPadding = IndustrialPlatformForm.ScaleLogicalMetric(
+                    IndustrialSpacing.Xs * 2,
+                    dpi);
+                int primaryHeight = (int)Math.Floor((headerHeight - verticalPadding) * 0.64D);
+                int titleBudget = (int)Math.Floor(primaryHeight * 0.70D);
+                int requiredHeight = IndustrialPlatformForm.ScaleLogicalMetric(
+                    measured.Height + IndustrialSpacing.Xs,
+                    dpi);
+                if (titleBudget < requiredHeight)
+                {
+                    throw new InvalidOperationException(
+                        $"{viewport.Width}x{viewport.Height}@{dpi}: "
+                        + $"budget={titleBudget}; required={requiredHeight}; header={headerHeight}.");
+                }
+            }
+        }
+
+        return true;
     }
 
     private static bool IsInsideParent(Control control) =>
