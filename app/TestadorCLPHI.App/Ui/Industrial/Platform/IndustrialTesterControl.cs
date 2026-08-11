@@ -642,6 +642,7 @@ internal sealed class IndustrialTesterControl : UserControl
             "LEITURA • DIAGNÓSTICO • RESULTADOS",
             PlatformStatusTone.Active);
         _enableOutputs.ForeColor = palette.Warning;
+        _ioMap?.ApplyTheme();
         foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
         {
             value.ForeColor = value.Text.Contains("ON", StringComparison.Ordinal)

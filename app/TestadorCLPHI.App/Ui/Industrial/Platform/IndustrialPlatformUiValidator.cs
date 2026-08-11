@@ -44,6 +44,7 @@ internal static class IndustrialPlatformUiValidator
             ("Simulador UI2 preserva acoes e editores entre cenarios", SimulatorFeatureParityIsPreserved),
             ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
             ("Mapa de I/O e aliases acompanham o perfil Poco", WellAliasesAndIoMapAreVisible),
+            ("Mapa de I/O UI2 filtra sem alterar bindings", IoMapFiltersWithoutChangingBindings),
             ("renderer leve do Pivo carrega quatro torres sem timer", PivotRendererLoadsWithoutTimer),
             ("renderer do Pivo atualiza somente por mudanca de estado", PivotRendererTracksStateChanges),
             ("perfil Poco preserva editor agrupado sem renderer de Pivo", WellUsesGenericGroupedEditor),
@@ -531,6 +532,23 @@ internal static class IndustrialPlatformUiValidator
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
+    }
+
+    private static bool IoMapFiltersWithoutChangingBindings()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialIoMapControl map = new(session);
+        int total = map.TotalBindingCount;
+        map.Filter("31120", "DI");
+        bool narrowed = map.BindingRowCount == 1;
+        map.Filter(string.Empty, null);
+        return total == session.Profile.IoBindings.Count
+            && narrowed
+            && map.BindingRowCount == total
+            && map.AvailableTypeFilters.Contains("DI")
+            && map.AvailableTypeFilters.Contains("AI")
+            && map.AvailableTypeFilters.Contains("DO")
+            && !map.HasUnsupportedAnalogOutputBadge;
     }
 
     private static bool SimulatorFeatureParityIsPreserved()
