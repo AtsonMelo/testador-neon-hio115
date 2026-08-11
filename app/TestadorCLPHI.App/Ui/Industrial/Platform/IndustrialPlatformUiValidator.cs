@@ -55,6 +55,9 @@ internal static class IndustrialPlatformUiValidator
             ("layout estrutural permanece utilizavel em 2560x1440", () => LayoutFits(new Size(2560, 1440))),
             ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
+            ("troca de tema preserva sessao, pagina e instancias", ThemeSwitchPreservesUiState),
+            ("troca de tema e Pivo mantem recursos GDI estaveis", ThemeAndPivotKeepGdiResourcesStable),
+            ("textos operacionais da UI2 permanecem em PT-BR", OperatorTextIsConsistent),
             ("sessao padrao usa endereco fake 1", SessionUsesFakeAddressOne),
             ("perfil Pivo pode ser manipulado offline", PivotProfileIsInteractive),
             ("perfil Poco pode ser carregado offline", WellProfileLoads),
@@ -509,6 +512,96 @@ internal static class IndustrialPlatformUiValidator
 
         return led.Font.SizeInPoints >= 8.5F
             && button.Font.SizeInPoints >= 8.5F;
+    }
+
+    private static bool ThemeSwitchPreservesUiState()
+    {
+        IndustrialTheme.SetMode(IndustrialThemeMode.Dark);
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        IndustrialTesterControl tester = form.TesterInstance!;
+        tester.SelectView(5);
+        _ = form.Session.IdentifyAsync(1, CancellationToken.None).GetAwaiter().GetResult();
+        form.Session.ApplyScenario("falha-torre");
+        string log = tester.RenderedLogText;
+        double safetyChain = form.Session.Simulation.GetValue("SafetyChain");
+        form.ShowSimulator();
+        IndustrialSimulatorControl simulator = form.SimulatorInstance!;
+        int structureBuilds = simulator.SignalStructureBuildCount;
+        int editorCount = simulator.EditableSignalCount;
+        int controlCount = CountControls(form);
+
+        foreach (IndustrialThemeMode mode in new[]
+                 {
+                     IndustrialThemeMode.Dark,
+                     IndustrialThemeMode.Light,
+                     IndustrialThemeMode.Dark,
+                     IndustrialThemeMode.System,
+                     IndustrialThemeMode.Dark
+                 })
+        {
+            form.SetTheme(mode);
+            form.ShowTester();
+            form.ShowSimulator();
+        }
+
+        return ReferenceEquals(tester, form.TesterInstance)
+            && ReferenceEquals(simulator, form.SimulatorInstance)
+            && tester.GetSelectedViewIndex() == 5
+            && tester.RenderedLogText == log
+            && log.Length > 0
+            && form.Session.Simulation.GetValue("SafetyChain") == safetyChain
+            && simulator.SignalStructureBuildCount == structureBuilds
+            && simulator.EditableSignalCount == editorCount
+            && CountControls(form) == controlCount
+            && form.ThemeMode == IndustrialThemeMode.Dark;
+    }
+
+    private static bool ThemeAndPivotKeepGdiResourcesStable()
+    {
+        RenderThemeAndPivotCycles(8);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        int afterWarmup = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
+        RenderThemeAndPivotCycles(8);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        int afterRepeat = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
+        IndustrialTheme.SetMode(IndustrialThemeMode.Dark);
+        return afterWarmup > 0 && afterRepeat - afterWarmup <= 4;
+    }
+
+    private static void RenderThemeAndPivotCycles(int iterations)
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialSimulatorControl simulator = new(session);
+        PivotProcessControl pivot = Find<PivotProcessControl>(simulator)!;
+        for (int index = 0; index < iterations; index++)
+        {
+            IndustrialTheme.SetMode(index % 2 == 0
+                ? IndustrialThemeMode.Light
+                : IndustrialThemeMode.Dark);
+            pivot.ApplyTheme();
+            pivot.Size = new Size(560 + index, 360 + index);
+            using Bitmap bitmap = new(pivot.Width, pivot.Height);
+            pivot.DrawToBitmap(bitmap, pivot.ClientRectangle);
+        }
+    }
+
+    private static bool OperatorTextIsConsistent()
+    {
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        form.ShowSimulator();
+        string visibleText = string.Join(
+            "\n",
+            FindAll<Control>(form)
+                .Select(control => control.Text));
+        return visibleText.Contains("TESTADOR INDUSTRIAL HI", StringComparison.Ordinal)
+            && visibleText.Contains("SIMULAÇÃO", StringComparison.Ordinal)
+            && !visibleText.Contains("TESTADOR CLP", StringComparison.OrdinalIgnoreCase)
+            && !visibleText.Contains("SIMULATION_READY", StringComparison.OrdinalIgnoreCase)
+            && !visibleText.Contains("DEVELOPMENT", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void PerformLayoutTree(Control control)

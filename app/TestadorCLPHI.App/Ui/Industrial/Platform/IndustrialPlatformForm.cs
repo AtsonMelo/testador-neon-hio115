@@ -111,6 +111,11 @@ internal sealed class IndustrialPlatformForm : Form
 
         _testerButton.Click += (_, _) => ShowTester();
         _simulatorButton.Click += (_, _) => ShowSimulator();
+        _testerButton.TabIndex = 0;
+        _testerButton.AccessibleDescription = "Abre leitura, diagnóstico e resultados no ambiente offline";
+        _simulatorButton.TabIndex = 1;
+        _simulatorButton.AccessibleDescription = "Abre cenários e sinais simulados em memória";
+        _themeSelector.TabIndex = 2;
         _themeSelector.Items.AddRange(["Escuro", "Claro", "Windows"]);
         _themeSelector.SelectedIndex = 0;
         _themeSelector.SelectedIndexChanged += ThemeSelectorChanged;

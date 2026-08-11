@@ -74,6 +74,9 @@ internal sealed class IndustrialTesterControl : UserControl
     internal int IoMappingRowCount => _ioMap?.BindingRowCount ?? 0;
     internal bool IoMappingDeclaresSimulationEvidence => _ioMap?.DeclaresSimulationEvidence == true;
     internal bool UsesIncrementalLogUpdates => true;
+    internal int GetSelectedViewIndex() => _tabs.SelectedIndex;
+    internal void SelectView(int index) => _tabs.SelectedIndex = index;
+    internal string RenderedLogText => _renderedLog;
 
     internal bool ShowsProcessAlias(string registerAlias, string expectedLabel)
     {
