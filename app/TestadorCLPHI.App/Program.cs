@@ -135,7 +135,7 @@ internal static class Program
 
         if (args.Contains("--validate-industrial-io-mapping", StringComparer.OrdinalIgnoreCase))
         {
-            Environment.ExitCode = IndustrialIoMappingValidator.ValidateDefaultProfiles(
+            Environment.ExitCode = IndustrialIoMappingCliValidator.ValidateDefaultProfiles(
                 Console.Out,
                 Console.Error);
             return;
