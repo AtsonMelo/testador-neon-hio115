@@ -63,6 +63,8 @@ internal sealed class IndustrialTesterControl : UserControl
         AccessibleName = "Áreas do Testador"
     };
     private IndustrialIoMapControl? _ioMap;
+    private TableLayoutPanel? _rootLayout;
+    private ResponsiveRtuConfigurationControl? _rtuConfiguration;
     private CancellationTokenSource? _operation;
     private bool _identified;
     private string _renderedLog = string.Empty;
@@ -78,6 +80,7 @@ internal sealed class IndustrialTesterControl : UserControl
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoScroll = true;
         Controls.Add(BuildLayout());
+        ClientSizeChanged += (_, _) => UpdateResponsiveRootHeight();
         PlatformUi.StyleTabs(_tabs);
         _state.AccessibleDescription = "Estado operacional do Testador offline";
         _result.AccessibleName = "Resultado da operação";
@@ -121,23 +124,24 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private Control BuildLayout()
     {
-        TableLayoutPanel root = new()
+        _rootLayout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
-            RowCount = 3,
+            Dock = DockStyle.Top,
+            RowCount = 4,
             ColumnCount = 1,
-            BackColor = PlatformUi.Background
+            BackColor = PlatformUi.Background,
+            MinimumSize = new Size(0, 0)
         };
-        root.RowCount = 4;
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 172F));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        root.Controls.Add(BuildHero(), 0, 0);
-        root.Controls.Add(BuildConfiguration(), 0, 1);
-        root.Controls.Add(BuildStatus(), 0, 2);
-        root.Controls.Add(BuildTabs(), 0, 3);
-        return root;
+        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 236F));
+        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+        _rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        _rootLayout.Controls.Add(BuildHero(), 0, 0);
+        _rootLayout.Controls.Add(BuildConfiguration(), 0, 1);
+        _rootLayout.Controls.Add(BuildStatus(), 0, 2);
+        _rootLayout.Controls.Add(BuildTabs(), 0, 3);
+        UpdateResponsiveRootHeight();
+        return _rootLayout;
     }
 
     private Control BuildHero()
@@ -168,37 +172,6 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private Control BuildConfiguration()
     {
-        GroupBox group = PlatformUi.Group("PARÂMETROS RTU • REFERÊNCIA OFFLINE");
-        group.Dock = DockStyle.Fill;
-        group.Padding = new Padding(IndustrialSpacing.Sm);
-        TableLayoutPanel grid = new() { Dock = DockStyle.Fill, ColumnCount = 5, RowCount = 4 };
-        for (int column = 0; column < 5; column++)
-        {
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-        }
-        grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-        grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
-        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
-
-        AddField(grid, "COM (informativa)", _port, 0);
-        AddField(grid, "Camada física", _physicalLayer, 1);
-        AddField(grid, "Baud", _baud, 2);
-        AddField(grid, "Data bits", _dataBits, 3);
-        AddField(grid, "Paridade", _parity, 4);
-        AddField(grid, "Stop bits", _stopBits, 5);
-        AddField(grid, "Timeout (ms)", _timeout, 6);
-        AddField(grid, "Intervalo (ms)", _interval, 7);
-        AddField(grid, "Endereço inicial", _startAddress, 8);
-        AddField(grid, "Endereço final", _endAddress, 9);
-
-        FlowLayoutPanel actions = new()
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            WrapContents = true,
-            AccessibleName = "Ações do Testador"
-        };
         Button refreshPorts = PlatformUi.Button("PORTAS", "refreshPortsButton");
         refreshPorts.Enabled = false;
         _toolTip.SetToolTip(refreshPorts, "Indisponível no host estritamente offline.");
@@ -209,27 +182,32 @@ internal sealed class IndustrialTesterControl : UserControl
         Button cancel = PlatformUi.Button("CANCELAR", "cancelButton");
         PlatformUi.SetButtonTone(refreshPorts, PlatformButtonTone.Ghost);
         PlatformUi.SetButtonTone(cancel, PlatformButtonTone.Danger);
-        foreach (Button button in new[] { refreshPorts, validate, identify, discover, cancel })
-        {
-            button.Width = 172;
-            button.Height = IndustrialSpacing.FieldHeight;
-            button.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
-            actions.Controls.Add(button);
-        }
-
         validate.Click += (_, _) => ValidateConfiguration();
         identify.Click += async (_, _) => await IdentifyAsync();
         discover.Click += async (_, _) => await DiscoverAsync();
         cancel.Click += (_, _) => _operation?.Cancel();
-        grid.Controls.Add(actions, 0, 2);
-        grid.SetColumnSpan(actions, 5);
-        _offlineSafety.Dock = DockStyle.Fill;
+        RtuFieldDefinition[] fields =
+        [
+            new("COM (informativa)", _port),
+            new("Camada física", _physicalLayer),
+            new("Baud", _baud),
+            new("Data bits", _dataBits),
+            new("Paridade", _parity),
+            new("Stop bits", _stopBits),
+            new("Timeout (ms)", _timeout),
+            new("Intervalo (ms)", _interval),
+            new("Endereço inicial", _startAddress),
+            new("Endereço final", _endAddress)
+        ];
+        Button[] actions = [refreshPorts, validate, identify, discover, cancel];
         _offlineSafety.AutoSize = false;
-        _offlineSafety.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
-        grid.Controls.Add(_offlineSafety, 0, 3);
-        grid.SetColumnSpan(_offlineSafety, 5);
-        group.Controls.Add(grid);
-        return group;
+        _rtuConfiguration = new ResponsiveRtuConfigurationControl(fields, actions, _offlineSafety)
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(IndustrialSpacing.Xs)
+        };
+        _rtuConfiguration.PreferredLayoutHeightChanged += (_, _) => UpdateResponsiveRootHeight();
+        return _rtuConfiguration;
     }
 
     private Control BuildStatus()
@@ -577,30 +555,6 @@ internal sealed class IndustrialTesterControl : UserControl
         UpdateLogIncrementally(_session.FormatOperationLog());
     }
 
-    private static void AddField(TableLayoutPanel grid, string label, Control field, int index)
-    {
-        TableLayoutPanel fieldContainer = new()
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2,
-            Margin = new Padding(IndustrialSpacing.Xs)
-        };
-        fieldContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
-        fieldContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        Label caption = PlatformUi.Label(label);
-        caption.Dock = DockStyle.Fill;
-        caption.AutoEllipsis = true;
-        caption.Margin = Padding.Empty;
-        fieldContainer.Controls.Add(caption, 0, 0);
-        field.Dock = DockStyle.Fill;
-        field.Margin = Padding.Empty;
-        field.AccessibleName = label;
-        PlatformUi.StyleField(field);
-        fieldContainer.Controls.Add(field, 0, 1);
-        grid.Controls.Add(fieldContainer, index % 5, index / 5);
-    }
-
     private static IndustrialComboBox Combo(params string[] items)
     {
         IndustrialComboBox combo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Height = 32 };
@@ -723,6 +677,7 @@ internal sealed class IndustrialTesterControl : UserControl
             PlatformStatusTone.Offline);
         _enableOutputs.ForeColor = palette.Warning;
         _ioMap?.ApplyTheme();
+        _rtuConfiguration?.ApplyTheme();
         foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
         {
             PlatformStatusTone tone = value.Text.Contains("DESCONHECIDO", StringComparison.Ordinal)
@@ -789,6 +744,22 @@ internal sealed class IndustrialTesterControl : UserControl
     private static bool IsPrimaryAction(Button button) => button.Name is
         "validateRtuButton" or "readInputsButton"
         || button.Name.StartsWith("activate", StringComparison.Ordinal);
+
+    private void UpdateResponsiveRootHeight()
+    {
+        if (_rootLayout is null || _rtuConfiguration is null)
+        {
+            return;
+        }
+
+        const int minimumTabHeight = 220;
+        int configurationHeight = _rtuConfiguration.PreferredLayoutHeight
+            + _rtuConfiguration.Margin.Vertical;
+        _rootLayout.RowStyles[1].Height = configurationHeight;
+        int contentHeight = 44 + configurationHeight + 40 + minimumTabHeight;
+        _rootLayout.Height = Math.Max(ClientSize.Height, contentHeight);
+        AutoScrollMinSize = new Size(0, contentHeight);
+    }
 
     private void UpdateLogIncrementally(IReadOnlyList<string> lines)
     {
