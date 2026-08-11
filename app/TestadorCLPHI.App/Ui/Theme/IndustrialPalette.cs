@@ -27,7 +27,9 @@ internal sealed record IndustrialPalette(
     Color Disabled,
     Color Focus,
     Color SelectedText,
-    Color SelectedSurface)
+    Color SelectedSurface,
+    Color ScrollThumb,
+    Color ScrollThumbHover)
 {
     internal static IndustrialPalette Dark { get; } = new(
         IsDark: true,
@@ -56,7 +58,9 @@ internal sealed record IndustrialPalette(
         Disabled: Color.FromArgb(152, 165, 178),
         Focus: Color.FromArgb(101, 210, 225),
         SelectedText: Color.FromArgb(233, 250, 252),
-        SelectedSurface: Color.FromArgb(22, 65, 74));
+        SelectedSurface: Color.FromArgb(22, 65, 74),
+        ScrollThumb: Color.FromArgb(91, 110, 128),
+        ScrollThumbHover: Color.FromArgb(152, 165, 178));
 
     internal static IndustrialPalette Light { get; } = new(
         IsDark: false,
@@ -85,5 +89,7 @@ internal sealed record IndustrialPalette(
         Disabled: Color.FromArgb(94, 106, 117),
         Focus: Color.FromArgb(0, 111, 124),
         SelectedText: Color.FromArgb(11, 79, 89),
-        SelectedSurface: Color.FromArgb(211, 237, 240));
+        SelectedSurface: Color.FromArgb(211, 237, 240),
+        ScrollThumb: Color.FromArgb(148, 163, 177),
+        ScrollThumbHover: Color.FromArgb(82, 97, 112));
 }

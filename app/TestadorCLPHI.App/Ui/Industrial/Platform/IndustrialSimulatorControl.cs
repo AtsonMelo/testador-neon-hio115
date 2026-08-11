@@ -34,7 +34,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
         PlatformStatusTone.Disabled,
         "simulationSafetyStatus");
     private readonly Label _overviewStatus = PlatformUi.Label(string.Empty, heading: true);
-    private readonly Panel _signals = new() { Dock = DockStyle.Fill, AutoScroll = true };
+    private readonly IndustrialScrollPanel _signals = new()
+    {
+        Dock = DockStyle.Fill,
+        AutoScroll = true,
+        Name = "simulationSignalScrollHost",
+        AccessibleName = "Sinais do processo simulados"
+    };
     private readonly TableLayoutPanel _signalGroups = new()
     {
         Dock = DockStyle.Top,

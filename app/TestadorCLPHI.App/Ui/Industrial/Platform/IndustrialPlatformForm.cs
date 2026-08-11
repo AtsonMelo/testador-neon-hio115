@@ -41,7 +41,7 @@ internal sealed class IndustrialPlatformForm : Form
         Margin = Padding.Empty,
         Name = "industrialStatusBar"
     };
-    private readonly FlowLayoutPanel _sidebar = new()
+    private readonly IndustrialFlowLayoutPanel _sidebar = new()
     {
         Dock = DockStyle.Fill,
         FlowDirection = FlowDirection.TopDown,

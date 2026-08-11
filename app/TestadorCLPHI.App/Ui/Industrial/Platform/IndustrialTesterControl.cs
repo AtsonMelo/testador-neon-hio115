@@ -49,8 +49,8 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         Multiline = true,
         ReadOnly = true,
-        ScrollBars = ScrollBars.Both,
-        WordWrap = false,
+        ScrollBars = ScrollBars.Vertical,
+        WordWrap = true,
         Dock = DockStyle.Fill,
         AccessibleName = "Log técnico incremental do Testador",
         AccessibleDescription = "Eventos offline, comandos simulados e diagnósticos em ordem cronológica"
@@ -61,6 +61,13 @@ internal sealed class IndustrialTesterControl : UserControl
         Dock = DockStyle.Fill,
         Name = "testerTabs",
         AccessibleName = "Áreas do Testador"
+    };
+    private readonly IndustrialScrollPanel _scrollHost = new()
+    {
+        Dock = DockStyle.Fill,
+        Name = "testerMainScrollHost",
+        AccessibleName = "Conteúdo do Testador",
+        BackColor = PlatformUi.Background
     };
     private IndustrialIoMapControl? _ioMap;
     private TableLayoutPanel? _rootLayout;
@@ -78,8 +85,9 @@ internal sealed class IndustrialTesterControl : UserControl
         AccessibleName = "Testador industrial offline";
         AccessibleDescription = "Leitura, diagnóstico e resultados usando somente transporte em memória";
         AutoScaleMode = AutoScaleMode.Dpi;
-        AutoScroll = true;
-        Controls.Add(BuildLayout());
+        AutoScroll = false;
+        _scrollHost.Controls.Add(BuildLayout());
+        Controls.Add(_scrollHost);
         ClientSizeChanged += (_, _) => UpdateResponsiveRootHeight();
         PlatformUi.StyleTabs(_tabs);
         _state.AccessibleDescription = "Estado operacional do Testador offline";
@@ -593,16 +601,16 @@ internal sealed class IndustrialTesterControl : UserControl
         return signal?.Label ?? binding?.SignalLabel ?? "Sem binding no perfil";
     }
 
-    private static FlowLayoutPanel SignalList()
+    private static IndustrialFlowLayoutPanel SignalList()
     {
-        FlowLayoutPanel list = new()
+        IndustrialFlowLayoutPanel list = new()
         {
             Dock = DockStyle.Fill,
             AutoScroll = true,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
             BackColor = PlatformUi.Background,
-            Padding = new Padding(8)
+            Padding = new Padding(8, 8, IndustrialScrollChrome.ReservedWidth + 8, 8)
         };
         list.ClientSizeChanged += (_, _) => ResizeSignalRows(list);
         return list;
@@ -665,6 +673,7 @@ internal sealed class IndustrialTesterControl : UserControl
         IndustrialPalette palette = IndustrialTheme.Palette;
         BackColor = palette.Background;
         ForeColor = palette.TextPrimary;
+        _scrollHost.BackColor = palette.Background;
         ApplyThemeToChildren(this);
         SetState(_stateText, _stateTone);
         PlatformUi.UpdateStatusChip(
@@ -758,7 +767,7 @@ internal sealed class IndustrialTesterControl : UserControl
         _rootLayout.RowStyles[1].Height = configurationHeight;
         int contentHeight = 44 + configurationHeight + 38 + minimumTabHeight;
         _rootLayout.Height = Math.Max(ClientSize.Height, contentHeight);
-        AutoScrollMinSize = new Size(0, contentHeight);
+        _scrollHost.AutoScrollMinSize = new Size(0, contentHeight);
     }
 
     private void UpdateLogIncrementally(IReadOnlyList<string> lines)
