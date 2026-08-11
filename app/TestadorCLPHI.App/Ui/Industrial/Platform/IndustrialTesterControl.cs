@@ -38,7 +38,16 @@ internal sealed class IndustrialTesterControl : UserControl
     private readonly Label[] _outputValues = Enumerable.Range(0, 4).Select(_ => PlatformUi.Label("○ OFF")).ToArray();
     private readonly CheckBox _enableOutputs = new() { Text = "MODO SUPERVISIONADO SIMULADO", AutoSize = true };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
-    private readonly TextBox _log = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, Dock = DockStyle.Fill };
+    private readonly TextBox _log = new()
+    {
+        Multiline = true,
+        ReadOnly = true,
+        ScrollBars = ScrollBars.Both,
+        WordWrap = false,
+        Dock = DockStyle.Fill,
+        AccessibleName = "Log técnico incremental do Testador",
+        AccessibleDescription = "Eventos offline, comandos simulados e diagnósticos em ordem cronológica"
+    };
     private readonly ToolTip _toolTip = new();
     private readonly TabControl _tabs = new()
     {

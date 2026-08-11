@@ -21,6 +21,9 @@ internal sealed class IndustrialIoMapControl : UserControl
         AccessibleName = "Filtrar tipo de I/O",
         Dock = DockStyle.Fill
     };
+    private readonly Label _evidenceTitle = PlatformUi.Label(
+        "MAPEAMENTO DO PERFIL DE SIMULAÇÃO",
+        heading: true);
     private readonly DataGridView _grid = new()
     {
         Name = "ioMappingGrid",
@@ -50,6 +53,7 @@ internal sealed class IndustrialIoMapControl : UserControl
         ForeColor = PlatformUi.Text;
         Dock = DockStyle.Fill;
         Controls.Add(BuildLayout());
+        _typeFilter.AccessibleDescription = "Restringe a tabela a DI, AI ou DO existentes no perfil";
         ConfigureGrid();
         LoadBindings();
         _search.TextChanged += (_, _) => ApplyFilter();
@@ -89,9 +93,9 @@ internal sealed class IndustrialIoMapControl : UserControl
             RowCount = 2,
             ColumnCount = 1,
             BackColor = PlatformUi.Background,
-            Padding = new Padding(8)
+            Padding = new Padding(IndustrialSpacing.Sm)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
         TableLayoutPanel banner = new()
@@ -100,8 +104,12 @@ internal sealed class IndustrialIoMapControl : UserControl
             ColumnCount = 3,
             RowCount = 1,
             BackColor = PlatformUi.Surface,
-            Padding = new Padding(14, 7, 14, 7),
-            Margin = new Padding(0, 0, 0, 6),
+            Padding = new Padding(
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Xs,
+                IndustrialSpacing.Md,
+                IndustrialSpacing.Xs),
+            Margin = new Padding(0, 0, 0, IndustrialSpacing.Xs),
             Name = "ioMappingToolbar"
         };
         banner.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -116,15 +124,15 @@ internal sealed class IndustrialIoMapControl : UserControl
         };
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
-        Label title = PlatformUi.Label("MAPEAMENTO DO PERFIL DE SIMULAÇÃO", heading: true);
-        title.Name = "ioMappingEvidenceLabel";
-        title.Dock = DockStyle.Fill;
-        title.ForeColor = PlatformUi.Warning;
+        _evidenceTitle.Name = "ioMappingEvidenceLabel";
+        _evidenceTitle.Dock = DockStyle.Fill;
+        _evidenceTitle.ForeColor = PlatformUi.Warning;
+        _evidenceTitle.AccessibleName = "Evidência e quantidade do mapa de I/O";
         Label detail = PlatformUi.Label(
             $"{_session.Profile.DisplayName} • vínculo conceitual em memória • não confirmado como ligação física");
         detail.Dock = DockStyle.Fill;
         detail.AutoEllipsis = true;
-        identity.Controls.Add(title, 0, 0);
+        identity.Controls.Add(_evidenceTitle, 0, 0);
         identity.Controls.Add(detail, 0, 1);
         banner.Controls.Add(identity, 0, 0);
         banner.Controls.Add(_search, 1, 0);
@@ -138,7 +146,13 @@ internal sealed class IndustrialIoMapControl : UserControl
     private void ConfigureGrid()
     {
         _grid.AccessibleName = "Tabela de mapeamento entre processo e canais do CLP simulado";
-        _grid.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
+        _grid.AccessibleDescription =
+            "Mapa somente leitura do perfil de simulação; não representa ligação física confirmada";
+        _grid.DefaultCellStyle.Padding = new Padding(
+            IndustrialSpacing.Sm,
+            IndustrialSpacing.Xs,
+            IndustrialSpacing.Sm,
+            IndustrialSpacing.Xs);
         _grid.DefaultCellStyle.Font = IndustrialTypography.Body();
         _grid.ColumnHeadersDefaultCellStyle.Font = IndustrialTypography.BodyStrong();
         _grid.RowTemplate.Height = 42;
@@ -261,6 +275,9 @@ internal sealed class IndustrialIoMapControl : UserControl
 
         _grid.ClearSelection();
         _grid.ResumeLayout();
+        _evidenceTitle.Text = $"MAPEAMENTO DO PERFIL DE SIMULAÇÃO • {_grid.Rows.Count}/{_rows.Count} SINAIS";
+        _grid.AccessibleDescription =
+            $"{_grid.Rows.Count} de {_rows.Count} sinais visíveis; somente leitura; ligação física não confirmada";
     }
 
     private static void ApplyThemeToTree(Control control, IndustrialPalette palette)
