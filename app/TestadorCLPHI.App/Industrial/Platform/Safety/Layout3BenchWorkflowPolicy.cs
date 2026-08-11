@@ -1,6 +1,6 @@
 using TestadorCLPHI.App.Industrial.Platform.Devices;
 
-namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
+namespace TestadorCLPHI.App.Industrial.Platform.Safety;
 
 internal enum Layout3BenchMode
 {

@@ -1,3 +1,5 @@
+using TestadorCLPHI.App.Industrial.Platform.Safety;
+
 namespace TestadorCLPHI.App.Ui.Industrial.Layout3;
 
 internal static class Layout3BenchReadinessEvaluator

@@ -1,5 +1,5 @@
 using TestadorCLPHI.App.Industrial.Platform.Devices;
-using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Industrial.Platform.Safety;
 using TestadorCLPHI.App.Plc;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Rtu;

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Rtu;
+using TestadorCLPHI.App.Industrial.Platform.Safety;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
 using TestadorCLPHI.App.Ui.Industrial.Layout3;
 using TestadorCLPHI.App.Ui.Controls;

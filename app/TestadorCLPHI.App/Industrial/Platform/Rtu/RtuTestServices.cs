@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using TestadorCLPHI.App.Industrial.Platform.Devices;
-using TestadorCLPHI.App.Ui.Industrial.Layout3;
+using TestadorCLPHI.App.Industrial.Platform.Safety;
 
 namespace TestadorCLPHI.App.Industrial.Platform.Rtu;
 
