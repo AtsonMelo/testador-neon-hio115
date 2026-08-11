@@ -82,12 +82,14 @@ internal static class IndustrialPlatformUiValidator
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
+            ("header RTU usa titulo subtitulo e divisor sem legenda de GroupBox", TesterRtuHeaderUsesFlatSectionComposition),
             ("layout RTU preserva ordem e breakpoints de cinco duas e uma coluna", TesterRtuLayoutIsResponsive),
             ("configuracao RTU usa altura compacta orientada ao conteudo", TesterRtuUsesContentDrivenHeight),
             ("acoes RTU compartilham metrica tipografica e semantica visual", TesterRtuActionsUseOneVisualSpecification),
             ("botoes e superficies principais usam cantos modernos moderados", ProductionActionsAndCardsUseModerateRoundedCorners),
             ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
             ("linhas do Testador preservam densidade operacional compacta", TesterSignalRowsUseCompactDensity),
+            ("listas do Testador alinham colunas Canal Sinal e Estado", TesterSignalListsExposeAlignedColumns),
             ("tema light preserva profundidade entre superficies", LightThemePreservesSurfaceDepth),
             ("footer permanece compacto e sem marcadores de iteracao UI", FooterHasOnlyProductRuntimeEvidence),
             ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
@@ -1029,6 +1031,29 @@ internal static class IndustrialPlatformUiValidator
         }
     }
 
+    private static bool TesterRtuHeaderUsesFlatSectionComposition()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session);
+        Label? title = tester.Controls.Find("rtuConfigurationTitle", true).OfType<Label>().SingleOrDefault();
+        Label? subtitle = tester.Controls.Find("rtuConfigurationSubtitle", true).OfType<Label>().SingleOrDefault();
+        Panel? divider = tester.Controls.Find("rtuConfigurationTitleDivider", true).OfType<Panel>().SingleOrDefault();
+        TableLayoutPanel? header = tester.Controls.Find("rtuConfigurationSectionHeader", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        return title is not null
+            && subtitle is not null
+            && divider is not null
+            && header is not null
+            && title.Parent == header
+            && subtitle.Parent == header
+            && divider.Parent == header
+            && title.Text == "Parâmetros RTU"
+            && subtitle.Text == "Referência offline"
+            && !title.Text.Contains('•')
+            && title.Parent?.Parent?.Parent is ResponsiveRtuConfigurationControl;
+    }
+
     private static bool TesterRtuLayoutIsResponsive()
     {
         string[] expectedOrder =
@@ -1226,6 +1251,34 @@ internal static class IndustrialPlatformUiValidator
         return rows.Length >= 11
             && rows.All(row => row.Height <= IndustrialPlatformForm.ScaleLogicalMetric(38, row.DeviceDpi)
                 && row.Margin.Bottom <= IndustrialPlatformForm.ScaleLogicalMetric(4, row.DeviceDpi));
+    }
+
+    private static bool TesterSignalListsExposeAlignedColumns()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.Show();
+        PerformLayoutTree(form);
+        FlowLayoutPanel? list = form.Controls.Find("digitalSignalList", true)
+            .OfType<FlowLayoutPanel>()
+            .SingleOrDefault();
+        FlowLayoutPanel? header = list?.Controls.OfType<FlowLayoutPanel>()
+            .SingleOrDefault(control => Equals(control.Tag, "signal-header"));
+        FlowLayoutPanel[] rows = list?.Controls.OfType<FlowLayoutPanel>()
+            .Where(control => Equals(control.Tag, "signal-row"))
+            .ToArray() ?? [];
+        if (list is null || header is null || rows.Length != 8 || header.Controls.Count != 3)
+        {
+            return false;
+        }
+
+        string[] labels = header.Controls.OfType<Label>().Select(label => label.Text).ToArray();
+        return labels.SequenceEqual(["Canal", "Sinal", "Estado"], StringComparer.Ordinal)
+            && rows.All(row => row.Controls.Count >= 3
+                && Math.Abs(row.Controls[0].Left - header.Controls[0].Left) <= 1
+                && Math.Abs(row.Controls[1].Left - header.Controls[1].Left) <= 1
+                && Math.Abs(row.Controls[2].Left - header.Controls[2].Left) <= 1
+                && row.Controls[2].Left > row.Controls[1].Left);
     }
 
     private static bool LightThemePreservesSurfaceDepth()

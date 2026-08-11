@@ -8,16 +8,19 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
 {
     private const int WideBreakpoint = 860;
     private const int CompactBreakpoint = 520;
-    private const int TitleRowHeight = 18;
-    private const int FieldRowHeight = 50;
+    private const int TitleRowHeight = 28;
+    private const int FieldRowHeight = 46;
     private const int ActionRowHeight = IndustrialSpacing.InteractiveHeight;
-    private const int StatusRowHeight = 24;
+    private const int StatusRowHeight = 22;
     private readonly IReadOnlyList<RtuFieldDefinition> _fields;
     private readonly IReadOnlyList<Button> _actions;
     private readonly Control _status;
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _fieldGrid;
     private readonly TableLayoutPanel _actionGrid;
+    private readonly Label _title;
+    private readonly Label _subtitle;
+    private readonly Panel _titleDivider;
     private Region? _roundedRegion;
     private int _fieldColumns;
     private int _actionColumns;
@@ -58,16 +61,47 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         _root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _root.RowStyles.Add(new RowStyle(SizeType.Absolute, StatusRowHeight));
 
-        Label title = new()
+        _title = new Label
         {
             Name = "rtuConfigurationTitle",
-            Text = "Parâmetros RTU  •  Referência offline",
+            Text = "Parâmetros RTU",
             Dock = DockStyle.Fill,
             Margin = Padding.Empty,
-            TextAlign = ContentAlignment.MiddleLeft,
+            TextAlign = ContentAlignment.BottomLeft,
             Font = IndustrialTypography.SectionTitle(),
-            AccessibleName = "Parâmetros RTU; referência offline"
+            AccessibleName = "Parâmetros RTU"
         };
+        _subtitle = new Label
+        {
+            Name = "rtuConfigurationSubtitle",
+            Text = "Referência offline",
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty,
+            TextAlign = ContentAlignment.TopLeft,
+            Font = IndustrialTypography.Status(),
+            AccessibleName = "Referência offline"
+        };
+        _titleDivider = new Panel
+        {
+            Name = "rtuConfigurationTitleDivider",
+            Dock = DockStyle.Fill,
+            Margin = Padding.Empty
+        };
+        TableLayoutPanel header = new()
+        {
+            Name = "rtuConfigurationSectionHeader",
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 3,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty
+        };
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 16F));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 11F));
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 1F));
+        header.Controls.Add(_title, 0, 0);
+        header.Controls.Add(_subtitle, 0, 1);
+        header.Controls.Add(_titleDivider, 0, 2);
         _fieldGrid = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
@@ -90,7 +124,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         _status.Dock = DockStyle.Fill;
         _status.Margin = new Padding(0, IndustrialSpacing.Xs, 0, 0);
 
-        _root.Controls.Add(title, 0, 0);
+        _root.Controls.Add(header, 0, 0);
         _root.Controls.Add(_fieldGrid, 0, 1);
         _root.Controls.Add(_actionGrid, 0, 2);
         _root.Controls.Add(_status, 0, 3);
@@ -131,13 +165,18 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         _root.BackColor = palette.SurfaceElevated;
         _fieldGrid.BackColor = palette.SurfaceElevated;
         _actionGrid.BackColor = palette.SurfaceElevated;
+        _title.ForeColor = palette.TextPrimary;
+        _subtitle.ForeColor = palette.TextMuted;
+        _titleDivider.BackColor = palette.Border;
         foreach (Control child in EnumerateControls(this))
         {
             if (child is Label label && label.Tag is not PlatformStatusTone)
             {
-                label.ForeColor = ReferenceEquals(label, _root.GetControlFromPosition(0, 0))
+                label.ForeColor = ReferenceEquals(label, _title)
                     ? palette.TextPrimary
-                    : palette.TextSecondary;
+                    : ReferenceEquals(label, _subtitle)
+                        ? palette.TextMuted
+                        : palette.TextSecondary;
             }
         }
 

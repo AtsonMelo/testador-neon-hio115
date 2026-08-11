@@ -262,6 +262,7 @@ internal sealed class IndustrialTesterControl : UserControl
         TabPage page = Page("Entradas digitais");
         FlowLayoutPanel list = SignalList();
         list.Name = "digitalSignalList";
+        list.Controls.Add(SignalHeader());
         for (int index = 0; index < _digitalValues.Length; index++)
         {
             string registerAlias = $"DI{index:00}";
@@ -285,6 +286,7 @@ internal sealed class IndustrialTesterControl : UserControl
         TabPage page = Page("Entradas analógicas");
         FlowLayoutPanel list = SignalList();
         list.Name = "analogSignalList";
+        list.Controls.Add(SignalHeader());
         for (int index = 0; index < _analogValues.Length; index++)
         {
             string registerAlias = $"AI{index:00}";
@@ -310,6 +312,7 @@ internal sealed class IndustrialTesterControl : UserControl
         list.Controls.Add(_enableOutputs);
         list.Controls.Add(PlatformUi.Label("Duracao ms"));
         list.Controls.Add(_outputDuration);
+        list.Controls.Add(SignalHeader());
         Layout3OutputChannel[] channels = Enum.GetValues<Layout3OutputChannel>();
         for (int index = 0; index < channels.Length; index++)
         {
@@ -630,11 +633,65 @@ internal sealed class IndustrialTesterControl : UserControl
             - SystemInformation.VerticalScrollBarWidth);
         foreach (Control control in list.Controls)
         {
-            if (Equals(control.Tag, "signal-row"))
+            if (control is FlowLayoutPanel row
+                && (Equals(control.Tag, "signal-row") || Equals(control.Tag, "signal-header")))
             {
                 control.Width = width;
+                ResizeSignalColumns(row);
             }
         }
+    }
+
+    private static FlowLayoutPanel SignalHeader()
+    {
+        FlowLayoutPanel header = new()
+        {
+            Width = 900,
+            Height = 30,
+            BackColor = PlatformUi.Surface,
+            Margin = new Padding(3, 0, 3, 2),
+            Padding = new Padding(10, 1, 10, 1),
+            WrapContents = false,
+            Tag = "signal-header",
+            AccessibleName = "Cabeçalho da lista técnica: Canal, Sinal e Estado"
+        };
+        header.Controls.Add(SignalHeaderLabel("Canal", "signal-header-channel", 100));
+        header.Controls.Add(SignalHeaderLabel("Sinal", "signal-header-signal", 270));
+        header.Controls.Add(SignalHeaderLabel("Estado", "signal-header-state", 150));
+        return header;
+    }
+
+    private static Label SignalHeaderLabel(string text, string tag, int width)
+    {
+        Label label = PlatformUi.Label(text);
+        label.Tag = tag;
+        label.Width = width;
+        label.Height = 28;
+        label.AutoSize = false;
+        label.TextAlign = ContentAlignment.MiddleLeft;
+        label.Font = IndustrialTypography.CaptionStrong();
+        return label;
+    }
+
+    private static void ResizeSignalColumns(FlowLayoutPanel row)
+    {
+        if (row.Controls.Count < 3)
+        {
+            return;
+        }
+
+        Control channel = row.Controls[0];
+        Control signal = row.Controls[1];
+        Control state = row.Controls[2];
+        int actionWidth = row.Controls.Cast<Control>()
+            .Skip(3)
+            .Sum(control => control.Width + control.Margin.Horizontal);
+        int fixedWidth = row.Padding.Horizontal
+            + channel.Width + channel.Margin.Horizontal
+            + state.Width + state.Margin.Horizontal
+            + signal.Margin.Horizontal
+            + actionWidth;
+        signal.Width = Math.Max(160, row.ClientSize.Width - fixedWidth);
     }
 
     private static FlowLayoutPanel SignalRow(
@@ -654,11 +711,13 @@ internal sealed class IndustrialTesterControl : UserControl
             Tag = "signal-row"
         };
         Label name = PlatformUi.Label(registerAlias, heading: true);
+        name.Tag = "signal-channel";
         name.Width = 100;
         name.Height = 28;
         name.AutoSize = false;
         name.TextAlign = ContentAlignment.MiddleLeft;
         Label process = PlatformUi.Label(processAlias);
+        process.Tag = "signal-name";
         process.Name = processAliasControlName;
         process.Width = 270;
         process.Height = 28;
@@ -733,7 +792,9 @@ internal sealed class IndustrialTesterControl : UserControl
                 case FlowLayoutPanel flow:
                     flow.BackColor = Equals(flow.Tag, "signal-row")
                         ? palette.SurfaceElevated
-                        : palette.Background;
+                        : Equals(flow.Tag, "signal-header")
+                            ? palette.SurfaceInteractive
+                            : palette.Background;
                     break;
                 case GroupBox:
                     child.BackColor = palette.SurfaceElevated;
