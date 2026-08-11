@@ -175,8 +175,8 @@ internal static class TestSimulatorIntegrationValidator
         }),
         new("mudanca de perfil troca bindings sem reaproveitar aliases", () =>
         {
-            using IndustrialPlatformSession pivot = new("pivo-central");
-            using IndustrialPlatformSession well = new("poco");
+            using IndustrialPlatformSession pivot = new(SimulationProfileLoader.Load("pivo-central"));
+            using IndustrialPlatformSession well = new(SimulationProfileLoader.Load("poco"));
             return Task.FromResult(
                 pivot.FindBinding(SimulationIoDirection.Input, SimulationIoType.Digital, 0)?.SignalId
                     == "Emergencia"
@@ -196,7 +196,7 @@ internal static class TestSimulatorIntegrationValidator
         }),
         new("sessao default resolve perfil HIO115 executavel", () =>
         {
-            using IndustrialPlatformSession session = new("pivo-central");
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
             return Task.FromResult(
                 session.DeviceProfile.Id == NeonHio115DeviceProfile.ProfileId
                 && session.DeviceProfile.CanCreateSimulatedSession
@@ -208,7 +208,9 @@ internal static class TestSimulatorIntegrationValidator
                 "UNKNOWN",
                 "Equipamento pendente");
             return Task.FromResult(Throws<InvalidOperationException>(() =>
-                new IndustrialPlatformSession("pivo-central", unsupported)));
+                new IndustrialPlatformSession(
+                    SimulationProfileLoader.Load("pivo-central"),
+                    unsupported)));
         }),
         new("integracao nao usa porta serial", () => Task.FromResult(
             typeof(SimulationHio115Adapter).AssemblyQualifiedName is not null

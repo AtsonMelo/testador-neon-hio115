@@ -1,4 +1,4 @@
-using System.IO.Ports;
+using TestadorCLPHI.App.Industrial.Transport;
 
 namespace TestadorCLPHI.App.Plc;
 
@@ -8,11 +8,11 @@ public sealed class PlcConnectionSettings
 
     public int BaudRate { get; set; } = 9600;
 
-    public Parity Parity { get; set; } = Parity.None;
+    internal IndustrialSerialParity Parity { get; set; } = IndustrialSerialParity.None;
 
     public int DataBits { get; set; } = 8;
 
-    public StopBits StopBits { get; set; } = StopBits.One;
+    internal IndustrialSerialStopBits StopBits { get; set; } = IndustrialSerialStopBits.One;
 
     public byte SlaveId { get; set; } = 1;
 

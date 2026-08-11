@@ -16,9 +16,11 @@ internal sealed class IndustrialPlatformSession : IDisposable
     private readonly RtuSupervisedOutputService _outputs;
 
     internal IndustrialPlatformSession(
-        string profileId,
+        SimulationProfile profile,
         IndustrialDeviceProfile? deviceProfile = null)
     {
+        ArgumentNullException.ThrowIfNull(profile);
+
         DeviceProfile = deviceProfile ?? NeonHio115DeviceProfile.Current;
         if (!DeviceProfile.CanCreateSimulatedSession)
         {
@@ -26,7 +28,7 @@ internal sealed class IndustrialPlatformSession : IDisposable
                 $"Equipamento {DeviceProfile.DisplayName} nao possui suporte operacional simulado.");
         }
 
-        Profile = SimulationProfileLoader.Load(profileId);
+        Profile = profile;
         Simulation = new SimulationEngine(Profile);
         Device = new NeonHio115FakeDevice(SimulatedDeviceAddress, profile: DeviceProfile);
         IoMapping = SimulationHio115Mappings.FromProfile(Profile, DeviceProfile);

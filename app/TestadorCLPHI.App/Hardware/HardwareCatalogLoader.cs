@@ -1,16 +1,7 @@
-using System.Text.Json;
-
 namespace TestadorCLPHI.App.Hardware;
 
 public static class HardwareCatalogLoader
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Disallow,
-        AllowTrailingCommas = false
-    };
-
     public static string GetDefaultCatalogPath()
     {
         return Path.Combine(
@@ -32,14 +23,6 @@ public static class HardwareCatalogLoader
             throw new FileNotFoundException("Catalogo de hardware nao encontrado.", filePath);
         }
 
-        string json = File.ReadAllText(filePath);
-        HardwareCatalog? catalog = JsonSerializer.Deserialize<HardwareCatalog>(json, JsonOptions);
-
-        if (catalog is null)
-        {
-            throw new InvalidDataException("Catalogo de hardware vazio ou invalido.");
-        }
-
-        return catalog;
+        return HardwareCatalogJson.Deserialize(File.ReadAllText(filePath), filePath);
     }
 }

@@ -1,4 +1,5 @@
 using System.IO.Ports;
+using TestadorCLPHI.App.Industrial.Transport;
 
 namespace TestadorCLPHI.App.Plc;
 
@@ -34,9 +35,9 @@ public sealed class ModbusRtuPlcCommunicationService : IPlcCommunicationService,
                 _serialPort = new SerialPort(
                     settings.PortName,
                     settings.BaudRate,
-                    settings.Parity,
+                    ToSystemParity(settings.Parity),
                     settings.DataBits,
-                    settings.StopBits)
+                    ToSystemStopBits(settings.StopBits))
                 {
                     ReadTimeout = settings.TimeoutMilliseconds,
                     WriteTimeout = settings.TimeoutMilliseconds
@@ -284,6 +285,24 @@ public sealed class ModbusRtuPlcCommunicationService : IPlcCommunicationService,
 
         return crc;
     }
+
+    private static Parity ToSystemParity(IndustrialSerialParity value) => value switch
+    {
+        IndustrialSerialParity.None => Parity.None,
+        IndustrialSerialParity.Odd => Parity.Odd,
+        IndustrialSerialParity.Even => Parity.Even,
+        IndustrialSerialParity.Mark => Parity.Mark,
+        IndustrialSerialParity.Space => Parity.Space,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Paridade serial invalida.")
+    };
+
+    private static StopBits ToSystemStopBits(IndustrialSerialStopBits value) => value switch
+    {
+        IndustrialSerialStopBits.One => StopBits.One,
+        IndustrialSerialStopBits.OnePointFive => StopBits.OnePointFive,
+        IndustrialSerialStopBits.Two => StopBits.Two,
+        _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Stop bits serial invalidos.")
+    };
 
     private void CloseSerialPort()
     {

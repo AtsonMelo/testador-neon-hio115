@@ -1,17 +1,7 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace TestadorCLPHI.App.Industrial.Platform.Simulation;
 
 internal static class SimulationProfileLoader
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
-
     internal static SimulationProfile Load(string profileId)
     {
         if (string.IsNullOrWhiteSpace(profileId))
@@ -21,9 +11,7 @@ internal static class SimulationProfileLoader
 
         string fileName = profileId + ".json";
         string path = ResolveProfilePath(fileName);
-        string json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<SimulationProfile>(json, Options)
-            ?? throw new InvalidOperationException($"Perfil vazio: {path}.");
+        return SimulationProfileJson.Deserialize(File.ReadAllText(path), path);
     }
 
     internal static IReadOnlyList<string> AvailableProfileIds() =>

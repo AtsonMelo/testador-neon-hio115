@@ -191,7 +191,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool UnknownArgumentStaysOffline()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         StartupMode mode = Program.ResolveStartupMode(["--unknown-startup-mode"]);
         using StringWriter error = new();
         int exitCode = Program.RejectUnknownStartupArguments(
@@ -357,7 +357,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool PivotAliasesAndIoMapAreVisible()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialTesterControl tester = new(session);
         return tester.HasIoMappingTab
             && tester.IoMappingRowCount == session.Profile.IoBindings.Count
@@ -369,7 +369,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool WellAliasesAndIoMapAreVisible()
     {
-        using IndustrialPlatformSession session = new("poco");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("poco"));
         using IndustrialTesterControl tester = new(session);
         return tester.IoMappingRowCount == session.Profile.IoBindings.Count
             && tester.ShowsProcessAlias("DI00", "Nível mínimo")
@@ -379,7 +379,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool PivotRendererLoadsWithoutTimer()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialSimulatorControl simulator = new(session);
         return simulator.HasPivotRenderer
             && simulator.RenderedTowerCount == 4
@@ -389,7 +389,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool PivotRendererTracksStateChanges()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialSimulatorControl simulator = new(session);
         int initialRevision = simulator.PivotStateRevision;
         session.ApplyScenario("movendo-frente");
@@ -402,7 +402,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool WellUsesGenericGroupedEditor()
     {
-        using IndustrialPlatformSession session = new("poco");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("poco"));
         using IndustrialSimulatorControl simulator = new(session);
         return !simulator.HasPivotRenderer
             && simulator.RenderedTowerCount == 0
@@ -598,7 +598,7 @@ internal static class IndustrialPlatformUiValidator
     private static bool Ui2ControlsRespectDpiScalingContract()
     {
         using IndustrialPlatformForm form = new();
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialTesterControl tester = new(session);
         using IndustrialSimulatorControl simulator = new(session);
         if (form.AutoScaleMode != AutoScaleMode.Dpi
@@ -683,7 +683,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static void RenderThemeAndPivotCycles(int iterations)
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialSimulatorControl simulator = new(session);
         PivotProcessControl pivot = Find<PivotProcessControl>(simulator)!;
         for (int index = 0; index < iterations; index++)
@@ -725,13 +725,13 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool SessionUsesFakeAddressOne()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         return session.Device.Address == 1;
     }
 
     private static bool PivotProfileIsInteractive()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         session.SetDigitalInput("Emergencia", true);
         bool emergency = session.Simulation.Snapshot.OutputsBlocked;
         session.ResetSimulation();
@@ -740,7 +740,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool WellProfileLoads()
     {
-        using IndustrialPlatformSession session = new("poco");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("poco"));
         session.ApplyScenario("falta-fase");
         return session.Simulation.Snapshot.State == "Falha";
     }
@@ -749,7 +749,7 @@ internal static class IndustrialPlatformUiValidator
     {
         return Task.Run(async () =>
         {
-            using IndustrialPlatformSession session = new("pivo-central");
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
             RtuIdentificationResult result = await session.IdentifyAsync(1, CancellationToken.None);
             return result.State == RtuIdentificationState.Identified;
         }).GetAwaiter().GetResult();
@@ -759,7 +759,7 @@ internal static class IndustrialPlatformUiValidator
     {
         return Task.Run(async () =>
         {
-            using IndustrialPlatformSession session = new("pivo-central");
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
             await session.IdentifyAsync(1, CancellationToken.None);
             RtuOutputTestResult result = await session.ActivateOutputAsync(
                 1,
@@ -794,7 +794,7 @@ internal static class IndustrialPlatformUiValidator
     {
         return Task.Run(async () =>
         {
-            using IndustrialPlatformSession session = new("pivo-central");
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
@@ -802,7 +802,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool PivotRendererUsesUi2VisualLanguage()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialSimulatorControl simulator = new(session);
         PivotProcessControl? pivot = Find<PivotProcessControl>(simulator);
         session.ApplyScenario("falha-torre");
@@ -817,7 +817,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool IoMapFiltersWithoutChangingBindings()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialIoMapControl map = new(session);
         int total = map.TotalBindingCount;
         map.Filter("31120", "DI");
@@ -834,7 +834,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool SimulatorFeatureParityIsPreserved()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialSimulatorControl simulator = new(session);
         int buildCount = simulator.SignalStructureBuildCount;
         int editorCount = simulator.EditableSignalCount;
@@ -852,7 +852,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static bool TesterFeatureParityIsPreserved()
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         using IndustrialTesterControl tester = new(session);
         string[] actions =
         [
@@ -893,7 +893,7 @@ internal static class IndustrialPlatformUiValidator
 
     private static CanonicalCounters CaptureCanonicalCounters() => Task.Run(async () =>
     {
-        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
         await session.DiscoverAsync(1, 1, TimeSpan.Zero, progress: null, CancellationToken.None);
         await session.ReadInputsAsync(1, CancellationToken.None);
         await session.ActivateOutputAsync(

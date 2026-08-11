@@ -438,7 +438,7 @@ internal sealed class IndustrialPlatformForm : Form
 
     private IndustrialPlatformSession CreateSession(string profileId)
     {
-        IndustrialPlatformSession session = new(profileId);
+        IndustrialPlatformSession session = new(SimulationProfileLoader.Load(profileId));
         session.Changed += SessionChanged;
         RefreshGlobalStatus(session);
         return session;
