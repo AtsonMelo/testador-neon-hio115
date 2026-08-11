@@ -501,7 +501,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
             return BuildDerivedDigitalSignal(definition);
         }
 
-        CheckBox value = new()
+        IndustrialCheckBox value = new()
         {
             Text = definition.Label,
             Name = $"simulation{definition.Id}Input",
@@ -882,6 +882,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
             switch (child)
             {
+                case IndustrialCheckBox industrialCheckBox:
+                    industrialCheckBox.ApplyTheme();
+                    break;
                 case IndustrialComboBox combo:
                     combo.ApplyTheme();
                     break;

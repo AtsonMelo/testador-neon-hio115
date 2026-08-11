@@ -43,7 +43,12 @@ internal sealed class IndustrialTesterControl : UserControl
     private readonly Label[] _outputValues = Enumerable.Range(0, 4)
         .Select(_ => PlatformUi.StatusChip("○ OFF", PlatformStatusTone.Disabled))
         .ToArray();
-    private readonly CheckBox _enableOutputs = new() { Text = "Modo supervisionado simulado", AutoSize = true };
+    private readonly IndustrialCheckBox _enableOutputs = new()
+    {
+        Text = "Modo supervisionado simulado",
+        AutoSize = true,
+        AccessibleName = "Modo supervisionado simulado"
+    };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
     private readonly TextBox _log = new()
     {
@@ -783,6 +788,9 @@ internal sealed class IndustrialTesterControl : UserControl
                 : child.ForeColor;
             switch (child)
             {
+                case IndustrialCheckBox checkBox:
+                    checkBox.ApplyTheme();
+                    break;
                 case IndustrialComboBox combo:
                     combo.ApplyTheme();
                     break;

@@ -87,7 +87,7 @@ internal sealed class IndustrialPlatformForm : Form
         Dock = DockStyle.Fill,
         Margin = Padding.Empty,
         TextAlign = ContentAlignment.MiddleLeft,
-        Font = IndustrialTypography.Caption(),
+        Font = IndustrialTypography.Status(),
         AccessibleName = "Contexto operacional offline"
     };
     private readonly Label _navCaption = new()

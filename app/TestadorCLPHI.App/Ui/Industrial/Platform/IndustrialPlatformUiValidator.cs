@@ -38,6 +38,7 @@ internal static class IndustrialPlatformUiValidator
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
             ("controles industriais expoem estado e acessibilidade", IndustrialControlsExposeAccessibleStates),
+            ("checkbox industrial preserva teclado tema foco e acessibilidade", IndustrialCheckBoxPreservesNativeSemantics),
             ("controles industriais nao apresentam crescimento GDI continuo", IndustrialControlsKeepGdiResourcesStable),
             ("host Layout 3 existente carrega Layout3HostControl", Layout3HostLoadsLayout3HostControl),
             ("ciclo de vida do launcher industrial permanece offline", IndustrialLauncherLifecycleStaysOffline),
@@ -402,6 +403,54 @@ internal static class IndustrialPlatformUiValidator
             && clicks == 1;
     }
 
+    private static bool IndustrialCheckBoxPreservesNativeSemantics()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            using IndustrialCheckBox checkBox = new()
+            {
+                Text = "Sinal simulado",
+                AccessibleName = "Sinal simulado",
+                ClientSize = new Size(180, IndustrialSpacing.InteractiveHeight)
+            };
+            using Panel host = new()
+            {
+                BackColor = IndustrialPalette.Dark.SurfaceElevated,
+                ClientSize = new Size(220, 48)
+            };
+            host.Controls.Add(checkBox);
+            InvokeKey(checkBox, "OnKeyDown", Keys.Space);
+            InvokeKey(checkBox, "OnKeyUp", Keys.Space);
+            bool toggledByKeyboard = checkBox.Checked;
+            foreach (IndustrialThemeMode mode in new[]
+                     {
+                         IndustrialThemeMode.Dark,
+                         IndustrialThemeMode.Light,
+                         IndustrialThemeMode.Dark
+                     })
+            {
+                IndustrialTheme.SetMode(mode);
+                checkBox.ApplyTheme();
+                using Bitmap bitmap = new(checkBox.Width, checkBox.Height);
+                checkBox.DrawToBitmap(bitmap, checkBox.ClientRectangle);
+            }
+
+            return checkBox.UsesIndustrialChrome
+                && toggledByKeyboard
+                && checkBox.TabStop
+                && checkBox.AccessibleRole == AccessibleRole.CheckButton
+                && checkBox.AccessibleName == "Sinal simulado"
+                && typeof(IndustrialCheckBox)
+                    .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                    .All(field => field.FieldType != typeof(System.Windows.Forms.Timer));
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
     private static bool IndustrialControlsKeepGdiResourcesStable()
     {
         RenderIndustrialControls(12);
@@ -422,7 +471,13 @@ internal static class IndustrialPlatformUiValidator
             using IndustrialLedIndicatorControl led = new() { IsOn = index % 2 != 0 };
             using IndustrialPushButtonControl button = new() { IsActive = index % 2 != 0 };
             using EmergencyStopButtonControl emergency = new();
-            foreach (Control control in new Control[] { led, button, emergency })
+            using IndustrialCheckBox checkBox = new()
+            {
+                Text = "Sinal simulado",
+                Checked = index % 2 != 0,
+                Size = new Size(180, IndustrialSpacing.InteractiveHeight)
+            };
+            foreach (Control control in new Control[] { led, button, emergency, checkBox })
             {
                 control.Size = new Size(control.Width + (index % 3), control.Height + (index % 2));
                 using Bitmap bitmap = new(Math.Max(1, control.Width), Math.Max(1, control.Height));

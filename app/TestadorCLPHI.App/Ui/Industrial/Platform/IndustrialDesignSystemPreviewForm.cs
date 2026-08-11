@@ -167,7 +167,7 @@ internal sealed class IndustrialDesignSystemPreviewForm : Form
                      ("Sinal com foco", false, "previewSignalFocus")
                  })
         {
-            CheckBox signal = new()
+            IndustrialCheckBox signal = new()
             {
                 Name = name,
                 Text = text,
@@ -176,9 +176,9 @@ internal sealed class IndustrialDesignSystemPreviewForm : Form
                 Height = IndustrialSpacing.InteractiveHeight,
                 Margin = Padding.Empty,
                 AccessibleName = text,
-                BackColor = IndustrialTheme.Palette.SurfaceElevated,
-                ForeColor = IndustrialTheme.Palette.TextPrimary
+                BackColor = IndustrialTheme.Palette.SurfaceElevated
             };
+            signal.ApplyTheme();
             rows.Controls.Add(signal);
         }
 
