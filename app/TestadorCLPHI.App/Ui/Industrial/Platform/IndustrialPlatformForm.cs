@@ -347,11 +347,14 @@ internal sealed class IndustrialPlatformForm : Form
     private Control BuildSidebar()
     {
         _sidebar.Name = "industrialSidebar";
-        _navCaption.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
+        int contentWidth = IndustrialSpacing.SidebarWidth
+            - (IndustrialSpacing.Md * 2)
+            - IndustrialScrollChrome.ReservedWidth;
+        _navCaption.Width = contentWidth;
         _sidebar.Controls.Add(_navCaption);
         foreach (Button button in new[] { _homeButton, _testerButton, _simulatorButton })
         {
-            button.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
+            button.Width = contentWidth;
             button.Height = IndustrialSpacing.CriticalInteractiveHeight;
             button.Margin = new Padding(0, IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs);
             button.TextAlign = ContentAlignment.MiddleLeft;
@@ -359,7 +362,7 @@ internal sealed class IndustrialPlatformForm : Form
             _sidebar.Controls.Add(button);
         }
 
-        _sidebarMode.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
+        _sidebarMode.Width = contentWidth;
         _sidebarMode.AutoSize = false;
         _sidebarMode.Height = 34;
         _sidebarMode.Margin = new Padding(0, IndustrialSpacing.Xs, 0, 0);
@@ -368,16 +371,16 @@ internal sealed class IndustrialPlatformForm : Form
         Panel divider = new()
         {
             Name = "sidebarStatusDivider",
-            Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2),
+            Width = contentWidth,
             Height = IndustrialSpacing.BorderWidth,
             Margin = new Padding(0, IndustrialSpacing.Lg, 0, IndustrialSpacing.Sm),
             BackColor = IndustrialTheme.Palette.Border
         };
         _sidebar.Controls.Add(divider);
-        _connectionCaption.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
+        _connectionCaption.Width = contentWidth;
         _connectionCaption.Margin = Padding.Empty;
         _sidebar.Controls.Add(_connectionCaption);
-        _sidebarOffline.Width = IndustrialSpacing.SidebarWidth - (IndustrialSpacing.Md * 2);
+        _sidebarOffline.Width = contentWidth;
         _sidebarOffline.AutoSize = false;
         _sidebarOffline.Height = 32;
         _sidebarOffline.Margin = new Padding(0, 0, 0, IndustrialSpacing.Xs);
@@ -784,11 +787,14 @@ internal sealed class IndustrialPlatformForm : Form
         ConfigureNavigationButton(_homeButton, compact ? "H" : "INÍCIO", width);
         ConfigureNavigationButton(_testerButton, compact ? "T" : "TESTADOR", width);
         ConfigureNavigationButton(_simulatorButton, compact ? "S" : "SIMULADOR", width);
-        _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
-        _sidebarOffline.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
+        int sidebarContentWidth = Math.Max(
+            40,
+            width - _sidebar.Padding.Horizontal - IndustrialScrollChrome.ReservedWidth);
+        _sidebarMode.Width = sidebarContentWidth;
+        _sidebarOffline.Width = sidebarContentWidth;
         if (_sidebar.Controls.Find("sidebarStatusDivider", true).FirstOrDefault() is Control divider)
         {
-            divider.Width = Math.Max(40, width - _sidebar.Padding.Horizontal);
+            divider.Width = sidebarContentWidth;
         }
         PlatformUi.UpdateStatusChip(
             _sidebarOffline,
@@ -946,7 +952,9 @@ internal sealed class IndustrialPlatformForm : Form
     private void ConfigureNavigationButton(Button button, string text, int sidebarWidth)
     {
         button.Text = text;
-        button.Width = Math.Max(40, sidebarWidth - _sidebar.Padding.Horizontal);
+        button.Width = Math.Max(
+            40,
+            sidebarWidth - _sidebar.Padding.Horizontal - IndustrialScrollChrome.ReservedWidth);
         button.TextAlign = _compactNavigation
             ? ContentAlignment.MiddleCenter
             : ContentAlignment.MiddleLeft;
@@ -1002,7 +1010,7 @@ internal static class PlatformUi
 
     internal static Button Button(string text, string name, bool primary = false)
     {
-        Button button = new()
+        Button button = new IndustrialButton
         {
             Text = text,
             Name = name,
@@ -1172,7 +1180,7 @@ internal static class PlatformUi
     internal static Panel Card(string name)
     {
         IndustrialPalette palette = IndustrialTheme.Palette;
-        return new Panel
+        return new IndustrialSurfacePanel
         {
             Name = name,
             BackColor = palette.SurfaceElevated,

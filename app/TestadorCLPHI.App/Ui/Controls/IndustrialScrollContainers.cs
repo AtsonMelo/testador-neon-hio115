@@ -18,7 +18,9 @@ internal sealed class IndustrialScrollPanel : Panel
     }
 
     internal bool UsesSlimThemedScrollbar => true;
-    internal bool HasHorizontalScroll => HorizontalScroll.Visible;
+    internal bool HasHorizontalScroll => _scrollChrome?.IsHorizontalScrollRequired == true;
+    internal bool IsVerticalScrollRequired => _scrollChrome?.IsVerticalScrollRequired == true;
+    internal static int ScrollbarThumbWidth => IndustrialScrollChrome.ThumbWidth;
 
     protected override void OnHandleCreated(EventArgs e)
     {
@@ -101,7 +103,9 @@ internal sealed class IndustrialFlowLayoutPanel : FlowLayoutPanel
     }
 
     internal bool UsesSlimThemedScrollbar => true;
-    internal bool HasHorizontalScroll => HorizontalScroll.Visible;
+    internal bool HasHorizontalScroll => _scrollChrome?.IsHorizontalScrollRequired == true;
+    internal bool IsVerticalScrollRequired => _scrollChrome?.IsVerticalScrollRequired == true;
+    internal static int ScrollbarThumbWidth => IndustrialScrollChrome.ThumbWidth;
 
     protected override void OnHandleCreated(EventArgs e)
     {
@@ -173,7 +177,7 @@ internal sealed class IndustrialFlowLayoutPanel : FlowLayoutPanel
 internal sealed class IndustrialScrollChrome
 {
     internal const int ReservedWidth = 10;
-    private const int ThumbWidth = 4;
+    internal const int ThumbWidth = 4;
     private const int MinimumThumbHeight = 28;
     private const int ScrollBarBoth = 3;
     private readonly ScrollableControl _owner;
@@ -184,6 +188,20 @@ internal sealed class IndustrialScrollChrome
     internal IndustrialScrollChrome(ScrollableControl owner)
     {
         _owner = owner;
+    }
+
+    internal bool IsVerticalScrollRequired => MaximumOffset > 0;
+    internal bool IsHorizontalScrollRequired
+    {
+        get
+        {
+            int offset = Math.Max(0, -_owner.AutoScrollPosition.X);
+            int rightEdge = Math.Max(0, _owner.ClientSize.Width - ReservedWidth);
+            return _owner.Controls.Cast<Control>()
+                .Where(control => control.Visible)
+                .Any(control => control.Left + offset < _owner.Padding.Left
+                    || control.Right + offset > rightEdge);
+        }
     }
 
     internal void HideNativeScrollbars()

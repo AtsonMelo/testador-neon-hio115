@@ -1,3 +1,5 @@
+using System.Drawing.Drawing2D;
+using TestadorCLPHI.App.Ui.Controls;
 using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
@@ -14,6 +16,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     private readonly TableLayoutPanel _root;
     private readonly TableLayoutPanel _fieldGrid;
     private readonly TableLayoutPanel _actionGrid;
+    private Region? _roundedRegion;
     private int _fieldColumns;
     private int _actionColumns;
 
@@ -83,6 +86,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         _root.Controls.Add(_actionGrid, 0, 2);
         _root.Controls.Add(_status, 0, 3);
         Controls.Add(_root);
+        UpdateRoundedRegion();
         ApplyResponsiveLayout(force: true);
         ApplyTheme();
     }
@@ -92,6 +96,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     internal int FieldColumnCount => _fieldColumns;
     internal int ActionColumnCount => _actionColumns;
     internal bool UsesHorizontalScroll => false;
+    internal IReadOnlyList<string> FieldLabels => _fields.Select(item => item.Label).ToArray();
 
     internal int PreferredLayoutHeight
     {
@@ -131,6 +136,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     protected override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
+        UpdateRoundedRegion();
         ApplyResponsiveLayout(force: false);
     }
 
@@ -140,8 +146,24 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         Rectangle border = ClientRectangle;
         border.Width = Math.Max(0, border.Width - 1);
         border.Height = Math.Max(0, border.Height - 1);
+        SmoothingMode previous = e.Graphics.SmoothingMode;
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(border, 8);
         using Pen pen = new(IndustrialTheme.Palette.Border, IndustrialSpacing.BorderWidth);
-        e.Graphics.DrawRectangle(pen, border);
+        e.Graphics.DrawPath(pen, path);
+        e.Graphics.SmoothingMode = previous;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            Region = null;
+            _roundedRegion?.Dispose();
+            _roundedRegion = null;
+        }
+
+        base.Dispose(disposing);
     }
 
     private void ApplyResponsiveLayout(bool force)
@@ -236,6 +258,21 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     }
 
     private static int DivideRoundUp(int value, int divisor) => (value + divisor - 1) / divisor;
+
+    private void UpdateRoundedRegion()
+    {
+        if (ClientSize.Width <= 0 || ClientSize.Height <= 0)
+        {
+            return;
+        }
+
+        using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(ClientRectangle, 8);
+        Region replacement = new(path);
+        Region? previous = _roundedRegion;
+        _roundedRegion = replacement;
+        Region = replacement;
+        previous?.Dispose();
+    }
 
     private static IEnumerable<Control> EnumerateControls(Control root)
     {

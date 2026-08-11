@@ -138,7 +138,8 @@ internal sealed class IndustrialTesterControl : UserControl
             RowCount = 4,
             ColumnCount = 1,
             BackColor = PlatformUi.Background,
-            MinimumSize = new Size(0, 0)
+            MinimumSize = new Size(0, 0),
+            Margin = Padding.Empty
         };
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 236F));
@@ -188,7 +189,6 @@ internal sealed class IndustrialTesterControl : UserControl
         Button identify = PlatformUi.Button("IDENTIFICAR", "identifyButton");
         Button discover = PlatformUi.Button("PROCURAR ENDEREÇO", "discoverButton");
         Button cancel = PlatformUi.Button("CANCELAR", "cancelButton");
-        PlatformUi.SetButtonTone(refreshPorts, PlatformButtonTone.Ghost);
         PlatformUi.SetButtonTone(cancel, PlatformButtonTone.Danger);
         validate.Click += (_, _) => ValidateConfiguration();
         identify.Click += async (_, _) => await IdentifyAsync();
@@ -260,6 +260,7 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         TabPage page = Page("Entradas digitais");
         FlowLayoutPanel list = SignalList();
+        list.Name = "digitalSignalList";
         for (int index = 0; index < _digitalValues.Length; index++)
         {
             string registerAlias = $"DI{index:00}";
@@ -282,6 +283,7 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         TabPage page = Page("Entradas analógicas");
         FlowLayoutPanel list = SignalList();
+        list.Name = "analogSignalList";
         for (int index = 0; index < _analogValues.Length; index++)
         {
             string registerAlias = $"AI{index:00}";
@@ -300,6 +302,7 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         TabPage page = Page("Saídas digitais");
         FlowLayoutPanel list = SignalList();
+        list.Name = "outputSignalList";
         _enableOutputs.ForeColor = IndustrialTheme.Palette.Warning;
         _enableOutputs.AccessibleDescription = "Autoriza somente saída simulada momentânea; hardware permanece bloqueado";
         _enableOutputs.Margin = new Padding(8, 10, 16, 10);
@@ -618,7 +621,12 @@ internal sealed class IndustrialTesterControl : UserControl
 
     private static void ResizeSignalRows(FlowLayoutPanel list)
     {
-        int width = Math.Max(680, list.ClientSize.Width - list.Padding.Horizontal - 28);
+        int width = Math.Max(
+            1,
+            list.ClientSize.Width
+            - list.Padding.Horizontal
+            - IndustrialScrollChrome.ReservedWidth
+            - SystemInformation.VerticalScrollBarWidth);
         foreach (Control control in list.Controls)
         {
             if (Equals(control.Tag, "signal-row"))
@@ -766,7 +774,7 @@ internal sealed class IndustrialTesterControl : UserControl
             + _rtuConfiguration.Margin.Vertical;
         _rootLayout.RowStyles[1].Height = configurationHeight;
         int contentHeight = 44 + configurationHeight + 38 + minimumTabHeight;
-        _rootLayout.Height = Math.Max(ClientSize.Height, contentHeight);
+        _rootLayout.Height = Math.Max(_scrollHost.ClientSize.Height, contentHeight);
         _scrollHost.AutoScrollMinSize = new Size(0, contentHeight);
     }
 
