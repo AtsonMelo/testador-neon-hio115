@@ -72,6 +72,10 @@ internal static class IndustrialPlatformUiValidator
             ("titulo do shell possui orcamento vertical seguro em 100 125 e 150%", ShellTitleDpiBudgetIsSafe),
             ("status tema sidebar e footer permanecem contidos", ShellCriticalRegionsRemainContained),
             ("acoes da Home permanecem contidas em modo amplo e compacto", HomeActionsRemainContained),
+            ("cards da Home usam altura orientada a conteudo e acoes alinhadas", HomeCardsUseContentDrivenHeight),
+            ("status da Home permanece informativo e nao parece botao", HomeStatusIsNotButtonLike),
+            ("sidebar separa navegacao de estado fisico nao interativo", SidebarSeparatesNavigationFromPhysicalStatus),
+            ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
             ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
             ("quatro metricas do Simulador permanecem visiveis sem rolagem horizontal", SimulatorMetricsRemainVisible),
@@ -766,6 +770,84 @@ internal static class IndustrialPlatformUiValidator
         }
 
         return true;
+    }
+
+    private static bool HomeCardsUseContentDrivenHeight()
+    {
+        foreach (Size viewport in new[] { new Size(1366, 768), new Size(1920, 1080) })
+        {
+            using IndustrialPlatformForm form = CreateOffscreenForm(viewport);
+            form.ShowHome();
+            form.Show();
+            PerformLayoutTree(form);
+            Panel[] cards = new[] { "welcomeTESTADORCard", "welcomeSIMULADORCard" }
+                .Select(name => form.Controls.Find(name, true).OfType<Panel>().SingleOrDefault())
+                .Where(card => card is not null)
+                .Cast<Panel>()
+                .ToArray();
+            Button[] actions = new[] { "welcomeTesterButton", "welcomeSimulatorButton" }
+                .Select(name => form.Controls.Find(name, true).OfType<Button>().SingleOrDefault())
+                .Where(button => button is not null)
+                .Cast<Button>()
+                .ToArray();
+            if (cards.Length != 2
+                || actions.Length != 2
+                || cards.Select(card => card.Height).Distinct().Count() != 1
+                || cards.Any(card => card.Height > 340 || card.Height < 200)
+                || actions.Select(action => BoundsRelativeTo(action, form).Top).Distinct().Count() != 1)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool HomeStatusIsNotButtonLike()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowHome();
+        form.Show();
+        PerformLayoutTree(form);
+        Label[] statuses = FindAll<Label>(form)
+            .Where(label => label.Name.StartsWith("welcome", StringComparison.Ordinal)
+                && label.Name.EndsWith("Status", StringComparison.Ordinal))
+            .ToArray();
+        return statuses.Length == 2
+            && statuses.All(status => status.AutoSize
+                && !status.TabStop
+                && status.Cursor != Cursors.Hand
+                && status.Parent is not null
+                && status.Width < status.Parent.ClientSize.Width * 0.8F);
+    }
+
+    private static bool SidebarSeparatesNavigationFromPhysicalStatus()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.Show();
+        PerformLayoutTree(form);
+        Label physical = form.SidebarPhysicalStatus;
+        Label offline = form.SidebarOfflineStatus;
+        Button[] navigation = [form.HomeModeButton, form.TesterModeButton, form.SimulatorModeButton];
+        return physical.Parent == offline.Parent
+            && physical is { TabStop: false, AccessibleRole: AccessibleRole.StaticText }
+            && offline is { TabStop: false, AccessibleRole: AccessibleRole.StaticText }
+            && physical.Cursor != Cursors.Hand
+            && offline.Cursor != Cursors.Hand
+            && navigation.All(button => button.TabStop && button.Cursor == Cursors.Hand)
+            && BoundsRelativeTo(offline, form).Top > navigation.Max(button => BoundsRelativeTo(button, form).Bottom);
+    }
+
+    private static bool OverviewUsesInformationalTone()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowHome();
+        form.Show();
+        PerformLayoutTree(form);
+        Label? mode = form.Controls.Find("platformModeStatus", true).OfType<Label>().SingleOrDefault();
+        return mode?.Tag is PlatformStatusTone.Active
+            && mode.BackColor == IndustrialTheme.Palette.SelectedSurface
+            && mode.BackColor != IndustrialTheme.Palette.SuccessSurface;
     }
 
     private static bool TesterControlsRemainContained()
