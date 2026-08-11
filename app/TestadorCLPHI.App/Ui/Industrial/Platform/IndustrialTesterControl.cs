@@ -144,7 +144,8 @@ internal sealed class IndustrialTesterControl : UserControl
             ColumnCount = 1,
             BackColor = PlatformUi.Background,
             MinimumSize = new Size(0, 0),
-            Margin = Padding.Empty
+            Margin = Padding.Empty,
+            Name = "testerRootLayout"
         };
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 236F));

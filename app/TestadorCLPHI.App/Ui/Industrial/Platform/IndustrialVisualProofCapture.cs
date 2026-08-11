@@ -31,7 +31,14 @@ internal static class IndustrialVisualProofCapture
                          (IndustrialThemeMode.Light, "light")
                      })
             {
-                foreach (int width in new[] { 1366, 1920 })
+                foreach ((int width, int height, string suffix) in new[]
+                         {
+                             (1366, 768, "1366"),
+                             (1600, 900, "1600x900"),
+                             (1920, 1080, "1920"),
+                             (1920, 1200, "1920x1200"),
+                             (2560, 1440, "2560x1440")
+                         })
                 {
                     foreach ((string page, Action<IndustrialPlatformForm> showPage) in new[]
                              {
@@ -41,7 +48,7 @@ internal static class IndustrialVisualProofCapture
                              })
                     {
                         IndustrialTheme.SetMode(mode);
-                        using IndustrialPlatformForm form = CreateOffscreenShell(width);
+                        using IndustrialPlatformForm form = CreateOffscreenShell(width, height);
                         showPage(form);
                         form.Show();
                         Application.DoEvents();
@@ -49,10 +56,10 @@ internal static class IndustrialVisualProofCapture
                         form.Update();
                         using Bitmap bitmap = new(form.ClientSize.Width, form.ClientSize.Height);
                         form.DrawToBitmap(bitmap, form.ClientRectangle);
-                        bitmap.Save(Path.Combine(directory, $"{page}-{theme}-{width}.png"));
+                        bitmap.Save(Path.Combine(directory, $"{page}-{theme}-{suffix}.png"));
                         if (page == "tester")
                         {
-                            bitmap.Save(Path.Combine(directory, $"rtu-{theme}-{width}.png"));
+                            bitmap.Save(Path.Combine(directory, $"rtu-{theme}-{suffix}.png"));
                         }
 
                         form.Hide();
@@ -99,10 +106,10 @@ internal static class IndustrialVisualProofCapture
         }
     }
 
-    private static IndustrialPlatformForm CreateOffscreenShell(int width) => new()
+    private static IndustrialPlatformForm CreateOffscreenShell(int width, int height) => new()
     {
         MinimumSize = Size.Empty,
-        ClientSize = width == 1366 ? new Size(1366, 768) : new Size(1920, 1080),
+        ClientSize = new Size(width, height),
         FormBorderStyle = FormBorderStyle.None,
         ShowInTaskbar = false,
         StartPosition = FormStartPosition.Manual,

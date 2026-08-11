@@ -8,10 +8,6 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
 {
     private const int WideBreakpoint = 860;
     private const int CompactBreakpoint = 520;
-    private const int TitleRowHeight = 28;
-    private const int FieldRowHeight = 46;
-    private const int ActionRowHeight = IndustrialSpacing.InteractiveHeight;
-    private const int StatusRowHeight = 22;
     private readonly IReadOnlyList<RtuFieldDefinition> _fields;
     private readonly IReadOnlyList<Button> _actions;
     private readonly Control _status;
@@ -56,16 +52,17 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
             Name = "rtuConfigurationLayout"
         };
         _root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        _root.RowStyles.Add(new RowStyle(SizeType.Absolute, TitleRowHeight));
         _root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         _root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        _root.RowStyles.Add(new RowStyle(SizeType.Absolute, StatusRowHeight));
+        _root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        _root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         _title = new Label
         {
             Name = "rtuConfigurationTitle",
             Text = "Parâmetros RTU",
             Dock = DockStyle.Fill,
+            AutoSize = true,
             Margin = Padding.Empty,
             TextAlign = ContentAlignment.BottomLeft,
             Font = IndustrialTypography.SectionTitle(),
@@ -76,6 +73,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
             Name = "rtuConfigurationSubtitle",
             Text = "Referência offline",
             Dock = DockStyle.Fill,
+            AutoSize = true,
             Margin = Padding.Empty,
             TextAlign = ContentAlignment.TopLeft,
             Font = IndustrialTypography.Status(),
@@ -90,14 +88,16 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         TableLayoutPanel header = new()
         {
             Name = "rtuConfigurationSectionHeader",
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
             RowCount = 3,
             Margin = Padding.Empty,
             Padding = Padding.Empty
         };
-        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 16F));
-        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 11F));
+        header.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        header.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         header.RowStyles.Add(new RowStyle(SizeType.Absolute, 1F));
         header.Controls.Add(_title, 0, 0);
         header.Controls.Add(_subtitle, 0, 1);
@@ -123,6 +123,9 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         };
         _status.Dock = DockStyle.Fill;
         _status.Margin = new Padding(0, IndustrialSpacing.Xs, 0, 0);
+        _status.MinimumSize = new Size(
+            0,
+            Math.Max(IndustrialSpacing.Xl, _status.GetPreferredSize(Size.Empty).Height));
 
         _root.Controls.Add(header, 0, 0);
         _root.Controls.Add(_fieldGrid, 0, 1);
@@ -145,15 +148,9 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     {
         get
         {
-            int fieldRows = DivideRoundUp(_fields.Count, Math.Max(1, _fieldColumns));
-            int actionRows = DivideRoundUp(_actions.Count, Math.Max(1, _actionColumns));
+            int availableWidth = Math.Max(1, ClientSize.Width - Padding.Horizontal);
             return Padding.Vertical
-                + TitleRowHeight
-                + (fieldRows * FieldRowHeight)
-                + (actionRows * ActionRowHeight)
-                + _fieldGrid.Margin.Vertical
-                + _actionGrid.Margin.Vertical
-                + StatusRowHeight;
+                + _root.GetPreferredSize(new Size(availableWidth, 0)).Height;
         }
     }
 
@@ -236,6 +233,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         _actionColumns = actionColumns;
         RebuildFields();
         RebuildActions();
+        _root.PerformLayout();
         PreferredLayoutHeightChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -246,29 +244,34 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         ConfigureGrid(
             _fieldGrid,
             _fieldColumns,
-            DivideRoundUp(_fields.Count, _fieldColumns),
-            FieldRowHeight);
+            DivideRoundUp(_fields.Count, _fieldColumns));
         for (int index = 0; index < _fields.Count; index++)
         {
             RtuFieldDefinition definition = _fields[index];
             TableLayoutPanel fieldContainer = new()
             {
                 Dock = DockStyle.Fill,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
                 RowCount = 2,
                 Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, IndustrialSpacing.Xs)
             };
-            fieldContainer.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
-            fieldContainer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            fieldContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            fieldContainer.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             Label caption = PlatformUi.Label(definition.Label);
             caption.Font = IndustrialTypography.FieldLabel();
             caption.Dock = DockStyle.Fill;
+            caption.AutoSize = true;
             caption.AutoEllipsis = true;
             caption.Margin = Padding.Empty;
             definition.Editor.Dock = DockStyle.Fill;
             definition.Editor.Margin = Padding.Empty;
-            definition.Editor.AccessibleName = definition.Label;
             PlatformUi.StyleField(definition.Editor);
+            definition.Editor.MinimumSize = new Size(
+                definition.Editor.MinimumSize.Width,
+                Math.Max(definition.Editor.MinimumSize.Height, definition.Editor.PreferredSize.Height));
+            definition.Editor.AccessibleName = definition.Label;
             fieldContainer.Controls.Add(caption, 0, 0);
             fieldContainer.Controls.Add(definition.Editor, 0, 1);
             _fieldGrid.Controls.Add(fieldContainer, index % _fieldColumns, index / _fieldColumns);
@@ -284,12 +287,12 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
         ConfigureGrid(
             _actionGrid,
             _actionColumns,
-            DivideRoundUp(_actions.Count, _actionColumns),
-            ActionRowHeight);
+            DivideRoundUp(_actions.Count, _actionColumns));
         for (int index = 0; index < _actions.Count; index++)
         {
             Button button = _actions[index];
             button.Dock = DockStyle.Fill;
+            button.MinimumSize = new Size(0, IndustrialSpacing.InteractiveHeight);
             button.Margin = new Padding(IndustrialSpacing.Xs, 0, IndustrialSpacing.Xs, 0);
             _actionGrid.Controls.Add(button, index % _actionColumns, index / _actionColumns);
         }
@@ -300,8 +303,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
     private static void ConfigureGrid(
         TableLayoutPanel grid,
         int columns,
-        int rows,
-        int rowHeight)
+        int rows)
     {
         grid.ColumnCount = columns;
         grid.RowCount = rows;
@@ -314,7 +316,7 @@ internal sealed class ResponsiveRtuConfigurationControl : UserControl
 
         for (int row = 0; row < rows; row++)
         {
-            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, rowHeight));
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         }
     }
 

@@ -57,6 +57,7 @@ internal static class IndustrialPlatformUiValidator
             ("layout estrutural permanece utilizavel em 1366x768", () => LayoutFits(new Size(1366, 768))),
             ("layout estrutural permanece utilizavel em 1600x900", () => LayoutFits(new Size(1600, 900))),
             ("layout estrutural permanece utilizavel em 1920x1080", () => LayoutFits(new Size(1920, 1080))),
+            ("layout estrutural permanece utilizavel em 1920x1200", () => LayoutFits(new Size(1920, 1200))),
             ("layout estrutural permanece utilizavel em 2560x1440", () => LayoutFits(new Size(2560, 1440))),
             ("shell responsivo preserva limites em 1366x768 @100%", () => ResponsiveShellFits(new Size(1366, 768), 96)),
             ("shell responsivo preserva limites em 1366x768 @125%", () => ResponsiveShellFits(new Size(1366, 768), 120)),
@@ -67,6 +68,7 @@ internal static class IndustrialPlatformUiValidator
             ("shell responsivo preserva limites em 1920x1080 @100%", () => ResponsiveShellFits(new Size(1920, 1080), 96)),
             ("shell responsivo preserva limites em 1920x1080 @125%", () => ResponsiveShellFits(new Size(1920, 1080), 120)),
             ("shell responsivo preserva limites em 1920x1080 @150%", () => ResponsiveShellFits(new Size(1920, 1080), 144)),
+            ("shell responsivo preserva limites em 1920x1200 @100%", () => ResponsiveShellFits(new Size(1920, 1200), 96)),
             ("shell responsivo preserva limites em 2560x1440 @100%", () => ResponsiveShellFits(new Size(2560, 1440), 96)),
             ("shell responsivo preserva limites em 2560x1440 @125%", () => ResponsiveShellFits(new Size(2560, 1440), 120)),
             ("shell responsivo preserva limites em 2560x1440 @150%", () => ResponsiveShellFits(new Size(2560, 1440), 144)),
@@ -88,6 +90,8 @@ internal static class IndustrialPlatformUiValidator
             ("header RTU usa titulo subtitulo e divisor sem legenda de GroupBox", TesterRtuHeaderUsesFlatSectionComposition),
             ("layout RTU preserva ordem e breakpoints de cinco duas e uma coluna", TesterRtuLayoutIsResponsive),
             ("configuracao RTU usa altura compacta orientada ao conteudo", TesterRtuUsesContentDrivenHeight),
+            ("RTU usa alturas medidas e contem todos os filhos visiveis", TesterRtuUsesMeasuredRuntimeHeight),
+            ("pilha do Testador nao apresenta intersecoes verticais", TesterRuntimeRegionsDoNotOverlap),
             ("acoes RTU compartilham metrica tipografica e semantica visual", TesterRtuActionsUseOneVisualSpecification),
             ("botoes e superficies principais usam cantos modernos moderados", ProductionActionsAndCardsUseModerateRoundedCorners),
             ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
@@ -634,11 +638,14 @@ internal static class IndustrialPlatformUiValidator
         DataGridView? map = form.Controls.Find("ioMappingGrid", searchAllChildren: true)
             .OfType<DataGridView>()
             .FirstOrDefault();
+        int minimumMapHeight = clientSize.Height <= 768 ? 128 : 180;
         bool result = simulatorFits
             && tester is not null
             && tester.ClientSize.Width >= 900
             && tester.ClientSize.Height >= 560
-            && map is { Width: >= 700, Height: >= 180 };
+            && map is { Width: >= 700 }
+            && map.Height >= minimumMapHeight
+            && map.ScrollBars is ScrollBars.Vertical or ScrollBars.Both;
         if (!result)
         {
             throw new InvalidOperationException(
@@ -646,7 +653,7 @@ internal static class IndustrialPlatformUiValidator
                 + $"simulador={simulator?.ClientSize.Width ?? -1}x{simulator?.ClientSize.Height ?? -1}; "
                 + $"pivo={pivot?.Width ?? -1}x{pivot?.Height ?? -1}; "
                 + $"testador={tester?.ClientSize.Width ?? -1}x{tester?.ClientSize.Height ?? -1}; "
-                + $"mapa={map?.Width ?? -1}x{map?.Height ?? -1}.");
+                + $"mapa={map?.Width ?? -1}x{map?.Height ?? -1}; minimo={minimumMapHeight}.");
         }
 
         return true;
@@ -1273,14 +1280,157 @@ internal static class IndustrialPlatformUiValidator
         TableLayoutPanel? actions = tester.Controls.Find("rtuActionGrid", true)
             .OfType<TableLayoutPanel>()
             .SingleOrDefault();
-        return rtu is not null
+        bool result = rtu is not null
             && root is { AutoSize: true, AutoSizeMode: AutoSizeMode.GrowAndShrink }
-            && root.RowStyles.Cast<RowStyle>().All(style => style.SizeType != SizeType.Percent)
+            && root.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.AutoSize)
             && fields is { AutoSize: true }
             && actions is { AutoSize: true }
-            && fields.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.Absolute)
-            && actions.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.Absolute)
+            && fields.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.AutoSize)
+            && actions.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.AutoSize)
             && Math.Abs(rtu.Height - rtu.PreferredLayoutHeight) <= IndustrialSpacing.Sm;
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"rtu={rtu?.Bounds}; preferred={rtu?.PreferredLayoutHeight}; root={root?.Bounds}/pref={root?.PreferredSize}; "
+                + $"fields={fields?.Bounds}/pref={fields?.PreferredSize}/rows={string.Join(',', fields?.RowStyles.Cast<RowStyle>().Select(style => $"{style.SizeType}:{style.Height}") ?? [])}; "
+                + $"actions={actions?.Bounds}/pref={actions?.PreferredSize}/rows={string.Join(',', actions?.RowStyles.Cast<RowStyle>().Select(style => $"{style.SizeType}:{style.Height}") ?? [])}.");
+        }
+
+        return true;
+    }
+
+    private static bool TesterRtuUsesMeasuredRuntimeHeight()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session) { Dock = DockStyle.Fill };
+        using Form host = CreateOffscreenHost(tester, new Size(1112, 625));
+        host.Show();
+        PerformLayoutTree(host);
+
+        ResponsiveRtuConfigurationControl? rtu = Find<ResponsiveRtuConfigurationControl>(tester);
+        TableLayoutPanel? root = tester.Controls.Find("rtuConfigurationLayout", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        TableLayoutPanel? header = tester.Controls.Find("rtuConfigurationSectionHeader", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        TableLayoutPanel? fields = tester.Controls.Find("rtuFieldGrid", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        TableLayoutPanel? actions = tester.Controls.Find("rtuActionGrid", true)
+            .OfType<TableLayoutPanel>()
+            .SingleOrDefault();
+        Label? status = tester.Controls.Find("testerOfflineSafetyStatus", true)
+            .OfType<Label>()
+            .SingleOrDefault();
+        if (rtu is null || root is null || header is null || fields is null || actions is null || status is null)
+        {
+            return false;
+        }
+
+        TableLayoutPanel[] fieldContainers = fields.Controls.OfType<TableLayoutPanel>().ToArray();
+        bool rowContracts = header.RowStyles.Count == 3
+            && header.RowStyles[0].SizeType == SizeType.AutoSize
+            && header.RowStyles[1].SizeType == SizeType.AutoSize
+            && header.RowStyles[2].SizeType == SizeType.Absolute
+            && header.RowStyles[2].Height >= 1F
+            && fieldContainers.Length == 10
+            && fieldContainers.All(container =>
+                container.AutoSize
+                && container.RowStyles.Cast<RowStyle>().All(style => style.SizeType == SizeType.AutoSize));
+        Control[] critical = [header, fields, actions, status];
+        bool contained = critical.All(control =>
+            control.Visible && IsContainedByAllAncestors(control, rtu));
+        Rectangle actionBounds = BoundsRelativeTo(actions, rtu);
+        Rectangle statusBounds = BoundsRelativeTo(status, rtu);
+        bool result = rowContracts
+            && contained
+            && rtu.Height >= rtu.PreferredLayoutHeight - 1
+            && root.Height >= root.PreferredSize.Height
+            && actionBounds.Bottom <= statusBounds.Top
+            && SingleLineTextFits(status);
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"rtu={rtu.Bounds}/preferred={rtu.PreferredLayoutHeight}; root={root.Bounds}/preferred={root.PreferredSize}; "
+                + $"header={header.Bounds}; fields={fields.Bounds}; actions={actions.Bounds}; status={status.Bounds}; "
+                + $"rows={rowContracts}; contained={contained}; statusText={SingleLineTextFits(status)}.");
+        }
+
+        return true;
+    }
+
+    private static bool TesterRuntimeRegionsDoNotOverlap()
+    {
+        foreach (Size viewport in new[]
+                 {
+                     new Size(1366, 768),
+                     new Size(1600, 900),
+                     new Size(1920, 1080),
+                     new Size(1920, 1200),
+                     new Size(2560, 1440)
+                 })
+        {
+            using IndustrialPlatformForm form = CreateOffscreenForm(viewport);
+            form.ShowTester();
+            form.Show();
+            PerformLayoutTree(form);
+            IndustrialTesterControl? tester = form.TesterInstance;
+            if (tester is null)
+            {
+                return false;
+            }
+
+            Control? hero = tester.Controls.Find("testerHero", true).SingleOrDefault();
+            Control? rtu = tester.Controls.Find("rtuConfigurationPanel", true).SingleOrDefault();
+            Control? equipment = tester.Controls.Find("testerStatus", true).SingleOrDefault();
+            IndustrialTabControl? tabs = tester.Controls.Find("testerTabs", true)
+                .OfType<IndustrialTabControl>()
+                .SingleOrDefault();
+            IndustrialScrollPanel? scroll = tester.Controls.Find("testerMainScrollHost", true)
+                .OfType<IndustrialScrollPanel>()
+                .SingleOrDefault();
+            if (hero is null || rtu is null || equipment is null || tabs is null || scroll is null)
+            {
+                return false;
+            }
+
+            Rectangle[] regions = [
+                BoundsRelativeTo(hero, tester),
+                BoundsRelativeTo(rtu, tester),
+                BoundsRelativeTo(equipment, tester),
+                BoundsRelativeTo(tabs, tester)
+            ];
+            bool ordered = regions.Zip(regions.Skip(1), (top, bottom) => top.Bottom <= bottom.Top)
+                .All(value => value);
+            bool tabsFit = tabs.TabCount == 6
+                && Enumerable.Range(0, tabs.TabCount)
+                    .Select(tabs.GetTabRect)
+                    .All(tab => tabs.ClientRectangle.Contains(tab));
+            if (!ordered || !tabsFit || scroll.HasHorizontalScroll)
+            {
+                throw new InvalidOperationException(
+                    $"viewport={viewport.Width}x{viewport.Height}; regions={string.Join(" | ", regions.AsEnumerable())}; "
+                    + $"tabsFit={tabsFit}; horizontal={scroll.HasHorizontalScroll}.");
+            }
+        }
+
+        return true;
+    }
+
+    private static Form CreateOffscreenHost(Control content, Size clientSize)
+    {
+        Form host = new()
+        {
+            ClientSize = clientSize,
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        host.Controls.Add(content);
+        return host;
     }
 
     private static bool ProductionActionsAndCardsUseModerateRoundedCorners()
