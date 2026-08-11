@@ -41,6 +41,7 @@ internal static class IndustrialPlatformUiValidator
             ("modo Testador carrega sob demanda", TesterLoadsLazily),
             ("Testador UI2 preserva todas as acoes funcionais", TesterFeatureParityIsPreserved),
             ("modo Simulador carrega sob demanda", SimulatorLoadsLazily),
+            ("Simulador UI2 preserva acoes e editores entre cenarios", SimulatorFeatureParityIsPreserved),
             ("Testador exibe aliases e Mapa de I/O do Pivo", PivotAliasesAndIoMapAreVisible),
             ("Mapa de I/O e aliases acompanham o perfil Poco", WellAliasesAndIoMapAreVisible),
             ("renderer leve do Pivo carrega quatro torres sem timer", PivotRendererLoadsWithoutTimer),
@@ -530,6 +531,24 @@ internal static class IndustrialPlatformUiValidator
             await session.IdentifyAsync(1, CancellationToken.None);
             return PhysicalCountersAreZero(session);
         }).GetAwaiter().GetResult();
+    }
+
+    private static bool SimulatorFeatureParityIsPreserved()
+    {
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialSimulatorControl simulator = new(session);
+        int buildCount = simulator.SignalStructureBuildCount;
+        int editorCount = simulator.EditableSignalCount;
+        session.ApplyScenario("movendo-frente");
+        session.ApplyScenario("falha-torre");
+        session.ResetSimulation();
+        return simulator.Controls.Find("applyScenarioButton", searchAllChildren: true).Length == 1
+            && simulator.Controls.Find("resetScenarioButton", searchAllChildren: true).Length == 1
+            && simulator.Controls.Find("simulationSafetyStatus", searchAllChildren: true).Length == 1
+            && buildCount == 1
+            && simulator.SignalStructureBuildCount == buildCount
+            && editorCount > 0
+            && simulator.EditableSignalCount == editorCount;
     }
 
     private static bool TesterFeatureParityIsPreserved()

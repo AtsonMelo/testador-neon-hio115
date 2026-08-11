@@ -511,6 +511,7 @@ internal sealed class IndustrialPlatformForm : Form
         PlatformUi.StyleButton(_testerButton, selected: ReferenceEquals(_activeButton, _testerButton));
         PlatformUi.StyleButton(_simulatorButton, selected: ReferenceEquals(_activeButton, _simulatorButton));
         _tester?.ApplyTheme();
+        _simulator?.ApplyTheme();
         RefreshGlobalStatus();
         IndustrialTheme.ApplyTitleBar(this);
         Invalidate(true);

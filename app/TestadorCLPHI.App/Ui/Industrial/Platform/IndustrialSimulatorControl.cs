@@ -1,6 +1,7 @@
 using TestadorCLPHI.App.Industrial.Platform.Integration;
 using TestadorCLPHI.App.Industrial.Platform.Process;
 using TestadorCLPHI.App.Industrial.Platform.Simulation;
+using TestadorCLPHI.App.Ui.Theme;
 
 namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 
@@ -9,9 +10,16 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private readonly IndustrialPlatformSession _session;
     private readonly ComboBox _profiles = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
     private readonly ComboBox _scenarios = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-    private readonly Label _state = PlatformUi.Label(string.Empty, heading: true);
+    private readonly Label _state = PlatformUi.StatusChip(
+        "AGUARDANDO ESTADO",
+        PlatformStatusTone.Disabled,
+        "simulationStateStatus");
     private readonly Label _alarms = PlatformUi.Label(string.Empty);
     private readonly Label _counters = PlatformUi.Label(string.Empty);
+    private readonly Label _safety = PlatformUi.StatusChip(
+        "SAFETYCHAIN • AGUARDANDO",
+        PlatformStatusTone.Disabled,
+        "simulationSafetyStatus");
     private readonly Label _overviewStatus = PlatformUi.Label(string.Empty, heading: true);
     private readonly Panel _signals = new() { Dock = DockStyle.Fill, AutoScroll = true };
     private readonly TableLayoutPanel _signalGroups = new()
@@ -24,16 +32,19 @@ internal sealed class IndustrialSimulatorControl : UserControl
         BackColor = PlatformUi.Background
     };
     private readonly Dictionary<string, Label> _metricValues = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, CheckBox> _digitalEditors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, NumericUpDown> _analogEditors = new(StringComparer.OrdinalIgnoreCase);
     private PivotProcessControl? _pivotVisual;
     private bool _initializing;
+    private bool _updatingEditors;
+    private int _signalStructureBuildCount;
 
     internal IndustrialSimulatorControl(IndustrialPlatformSession session)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         Name = "industrialSimulatorControl";
         AccessibleName = "Simulador industrial offline";
-        BackColor = PlatformUi.Background;
-        ForeColor = PlatformUi.Text;
+        AccessibleDescription = "Cenários, sinais editáveis e saídas virtuais executados somente em memória";
         AutoScaleMode = AutoScaleMode.Dpi;
         _signals.BackColor = PlatformUi.Background;
         _signalGroups.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -61,6 +72,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
         _session.Changed += SessionChanged;
         _profiles.SelectedIndexChanged += ProfileChanged;
         _initializing = false;
+        ApplyTheme();
     }
 
     internal event EventHandler<string>? ProfileRequested;
@@ -70,6 +82,8 @@ internal sealed class IndustrialSimulatorControl : UserControl
     internal int PivotStateRevision => _pivotVisual?.StateRevision ?? 0;
     internal bool UsesContinuousAnimation => _pivotVisual?.UsesContinuousAnimation == true;
     internal bool UsesGroupedSignalEditor => _signalGroups.Controls.OfType<GroupBox>().Any();
+    internal int SignalStructureBuildCount => _signalStructureBuildCount;
+    internal int EditableSignalCount => _digitalEditors.Count + _analogEditors.Count;
 
     protected override void Dispose(bool disposing)
     {
@@ -124,7 +138,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
         sidebar.Controls.Add(apply);
         sidebar.Controls.Add(reset);
         Label ready = PlatformUi.StatusChip(
-            "SIMULATION_READY",
+            "SIMULAÇÃO PRONTA • EM MEMÓRIA",
             PlatformStatusTone.Simulated,
             "simulationReadyStatus");
         ready.Margin = new Padding(3, 14, 3, 6);
@@ -134,6 +148,12 @@ internal sealed class IndustrialSimulatorControl : UserControl
         _state.Height = 32;
         _state.AutoSize = false;
         sidebar.Controls.Add(_state);
+        sidebar.Controls.Add(PlatformUi.Label("Segurança derivada", heading: true));
+        _safety.Width = 240;
+        _safety.Height = 38;
+        _safety.AutoSize = false;
+        _safety.AccessibleDescription = "SafetyChain derivada e não editável";
+        sidebar.Controls.Add(_safety);
         sidebar.Controls.Add(PlatformUi.Label("Alarmes", heading: true));
         _alarms.Width = 240;
         _alarms.Height = 80;
@@ -179,8 +199,10 @@ internal sealed class IndustrialSimulatorControl : UserControl
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        Label title = PlatformUi.Label(_session.Profile.DisplayName ?? _session.Profile.Id!, heading: true);
-        title.Font = new Font("Segoe UI Semibold", 17F);
+        Label title = PlatformUi.Label(
+            $"SIMULADOR INDUSTRIAL • {_session.Profile.DisplayName ?? _session.Profile.Id!}",
+            heading: true);
+        title.Font = IndustrialTypography.Title();
         title.Dock = DockStyle.Fill;
         title.TextAlign = ContentAlignment.MiddleLeft;
         Label simulated = PlatformUi.StatusChip("SIMULADO", PlatformStatusTone.Simulated, "simulatedProcessStatus");
@@ -295,6 +317,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
 
     private void BuildSignals()
     {
+        _signalStructureBuildCount++;
+        _digitalEditors.Clear();
+        _analogEditors.Clear();
         _signalGroups.SuspendLayout();
         _signalGroups.Controls.Clear();
         _signalGroups.RowStyles.Clear();
@@ -360,7 +385,14 @@ internal sealed class IndustrialSimulatorControl : UserControl
             Height = 30,
             ForeColor = PlatformUi.Text
         };
-        value.CheckedChanged += (_, _) => _session.SetDigitalInput(definition.Id!, value.Checked);
+        _digitalEditors[definition.Id!] = value;
+        value.CheckedChanged += (_, _) =>
+        {
+            if (!_updatingEditors)
+            {
+                _session.SetDigitalInput(definition.Id!, value.Checked);
+            }
+        };
         return SignalSurface(value);
     }
 
@@ -396,7 +428,14 @@ internal sealed class IndustrialSimulatorControl : UserControl
             AccessibleName = definition.Label ?? definition.Id
         };
         PlatformUi.StyleField(value);
-        value.ValueChanged += (_, _) => _session.SetAnalogInput(definition.Id!, (double)value.Value);
+        _analogEditors[definition.Id!] = value;
+        value.ValueChanged += (_, _) =>
+        {
+            if (!_updatingEditors)
+            {
+                _session.SetAnalogInput(definition.Id!, (double)value.Value);
+            }
+        };
         row.Controls.Add(label);
         row.Controls.Add(value);
         row.Controls.Add(PlatformUi.Label(string.IsNullOrWhiteSpace(definition.Unit) ? "raw" : definition.Unit!));
@@ -438,7 +477,6 @@ internal sealed class IndustrialSimulatorControl : UserControl
         if (_scenarios.SelectedItem is ScenarioItem scenario)
         {
             _session.ApplyScenario(scenario.Id);
-            BuildSignals();
             RefreshSnapshot();
         }
     }
@@ -446,7 +484,6 @@ internal sealed class IndustrialSimulatorControl : UserControl
     private void ResetSimulation()
     {
         _session.ResetSimulation();
-        BuildSignals();
         RefreshSnapshot();
     }
 
@@ -467,8 +504,10 @@ internal sealed class IndustrialSimulatorControl : UserControl
         SimulationProcessState processState = SimulationProcessStateProjector.Project(
             _session.Profile,
             snapshot);
-        _state.Text = snapshot.OutputsBlocked ? $"× {snapshot.State}" : $"✓ {snapshot.State}";
-        _state.ForeColor = snapshot.OutputsBlocked ? PlatformUi.Danger : PlatformUi.Success;
+        PlatformUi.UpdateStatusChip(
+            _state,
+            NormalizeOperationalState(snapshot.State),
+            snapshot.OutputsBlocked ? PlatformStatusTone.Fault : PlatformStatusTone.Normal);
         _alarms.Text = snapshot.ActiveAlarms.Count == 0
             ? "✓ Nenhum alarme"
             : "! " + string.Join(Environment.NewLine + "! ", snapshot.ActiveAlarms);
@@ -477,6 +516,25 @@ internal sealed class IndustrialSimulatorControl : UserControl
             + $"Comandos simulados: {_session.Simulation.Counters.SimulatedCommands}\r\n"
             + "Físico C/R/W/CMD: 0/0/0/0\r\n"
             + "Timer contínuo: NÃO";
+
+        SimulationSignalDefinition? safetyDefinition = _session.FindSignal("SafetyChain");
+        if (safetyDefinition is null)
+        {
+            PlatformUi.UpdateStatusChip(
+                _safety,
+                "SAFETYCHAIN • N/A",
+                PlatformStatusTone.Disabled);
+        }
+        else
+        {
+            bool closed = _session.Simulation.GetValue("SafetyChain") >= 0.5D;
+            PlatformUi.UpdateStatusChip(
+                _safety,
+                closed ? "SEGURANÇA OK • READ-ONLY" : "CADEIA ABERTA • READ-ONLY",
+                closed ? PlatformStatusTone.Normal : PlatformStatusTone.Fault);
+        }
+
+        RefreshInputEditors();
 
         if (_pivotVisual is not null)
         {
@@ -531,6 +589,97 @@ internal sealed class IndustrialSimulatorControl : UserControl
             }
         }
     }
+
+    internal void ApplyTheme()
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        BackColor = palette.Background;
+        ForeColor = palette.TextPrimary;
+        ApplyThemeToChildren(this);
+        RefreshSnapshot();
+        Invalidate(true);
+    }
+
+    private void ApplyThemeToChildren(Control root)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        foreach (Control child in root.Controls)
+        {
+            if (child is Label label && label.BorderStyle != BorderStyle.FixedSingle)
+            {
+                label.ForeColor = palette.TextSecondary;
+            }
+
+            switch (child)
+            {
+                case TextBox or ComboBox or NumericUpDown:
+                    child.BackColor = palette.Field;
+                    child.ForeColor = palette.TextPrimary;
+                    break;
+                case Button button:
+                    PlatformUi.StyleButton(
+                        button,
+                        primary: button.Name == "applyScenarioButton");
+                    break;
+                case FlowLayoutPanel flow:
+                    flow.BackColor = flow.Parent is GroupBox
+                        ? palette.SurfaceElevated
+                        : palette.Background;
+                    break;
+                case TableLayoutPanel table:
+                    table.BackColor = table.Parent is GroupBox
+                        ? palette.SurfaceElevated
+                        : palette.Background;
+                    break;
+                case GroupBox:
+                case Panel:
+                    child.BackColor = palette.SurfaceElevated;
+                    break;
+            }
+
+            ApplyThemeToChildren(child);
+        }
+    }
+
+    private void RefreshInputEditors()
+    {
+        _updatingEditors = true;
+        try
+        {
+            foreach ((string signalId, CheckBox editor) in _digitalEditors)
+            {
+                bool value = _session.Simulation.GetValue(signalId) != 0;
+                if (editor.Checked != value)
+                {
+                    editor.Checked = value;
+                }
+            }
+
+            foreach ((string signalId, NumericUpDown editor) in _analogEditors)
+            {
+                decimal value = Math.Clamp(
+                    (decimal)_session.Simulation.GetValue(signalId),
+                    editor.Minimum,
+                    editor.Maximum);
+                if (editor.Value != value)
+                {
+                    editor.Value = value;
+                }
+            }
+        }
+        finally
+        {
+            _updatingEditors = false;
+        }
+    }
+
+    private static string NormalizeOperationalState(string state) => state.ToUpperInvariant() switch
+    {
+        "MOVING" => "MOVIMENTO",
+        "FAULT" => "FALHA",
+        "DEVELOPMENT" => "DESENVOLVIMENTO",
+        _ => state
+    };
 
     private sealed record ScenarioItem(string Id, string DisplayName)
     {
