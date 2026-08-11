@@ -1218,7 +1218,7 @@ internal static class PlatformUi
             IndustrialSpacing.Xs)
     };
 
-    internal static GroupBox Group(string text) => new IndustrialGroupBox
+    internal static GroupBox Group(string text, bool flatSection = false) => new IndustrialGroupBox(flatSection)
     {
         Text = text,
         ForeColor = Text,

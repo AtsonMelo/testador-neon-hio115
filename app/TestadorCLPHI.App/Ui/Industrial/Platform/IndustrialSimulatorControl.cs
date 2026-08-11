@@ -448,7 +448,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
                      signal => string.IsNullOrWhiteSpace(signal.Group) ? "Sinais" : signal.Group!,
                      StringComparer.OrdinalIgnoreCase))
         {
-            GroupBox section = PlatformUi.Group(group.Key);
+            GroupBox section = PlatformUi.Group(group.Key, flatSection: true);
             section.Dock = DockStyle.Top;
             section.AutoSize = true;
             section.AutoSizeMode = AutoSizeMode.GrowAndShrink;
@@ -603,11 +603,13 @@ internal sealed class IndustrialSimulatorControl : UserControl
     {
         Panel surface = new()
         {
+            Name = "simulationSignalRow",
+            Tag = "signal-row-flat",
             Dock = DockStyle.Fill,
-            Height = 38,
+            Height = 34,
             BackColor = PlatformUi.Surface,
-            Padding = new Padding(IndustrialSpacing.Sm, IndustrialSpacing.Xs, IndustrialSpacing.Sm, IndustrialSpacing.Xs),
-            Margin = new Padding(IndustrialSpacing.Xs, 2, IndustrialSpacing.Xs, 2)
+            Padding = new Padding(IndustrialSpacing.Sm, 2, IndustrialSpacing.Sm, 2),
+            Margin = Padding.Empty
         };
         content.Dock = DockStyle.Fill;
         surface.Controls.Add(content);
@@ -862,7 +864,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
     {
         while (grid.RowStyles.Count <= row)
         {
-            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
         }
     }
 
@@ -888,7 +890,7 @@ internal sealed class IndustrialSimulatorControl : UserControl
                     child.ForeColor = palette.TextPrimary;
                     break;
                 case CheckBox checkBox:
-                    checkBox.BackColor = checkBox.Parent is GroupBox
+                    checkBox.BackColor = checkBox.Parent is GroupBox || IsFlatSignalSurface(checkBox.Parent)
                         ? palette.SurfaceElevated
                         : palette.Background;
                     checkBox.ForeColor = palette.TextPrimary;
@@ -899,14 +901,14 @@ internal sealed class IndustrialSimulatorControl : UserControl
                         primary: button.Name == "applyScenarioButton");
                     break;
                 case FlowLayoutPanel flow:
-                    flow.BackColor = flow.Parent is GroupBox
+                    flow.BackColor = flow.Parent is GroupBox || IsFlatSignalSurface(flow.Parent)
                         ? palette.SurfaceElevated
                         : palette.Background;
                     break;
                 case TableLayoutPanel table:
                     table.BackColor = table.Name == "simulationMetricHierarchy"
                         ? palette.SurfaceElevated
-                        : table.Parent is GroupBox
+                        : table.Parent is GroupBox || IsFlatSignalSurface(table.Parent)
                         ? palette.SurfaceElevated
                         : palette.Background;
                     break;
@@ -919,6 +921,9 @@ internal sealed class IndustrialSimulatorControl : UserControl
             ApplyThemeToChildren(child);
         }
     }
+
+    private static bool IsFlatSignalSurface(Control? control) =>
+        string.Equals(control?.Tag as string, "signal-row-flat", StringComparison.Ordinal);
 
     private void RefreshInputEditors()
     {

@@ -164,9 +164,11 @@ internal sealed class IndustrialSurfacePanel : Panel
 internal sealed class IndustrialGroupBox : GroupBox
 {
     private const int CornerRadius = 6;
+    private readonly bool _flatSection;
 
-    internal IndustrialGroupBox()
+    internal IndustrialGroupBox(bool flatSection = false)
     {
+        _flatSection = flatSection;
         SetStyle(
             ControlStyles.AllPaintingInWmPaint
             | ControlStyles.OptimizedDoubleBuffer
@@ -181,20 +183,27 @@ internal sealed class IndustrialGroupBox : GroupBox
             IndustrialSpacing.Md);
     }
 
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal bool IsFlatSection => _flatSection;
+
     protected override void OnPaint(PaintEventArgs e)
     {
         IndustrialPalette palette = IndustrialTheme.Palette;
         e.Graphics.Clear(palette.SurfaceElevated);
-        Rectangle border = ClientRectangle;
-        border.Width = Math.Max(0, border.Width - 1);
-        border.Height = Math.Max(0, border.Height - 1);
-        int radius = Math.Max(1, (int)Math.Round(CornerRadius * DeviceDpi / 96D));
-        SmoothingMode previous = e.Graphics.SmoothingMode;
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(border, radius);
-        using Pen borderPen = new(palette.Border, IndustrialSpacing.BorderWidth);
-        e.Graphics.DrawPath(borderPen, path);
-        e.Graphics.SmoothingMode = previous;
+        if (!_flatSection)
+        {
+            Rectangle border = ClientRectangle;
+            border.Width = Math.Max(0, border.Width - 1);
+            border.Height = Math.Max(0, border.Height - 1);
+            int radius = Math.Max(1, (int)Math.Round(CornerRadius * DeviceDpi / 96D));
+            SmoothingMode previous = e.Graphics.SmoothingMode;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(border, radius);
+            using Pen borderPen = new(palette.Border, IndustrialSpacing.BorderWidth);
+            e.Graphics.DrawPath(borderPen, path);
+            e.Graphics.SmoothingMode = previous;
+        }
 
         Rectangle titleBounds = new(
             IndustrialSpacing.Md,

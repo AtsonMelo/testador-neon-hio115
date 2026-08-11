@@ -150,15 +150,39 @@ internal sealed class IndustrialDesignSystemPreviewForm : Form
 
     private static Control BuildSection()
     {
-        GroupBox group = PlatformUi.Group("Seção técnica");
+        GroupBox group = PlatformUi.Group("Seção técnica flat", flatSection: true);
         group.Dock = DockStyle.Fill;
-        Label body = PlatformUi.Label(
-            "Conteúdo agrupado por hierarquia, com borda discreta e espaçamento previsível.");
-        body.Dock = DockStyle.Top;
-        body.AutoSize = false;
-        body.AutoEllipsis = true;
-        body.Height = IndustrialSpacing.InteractiveHeight;
-        group.Controls.Add(body);
+        FlowLayoutPanel rows = new()
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = IndustrialTheme.Palette.SurfaceElevated
+        };
+        foreach ((string text, bool isChecked, string name) in new[]
+                 {
+                     ("Sinal normal", false, "previewSignalNormal"),
+                     ("Sinal ativo", true, "previewSignalChecked"),
+                     ("Sinal com foco", false, "previewSignalFocus")
+                 })
+        {
+            CheckBox signal = new()
+            {
+                Name = name,
+                Text = text,
+                Checked = isChecked,
+                Width = 360,
+                Height = IndustrialSpacing.InteractiveHeight,
+                Margin = Padding.Empty,
+                AccessibleName = text,
+                BackColor = IndustrialTheme.Palette.SurfaceElevated,
+                ForeColor = IndustrialTheme.Palette.TextPrimary
+            };
+            rows.Controls.Add(signal);
+        }
+
+        group.Controls.Add(rows);
         return group;
     }
 

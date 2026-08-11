@@ -97,6 +97,8 @@ internal static class IndustrialPlatformUiValidator
             ("faixa restante das tabs acompanha tema dark e light", TesterTabStripRemainderMatchesTheme),
             ("configuracao do Simulador cabe em 1366 sem rolagem propria", SimulatorConfigurationFitsStandardViewport),
             ("secoes do Simulador usam chrome tematico sem GroupBox classico", SimulatorSectionsUseThemedChrome),
+            ("secoes internas do Simulador usam contrato flat sem borda aninhada", FlatSectionsAvoidNestedChrome),
+            ("linhas de sinais compartilham surface sem caixas individuais", SignalRowsAvoidExcessiveBoxing),
             ("sinais do Simulador usam densidade responsiva de duas e tres colunas", SimulatorSignalLayoutIsResponsive),
             ("metricas do Simulador preservam hierarquia label valor contexto", SimulatorMetricsExposeVisualHierarchy),
             ("acoes primarias preservam alinhamento e texto", PrimaryActionsRemainAligned),
@@ -1803,6 +1805,31 @@ internal static class IndustrialPlatformUiValidator
         return sections.Length >= 2
             && sections.All(section => section is IndustrialGroupBox)
             && sections.All(section => section.Padding.Top >= IndustrialSpacing.Xxl);
+    }
+
+    private static bool FlatSectionsAvoidNestedChrome()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session);
+        IndustrialGroupBox[] sections = FindAll<IndustrialGroupBox>(simulator).ToArray();
+        IndustrialGroupBox[] flat = sections.Where(section => section.IsFlatSection).ToArray();
+        return flat.Length >= 2
+            && flat.All(section => section.Parent is TableLayoutPanel)
+            && sections.Any(section => !section.IsFlatSection);
+    }
+
+    private static bool SignalRowsAvoidExcessiveBoxing()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialSimulatorControl simulator = new(session);
+        Panel[] rows = FindAll<Panel>(simulator)
+            .Where(panel => string.Equals(panel.Tag as string, "signal-row-flat", StringComparison.Ordinal))
+            .ToArray();
+        return rows.Length >= 6
+            && rows.All(row => row.Margin == Padding.Empty)
+            && rows.All(row => row.Height >= IndustrialPlatformForm.ScaleLogicalMetric(32, row.DeviceDpi)
+                && row.Height <= IndustrialPlatformForm.ScaleLogicalMetric(36, row.DeviceDpi))
+            && rows.All(row => row.Parent is not null && row.BackColor == row.Parent.BackColor);
     }
 
     private static bool OperatorTextIsConsistent()
