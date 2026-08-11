@@ -121,6 +121,12 @@ internal sealed class IndustrialPlatformForm : Form
     private IndustrialTesterControl? _tester;
     private IndustrialSimulatorControl? _simulator;
     private Control? _welcome;
+    private TableLayoutPanel? _welcomeLayout;
+    private Control? _welcomeHeader;
+    private Control? _welcomeTesterCard;
+    private Control? _welcomeSimulatorCard;
+    private Label? _welcomeTesterStatus;
+    private Label? _welcomeSimulatorStatus;
     private Button? _activeButton;
     private bool _compactNavigation;
 
@@ -352,40 +358,106 @@ internal sealed class IndustrialPlatformForm : Form
 
     private void ShowWelcome()
     {
-        TableLayoutPanel welcome = new()
+        _welcomeLayout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
             RowCount = 2,
-            Padding = new Padding(IndustrialSpacing.Xxl)
+            Padding = new Padding(IndustrialSpacing.Xl),
+            Name = "industrialWelcome"
         };
-        welcome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        welcome.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        welcome.RowStyles.Add(new RowStyle(SizeType.Percent, 35F));
-        welcome.RowStyles.Add(new RowStyle(SizeType.Percent, 65F));
-        Label title = new()
+        _welcomeHeader = BuildWelcomeHeader();
+        _welcomeTesterCard = BuildWelcomeCard(
+            "TESTADOR",
+            "Diagnóstico, identificação e testes supervisionados usando somente o transporte em memória.",
+            "LEITURA • DIAGNÓSTICO",
+            "ABRIR TESTADOR",
+            "welcomeTesterButton",
+            ShowTester,
+            out _welcomeTesterStatus);
+        _welcomeSimulatorCard = BuildWelcomeCard(
+            "SIMULADOR",
+            "Simulação offline do processo, das torres, da SafetyChain e dos sinais industriais.",
+            "SIMULAÇÃO OFFLINE",
+            "ABRIR SIMULADOR",
+            "welcomeSimulatorButton",
+            ShowSimulator,
+            out _welcomeSimulatorStatus);
+        _welcomeLayout.Controls.Add(_welcomeHeader, 0, 0);
+        _welcomeLayout.Controls.Add(_welcomeTesterCard, 0, 1);
+        _welcomeLayout.Controls.Add(_welcomeSimulatorCard, 1, 1);
+        _welcomeLayout.SetColumnSpan(_welcomeHeader, 2);
+        _welcome = _welcomeLayout;
+        _content.Controls.Add(_welcomeLayout);
+        UpdateWelcomeLayout(ClientSize.Width * 96F / Math.Max(DeviceDpi, 96));
+    }
+
+    private static Control BuildWelcomeHeader()
+    {
+        TableLayoutPanel header = new()
         {
-            Text = "Escolha o modo",
             Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.BottomCenter,
-            Font = IndustrialTypography.Display()
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(IndustrialSpacing.Sm)
         };
-        welcome.SetColumnSpan(title, 2);
-        Button tester = PlatformUi.Button("TESTADOR", "welcomeTesterButton", primary: true);
-        Button simulator = PlatformUi.Button("SIMULADOR", "welcomeSimulatorButton", primary: true);
-        tester.Margin = new Padding(24);
-        simulator.Margin = new Padding(24);
-        tester.Dock = DockStyle.Top;
-        simulator.Dock = DockStyle.Top;
-        tester.Height = 88;
-        simulator.Height = 88;
-        tester.Click += (_, _) => ShowTester();
-        simulator.Click += (_, _) => ShowSimulator();
-        welcome.Controls.Add(title, 0, 0);
-        welcome.Controls.Add(tester, 0, 1);
-        welcome.Controls.Add(simulator, 1, 1);
-        _welcome = welcome;
-        _content.Controls.Add(welcome);
+        Label title = PlatformUi.PageTitle("SELECIONE O MODO DE OPERAÇÃO", "Seleção do modo industrial");
+        Label context = PlatformUi.Label(
+            "Ambiente estritamente offline. Nenhuma comunicação física está habilitada.");
+        context.AutoSize = true;
+        context.AccessibleName = "Estado físico bloqueado";
+        header.Controls.Add(title, 0, 0);
+        header.Controls.Add(context, 0, 1);
+        return header;
+    }
+
+    private static Control BuildWelcomeCard(
+        string titleText,
+        string descriptionText,
+        string statusText,
+        string actionText,
+        string actionName,
+        Action action,
+        out Label status)
+    {
+        Panel card = PlatformUi.Card($"welcome{titleText}Card");
+        card.Dock = DockStyle.Fill;
+        card.AccessibleName = $"Modo {titleText}";
+        TableLayoutPanel layout = new()
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 4,
+            Margin = Padding.Empty
+        };
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        Label title = PlatformUi.PageTitle(titleText, $"Modo {titleText}");
+        Label description = PlatformUi.Label(descriptionText);
+        description.Dock = DockStyle.Fill;
+        description.AutoSize = false;
+        description.TextAlign = ContentAlignment.TopLeft;
+        description.Padding = new Padding(0, IndustrialSpacing.Md, 0, IndustrialSpacing.Md);
+        status = PlatformUi.StatusChip(statusText, PlatformStatusTone.Offline, $"welcome{titleText}Status");
+        status.Dock = DockStyle.Top;
+        status.AutoSize = false;
+        status.Height = IndustrialSpacing.FieldHeight;
+        Button button = PlatformUi.Button(actionText, actionName, primary: true);
+        button.Dock = DockStyle.Top;
+        button.Height = IndustrialSpacing.CriticalInteractiveHeight;
+        button.Margin = new Padding(0, IndustrialSpacing.Md, 0, 0);
+        button.AccessibleDescription = $"Abre o modo {titleText} sem habilitar hardware físico";
+        button.Click += (_, _) => action();
+        layout.Controls.Add(title, 0, 0);
+        layout.Controls.Add(description, 0, 1);
+        layout.Controls.Add(status, 0, 2);
+        layout.Controls.Add(button, 0, 3);
+        card.Controls.Add(layout);
+        return card;
     }
 
     private void ShowControl(Control control, Button activeButton)
@@ -568,6 +640,7 @@ internal sealed class IndustrialPlatformForm : Form
         PlatformUi.StyleButton(_simulatorButton, selected: ReferenceEquals(_activeButton, _simulatorButton));
         _tester?.ApplyTheme();
         _simulator?.ApplyTheme();
+        ApplyWelcomeTheme();
         RefreshGlobalStatus();
         IndustrialTheme.ApplyTitleBar(this);
         Invalidate(true);
@@ -606,8 +679,108 @@ internal sealed class IndustrialPlatformForm : Form
         _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
         _sidebarMode.Text = compact ? "OFF" : "■ OFFLINE • FÍSICA BLOQUEADA";
 
+        UpdateWelcomeLayout(logicalWidth);
+
         _header.PerformLayout();
         _statusBar.PerformLayout();
+    }
+
+    private void UpdateWelcomeLayout(float logicalWidth)
+    {
+        if (_welcomeLayout is null
+            || _welcomeHeader is null
+            || _welcomeTesterCard is null
+            || _welcomeSimulatorCard is null)
+        {
+            return;
+        }
+
+        bool stacked = logicalWidth < 900F;
+        _welcomeLayout.SuspendLayout();
+        _welcomeLayout.ColumnStyles.Clear();
+        _welcomeLayout.RowStyles.Clear();
+        _welcomeLayout.ColumnCount = stacked ? 1 : 2;
+        _welcomeLayout.RowCount = stacked ? 3 : 2;
+        if (stacked)
+        {
+            _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            _welcomeLayout.SetCellPosition(_welcomeHeader, new TableLayoutPanelCellPosition(0, 0));
+            _welcomeLayout.SetColumnSpan(_welcomeHeader, 1);
+            _welcomeLayout.SetCellPosition(_welcomeTesterCard, new TableLayoutPanelCellPosition(0, 1));
+            _welcomeLayout.SetCellPosition(_welcomeSimulatorCard, new TableLayoutPanelCellPosition(0, 2));
+        }
+        else
+        {
+            _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            _welcomeLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _welcomeLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            _welcomeLayout.SetCellPosition(_welcomeHeader, new TableLayoutPanelCellPosition(0, 0));
+            _welcomeLayout.SetColumnSpan(_welcomeHeader, 2);
+            _welcomeLayout.SetCellPosition(_welcomeTesterCard, new TableLayoutPanelCellPosition(0, 1));
+            _welcomeLayout.SetCellPosition(_welcomeSimulatorCard, new TableLayoutPanelCellPosition(1, 1));
+        }
+
+        _welcomeLayout.ResumeLayout(performLayout: true);
+    }
+
+    private void ApplyWelcomeTheme()
+    {
+        if (_welcome is null)
+        {
+            return;
+        }
+
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        _welcome.BackColor = palette.Background;
+        foreach (Panel card in EnumerateControls(_welcome).OfType<Panel>()
+                     .Where(panel => panel.Name.EndsWith("Card", StringComparison.Ordinal)))
+        {
+            card.BackColor = palette.SurfaceElevated;
+            card.ForeColor = palette.TextPrimary;
+        }
+
+        foreach (Label label in EnumerateControls(_welcome).OfType<Label>()
+                     .Where(label => label.BorderStyle != BorderStyle.FixedSingle))
+        {
+            label.ForeColor = label.Font.Bold ? palette.TextPrimary : palette.TextSecondary;
+        }
+
+        if (_welcomeTesterStatus is not null)
+        {
+            PlatformUi.UpdateStatusChip(
+                _welcomeTesterStatus,
+                "LEITURA • DIAGNÓSTICO",
+                PlatformStatusTone.Offline);
+        }
+
+        if (_welcomeSimulatorStatus is not null)
+        {
+            PlatformUi.UpdateStatusChip(
+                _welcomeSimulatorStatus,
+                "SIMULAÇÃO OFFLINE",
+                PlatformStatusTone.Simulated);
+        }
+
+        foreach (Button button in EnumerateControls(_welcome).OfType<Button>())
+        {
+            PlatformUi.StyleButton(button, primary: true);
+        }
+    }
+
+    private static IEnumerable<Control> EnumerateControls(Control root)
+    {
+        foreach (Control child in root.Controls)
+        {
+            yield return child;
+            foreach (Control descendant in EnumerateControls(child))
+            {
+                yield return descendant;
+            }
+        }
     }
 
     private HeaderLayoutMetrics CalculateHeaderLayoutMetrics(int dpi, bool compact)
