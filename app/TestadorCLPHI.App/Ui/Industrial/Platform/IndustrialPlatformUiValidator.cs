@@ -69,6 +69,12 @@ internal static class IndustrialPlatformUiValidator
             ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
             ("titulo do shell permanece integral em Home Testador e Simulador", ShellTitleFitsAllPagesAndThemes),
             ("titulo do shell possui orcamento vertical seguro em 100 125 e 150%", ShellTitleDpiBudgetIsSafe),
+            ("status tema sidebar e footer permanecem contidos", ShellCriticalRegionsRemainContained),
+            ("acoes da Home permanecem contidas em modo amplo e compacto", HomeActionsRemainContained),
+            ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
+            ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
+            ("controles criticos expoem nomes acessiveis", CriticalAccessibleNamesArePresent),
+            ("navegacao tema e resize nao ampliam a arvore visual", NavigationThemeAndResizeKeepStructureStable),
             ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
             ("troca de tema preserva sessao, pagina e instancias", ThemeSwitchPreservesUiState),
             ("troca de tema e Pivo mantem recursos GDI estaveis", ThemeAndPivotKeepGdiResourcesStable),
@@ -690,6 +696,183 @@ internal static class IndustrialPlatformUiValidator
 
         return true;
     }
+
+    private static bool ShellCriticalRegionsRemainContained()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        _ = form.Session;
+        form.Show();
+        PerformLayoutTree(form);
+        Control[] critical =
+        [
+            form.HeaderRegion,
+            form.BodyRegion,
+            form.FooterRegion,
+            form.ThemeSelector,
+            .. form.CriticalHeaderStatuses
+        ];
+        bool contained = critical.All(control => control.Visible && IsInsideParent(control));
+        bool statusesSeparate = form.CriticalHeaderStatuses
+            .Select(status => BoundsRelativeTo(status, form))
+            .SelectMany((left, index) => form.CriticalHeaderStatuses
+                .Skip(index + 1)
+                .Select(right => !left.IntersectsWith(BoundsRelativeTo(right, form))))
+            .All(value => value);
+        bool footerContained = form.FooterRegion.Controls.Cast<Control>()
+            .All(control => control.Visible && IsInsideParent(control));
+        return contained && statusesSeparate && footerContained;
+    }
+
+    private static bool HomeActionsRemainContained()
+    {
+        foreach (Size viewport in new[] { new Size(1024, 680), new Size(1366, 768) })
+        {
+            using IndustrialPlatformForm form = CreateOffscreenForm(viewport);
+            form.Show();
+            PerformLayoutTree(form);
+            Button? tester = form.Controls.Find("welcomeTesterButton", true).OfType<Button>().FirstOrDefault();
+            Button? simulator = form.Controls.Find("welcomeSimulatorButton", true).OfType<Button>().FirstOrDefault();
+            TableLayoutPanel? welcome = form.Controls.Find("industrialWelcome", true)
+                .OfType<TableLayoutPanel>()
+                .FirstOrDefault();
+            if (tester is null || simulator is null || welcome is null
+                || !IsInsideParent(tester) || !IsInsideParent(simulator)
+                || tester.Height < 36 || simulator.Height < 36
+                || BoundsRelativeTo(tester, welcome).IntersectsWith(BoundsRelativeTo(simulator, welcome)))
+            {
+                return false;
+            }
+
+            bool expectedStacked = viewport.Width < 1100;
+            bool stacked = welcome.GetCellPosition(tester.Parent!.Parent!).Column == 0
+                && welcome.GetCellPosition(simulator.Parent!.Parent!).Column == 0;
+            if (stacked != expectedStacked)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TesterControlsRemainContained()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowTester();
+        form.Show();
+        PerformLayoutTree(form);
+        string[] actions =
+        [
+            "validateRtuButton",
+            "identifyButton",
+            "discoverButton",
+            "cancelButton"
+        ];
+        Button?[] actionButtons = actions
+            .Select(name => form.Controls.Find(name, true).OfType<Button>().FirstOrDefault())
+            .ToArray();
+        bool actionsFit = actionButtons
+            .All(button => button is not null && button.Visible && IsInsideParent(button));
+        TabControl? tabs = form.Controls.Find("testerTabs", true).OfType<TabControl>().FirstOrDefault();
+        Rectangle selectedTab = tabs is null || tabs.SelectedIndex < 0
+            ? Rectangle.Empty
+            : tabs.GetTabRect(tabs.SelectedIndex);
+        bool result = actionsFit
+            && tabs is { Visible: true, TabCount: 6 }
+            && tabs.ClientRectangle.Contains(selectedTab)
+            && selectedTab.Height >= 30;
+        if (!result)
+        {
+            throw new InvalidOperationException(
+                $"actions={actionsFit} ["
+                + string.Join(", ", actionButtons.Select(button =>
+                    $"{button?.Name}:{button?.Visible}:{button?.Bounds}/{button?.Parent?.ClientRectangle}"))
+                + $"]; tabs={tabs?.Bounds}; count={tabs?.TabCount}; "
+                + $"selected={selectedTab}; client={tabs?.ClientRectangle}.");
+        }
+
+        return true;
+    }
+
+    private static bool SimulatorCriticalUiRemainsVisible()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.ShowSimulator();
+        form.Show();
+        PerformLayoutTree(form);
+        PivotProcessControl? pivot = Find<PivotProcessControl>(form);
+        Label? safety = form.Controls.Find("simulationSafetyStatus", true).OfType<Label>().FirstOrDefault();
+        return pivot is { Visible: true, Width: >= 420, Height: >= 240 }
+            && IsInsideParent(pivot)
+            && safety is { Visible: true, Width: >= 180, Height: >= 30 }
+            && IsInsideParent(safety)
+            && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal);
+    }
+
+    private static bool CriticalAccessibleNamesArePresent()
+    {
+        using IndustrialPlatformForm form = new();
+        form.ShowTester();
+        form.ShowSimulator();
+        string[] names =
+        [
+            "industrialBrand",
+            "industrialThemeSelector",
+            "modeTesterButton",
+            "modeSimulatorButton",
+            "platformOfflineStatus",
+            "platformSafetyStatus",
+            "testerOfflineSafetyStatus",
+            "simulationSafetyStatus",
+            "pivotProcessControl",
+            "ioMappingGrid"
+        ];
+        return names
+            .Select(name => form.Controls.Find(name, true).FirstOrDefault())
+            .All(control => control is not null
+                && !string.IsNullOrWhiteSpace(control.AccessibleName));
+    }
+
+    private static bool NavigationThemeAndResizeKeepStructureStable()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            using IndustrialPlatformForm form = new();
+            form.ShowTester();
+            IndustrialTesterControl tester = form.TesterInstance!;
+            form.ShowSimulator();
+            IndustrialSimulatorControl simulator = form.SimulatorInstance!;
+            int count = CountControls(form);
+            for (int index = 0; index < 10; index++)
+            {
+                form.ClientSize = index % 2 == 0 ? new Size(1024, 680) : new Size(1366, 768);
+                form.SetTheme(index % 2 == 0 ? IndustrialThemeMode.Light : IndustrialThemeMode.Dark);
+                form.ShowTester();
+                form.ShowSimulator();
+                PerformLayoutTree(form);
+            }
+
+            return ReferenceEquals(tester, form.TesterInstance)
+                && ReferenceEquals(simulator, form.SimulatorInstance)
+                && CountControls(form) == count
+                && simulator.SignalStructureBuildCount == 1;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static IndustrialPlatformForm CreateOffscreenForm(Size clientSize) => new()
+    {
+        MinimumSize = Size.Empty,
+        ClientSize = clientSize,
+        Opacity = 0,
+        ShowInTaskbar = false,
+        StartPosition = FormStartPosition.Manual,
+        Location = new Point(-32000, -32000)
+    };
 
     private static bool IsInsideParent(Control control) =>
         control.Parent is not null

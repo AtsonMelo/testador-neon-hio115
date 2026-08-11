@@ -127,7 +127,7 @@ internal sealed class IndustrialTesterControl : UserControl
         };
         root.RowCount = 4;
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 168F));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 172F));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 60F));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         root.Controls.Add(BuildHero(), 0, 0);
@@ -175,7 +175,7 @@ internal sealed class IndustrialTesterControl : UserControl
         }
         grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
         grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
+        grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
         grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
 
         AddField(grid, "COM (informativa)", _port, 0);
@@ -615,7 +615,7 @@ internal sealed class IndustrialTesterControl : UserControl
     {
         BackColor = PlatformUi.Background,
         ForeColor = PlatformUi.Text,
-        Padding = new Padding(IndustrialSpacing.Md),
+        Padding = new Padding(IndustrialSpacing.Sm),
         AccessibleName = text
     };
 

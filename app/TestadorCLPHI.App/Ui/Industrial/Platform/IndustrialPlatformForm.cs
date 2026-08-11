@@ -699,7 +699,7 @@ internal sealed class IndustrialPlatformForm : Form
             return;
         }
 
-        bool stacked = logicalWidth < 900F;
+        bool stacked = logicalWidth < 1100F;
         _welcomeLayout.SuspendLayout();
         _welcomeLayout.ColumnStyles.Clear();
         _welcomeLayout.RowStyles.Clear();
