@@ -77,6 +77,10 @@ internal static class IndustrialPlatformUiValidator
             ("sidebar separa navegacao de estado fisico nao interativo", SidebarSeparatesNavigationFromPhysicalStatus),
             ("Visao Geral usa semantica informativa sem success verde", OverviewUsesInformationalTone),
             ("controles e cabecalhos do Testador permanecem visiveis", TesterControlsRemainContained),
+            ("campos RTU do Testador usam chrome industrial tematico", TesterRtuFieldsUseIndustrialChrome),
+            ("estado desconhecido permanece neutro e nao usa success", UnknownInputStateIsNeutral),
+            ("tema light preserva profundidade entre superficies", LightThemePreservesSurfaceDepth),
+            ("footer permanece compacto e sem marcadores de iteracao UI", FooterHasOnlyProductRuntimeEvidence),
             ("Pivo e SafetyChain do Simulador permanecem visiveis", SimulatorCriticalUiRemainsVisible),
             ("quatro metricas do Simulador permanecem visiveis sem rolagem horizontal", SimulatorMetricsRemainVisible),
             ("Simulador light preserva contraste efetivo dos sinais", SimulatorLightThemeHasEffectiveContrast),
@@ -858,6 +862,7 @@ internal static class IndustrialPlatformUiValidator
         PerformLayoutTree(form);
         string[] actions =
         [
+            "refreshPortsButton",
             "validateRtuButton",
             "identifyButton",
             "discoverButton",
@@ -887,6 +892,88 @@ internal static class IndustrialPlatformUiValidator
         }
 
         return true;
+    }
+
+    private static bool TesterRtuFieldsUseIndustrialChrome()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            foreach (IndustrialThemeMode mode in new[] { IndustrialThemeMode.Dark, IndustrialThemeMode.Light })
+            {
+                IndustrialTheme.SetMode(mode);
+                using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+                using IndustrialTesterControl tester = new(session);
+                tester.ApplyTheme();
+                ComboBox[] fields = FindAll<ComboBox>(tester).ToArray();
+                if (fields.Length < 6
+                    || fields.Any(field => field is not IndustrialComboBox
+                        || field.DropDownStyle != ComboBoxStyle.DropDownList
+                        || field.BackColor != IndustrialTheme.Palette.Field
+                        || IndustrialTheme.ContrastRatio(field.ForeColor, field.BackColor) < 4.5D))
+                {
+                    throw new InvalidOperationException(
+                        $"mode={mode}; count={fields.Length}; "
+                        + string.Join(" | ", fields.Select(field =>
+                            $"{field.GetType().Name}:{field.DropDownStyle}:"
+                            + $"back={field.BackColor}:expected={IndustrialTheme.Palette.Field}:"
+                            + $"ratio={IndustrialTheme.ContrastRatio(field.ForeColor, field.BackColor):0.00}")));
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static bool UnknownInputStateIsNeutral()
+    {
+        using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+        using IndustrialTesterControl tester = new(session);
+        Label[] unknown = FindAll<Label>(tester)
+            .Where(label => label.Text.Contains("DESCONHECIDO", StringComparison.Ordinal))
+            .ToArray();
+        return unknown.Length == 11
+            && unknown.All(label => label.Tag is PlatformStatusTone.Disabled
+                && label.BackColor != IndustrialTheme.Palette.SuccessSurface
+                && label.ForeColor != IndustrialTheme.Palette.Success);
+    }
+
+    private static bool LightThemePreservesSurfaceDepth()
+    {
+        IndustrialPalette palette = IndustrialPalette.Light;
+        Color[] surfaces =
+        [
+            palette.Background,
+            palette.Surface,
+            palette.SurfaceElevated,
+            palette.SurfaceInteractive,
+            palette.Field
+        ];
+        return surfaces.Distinct().Count() == surfaces.Length
+            && IndustrialTheme.ContrastRatio(palette.AccentText, palette.Accent) >= 4.5D
+            && IndustrialTheme.ContrastRatio(palette.TextPrimary, palette.Background) >= 4.5D;
+    }
+
+    private static bool FooterHasOnlyProductRuntimeEvidence()
+    {
+        using IndustrialPlatformForm form = CreateOffscreenForm(new Size(1366, 768));
+        form.Show();
+        PerformLayoutTree(form);
+        string footerText = string.Join(
+            " | ",
+            FindAll<Label>(form.FooterRegion).Select(label => label.Text));
+        return footerText.Contains("Perfil:", StringComparison.Ordinal)
+            && footerText.Contains("Transporte:", StringComparison.Ordinal)
+            && footerText.Contains("Endereço:", StringComparison.Ordinal)
+            && footerText.Contains("Física:", StringComparison.Ordinal)
+            && footerText.Contains(".NET 10", StringComparison.Ordinal)
+            && !footerText.Contains("UI2", StringComparison.OrdinalIgnoreCase)
+            && !footerText.Contains("UI3", StringComparison.OrdinalIgnoreCase)
+            && !footerText.Contains("UI4", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool SimulatorCriticalUiRemainsVisible()

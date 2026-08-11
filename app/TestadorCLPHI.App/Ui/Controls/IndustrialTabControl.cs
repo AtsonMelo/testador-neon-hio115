@@ -34,27 +34,7 @@ internal sealed class IndustrialTabControl : TabControl
 
     protected override void OnDrawItem(DrawItemEventArgs e)
     {
-        IndustrialPalette palette = IndustrialTheme.Palette;
-        bool selected = e.Index == SelectedIndex;
-        using SolidBrush background = new(selected ? palette.SelectedSurface : palette.Surface);
-        e.Graphics.FillRectangle(background, e.Bounds);
-        TextRenderer.DrawText(
-            e.Graphics,
-            TabPages[e.Index].Text,
-            Font,
-            e.Bounds,
-            selected ? palette.SelectedText : palette.TextSecondary,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
-        if (selected)
-        {
-            using SolidBrush accent = new(palette.Accent);
-            e.Graphics.FillRectangle(accent, e.Bounds.Left, e.Bounds.Bottom - 3, e.Bounds.Width, 3);
-        }
-
-        if (selected && Focused)
-        {
-            e.DrawFocusRectangle();
-        }
+        DrawTabItem(e.Graphics, e.Index, e.Bounds, drawFocus: true);
     }
 
     protected override void OnResize(EventArgs e)
@@ -87,14 +67,10 @@ internal sealed class IndustrialTabControl : TabControl
         using SolidBrush brush = new(HeaderRemainderColor);
 
         int headerBottom = Math.Max(display.Top, lastTab.Bottom);
-        if (lastTab.Right < ClientSize.Width)
+        graphics.FillRectangle(brush, 0, 0, ClientSize.Width, headerBottom);
+        for (int index = 0; index < TabCount; index++)
         {
-            graphics.FillRectangle(
-                brush,
-                lastTab.Right,
-                0,
-                ClientSize.Width - lastTab.Right,
-                headerBottom);
+            DrawTabItem(graphics, index, GetTabRect(index), drawFocus: false);
         }
 
         if (display.Left > 0)
@@ -120,6 +96,31 @@ internal sealed class IndustrialTabControl : TabControl
                 display.Bottom,
                 ClientSize.Width,
                 ClientSize.Height - display.Bottom);
+        }
+    }
+
+    private void DrawTabItem(Graphics graphics, int index, Rectangle bounds, bool drawFocus)
+    {
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        bool selected = index == SelectedIndex;
+        using SolidBrush background = new(selected ? palette.SelectedSurface : palette.Surface);
+        graphics.FillRectangle(background, bounds);
+        TextRenderer.DrawText(
+            graphics,
+            TabPages[index].Text,
+            Font,
+            bounds,
+            selected ? palette.SelectedText : palette.TextSecondary,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+        if (selected)
+        {
+            using SolidBrush accent = new(palette.Accent);
+            graphics.FillRectangle(accent, bounds.Left, bounds.Bottom - 3, bounds.Width, 3);
+        }
+
+        if (drawFocus && selected && Focused)
+        {
+            ControlPaint.DrawFocusRectangle(graphics, bounds);
         }
     }
 }

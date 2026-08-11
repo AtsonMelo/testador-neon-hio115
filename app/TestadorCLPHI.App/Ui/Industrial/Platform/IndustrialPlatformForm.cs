@@ -1010,7 +1010,7 @@ internal static class PlatformUi
             AutoSize = false,
             FlatStyle = FlatStyle.Flat,
             BackColor = primary ? Accent : ButtonSurface,
-            ForeColor = Text,
+            ForeColor = primary ? IndustrialTheme.Palette.AccentText : Text,
             Font = IndustrialTypography.BodyStrong(),
             Cursor = Cursors.Hand,
             AccessibleName = text,
@@ -1039,7 +1039,12 @@ internal static class PlatformUi
         button.FlatStyle = FlatStyle.Flat;
         button.ForeColor = selected
             ? palette.SelectedText
-            : tone == PlatformButtonTone.Danger ? palette.Danger : palette.TextPrimary;
+            : tone switch
+            {
+                PlatformButtonTone.Primary => palette.AccentText,
+                PlatformButtonTone.Danger => palette.Danger,
+                _ => palette.TextPrimary
+            };
         button.BackColor = selected
             ? palette.SelectedSurface
             : tone switch

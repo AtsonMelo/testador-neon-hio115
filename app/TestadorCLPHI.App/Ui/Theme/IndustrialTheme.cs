@@ -46,6 +46,7 @@ internal static class IndustrialTheme
             ["Warning/WarningSurface"] = ContrastRatio(palette.Warning, palette.WarningSurface),
             ["Danger/DangerSurface"] = ContrastRatio(palette.Danger, palette.DangerSurface),
             ["Disabled/Surface"] = ContrastRatio(palette.Disabled, palette.Surface),
+            ["AccentText/Accent"] = ContrastRatio(palette.AccentText, palette.Accent),
             ["SelectedText/SelectedSurface"] = ContrastRatio(
                 palette.SelectedText,
                 palette.SelectedSurface)

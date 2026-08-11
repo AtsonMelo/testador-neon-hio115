@@ -10,12 +10,12 @@ namespace TestadorCLPHI.App.Ui.Industrial.Platform;
 internal sealed class IndustrialTesterControl : UserControl
 {
     private readonly IndustrialPlatformSession _session;
-    private readonly ComboBox _port = Combo("COM8");
-    private readonly ComboBox _physicalLayer = Combo("RS232", "RS485");
-    private readonly ComboBox _baud = Combo("38400", "9600", "19200", "57600", "115200");
-    private readonly ComboBox _dataBits = Combo("8", "7");
-    private readonly ComboBox _parity = Combo("None", "Even", "Odd");
-    private readonly ComboBox _stopBits = Combo("1", "2");
+    private readonly IndustrialComboBox _port = Combo("COM8");
+    private readonly IndustrialComboBox _physicalLayer = Combo("RS232", "RS485");
+    private readonly IndustrialComboBox _baud = Combo("38400", "9600", "19200", "57600", "115200");
+    private readonly IndustrialComboBox _dataBits = Combo("8", "7");
+    private readonly IndustrialComboBox _parity = Combo("None", "Even", "Odd");
+    private readonly IndustrialComboBox _stopBits = Combo("1", "2");
     private readonly NumericUpDown _timeout = Number(250, 10, 10000);
     private readonly NumericUpDown _interval = Number(10, 0, 5000);
     private readonly NumericUpDown _startAddress = Number(1, 1, 247);
@@ -34,9 +34,15 @@ internal sealed class IndustrialTesterControl : UserControl
         "testerOfflineSafetyStatus");
     private readonly Label _result = PlatformUi.Label("Equipamento ainda nao identificado.");
     private readonly Label _counters = PlatformUi.Label(string.Empty);
-    private readonly Label[] _digitalValues = Enumerable.Range(0, 8).Select(_ => PlatformUi.Label("- DESCONHECIDO")).ToArray();
-    private readonly Label[] _analogValues = Enumerable.Range(0, 3).Select(_ => PlatformUi.Label("- DESCONHECIDO")).ToArray();
-    private readonly Label[] _outputValues = Enumerable.Range(0, 4).Select(_ => PlatformUi.Label("○ OFF")).ToArray();
+    private readonly Label[] _digitalValues = Enumerable.Range(0, 8)
+        .Select(_ => PlatformUi.StatusChip("DESCONHECIDO", PlatformStatusTone.Disabled))
+        .ToArray();
+    private readonly Label[] _analogValues = Enumerable.Range(0, 3)
+        .Select(_ => PlatformUi.StatusChip("DESCONHECIDO", PlatformStatusTone.Disabled))
+        .ToArray();
+    private readonly Label[] _outputValues = Enumerable.Range(0, 4)
+        .Select(_ => PlatformUi.StatusChip("○ OFF", PlatformStatusTone.Disabled))
+        .ToArray();
     private readonly CheckBox _enableOutputs = new() { Text = "MODO SUPERVISIONADO SIMULADO", AutoSize = true };
     private readonly NumericUpDown _outputDuration = Number(250, 50, 3000);
     private readonly TextBox _log = new()
@@ -469,15 +475,18 @@ internal sealed class IndustrialTesterControl : UserControl
                 token);
             for (int index = 0; index < snapshot.DigitalInputs.Length; index++)
             {
-                _digitalValues[index].Text = snapshot.DigitalInputs[index] ? "● ON" : "○ OFF";
-                _digitalValues[index].ForeColor = snapshot.DigitalInputs[index]
-                    ? PlatformUi.Success
-                    : PlatformUi.Muted;
+                PlatformUi.UpdateStatusChip(
+                    _digitalValues[index],
+                    snapshot.DigitalInputs[index] ? "● ON" : "○ OFF",
+                    snapshot.DigitalInputs[index] ? PlatformStatusTone.Normal : PlatformStatusTone.Disabled);
             }
 
             for (int index = 0; index < snapshot.AnalogInputs.Length; index++)
             {
-                _analogValues[index].Text = $"● {snapshot.AnalogInputs[index]} raw";
+                PlatformUi.UpdateStatusChip(
+                    _analogValues[index],
+                    $"● {snapshot.AnalogInputs[index]} raw",
+                    PlatformStatusTone.Active);
             }
 
             _result.Text = "Entradas lidas do equipamento simulado em memoria.";
@@ -556,8 +565,10 @@ internal sealed class IndustrialTesterControl : UserControl
         for (int index = 0; index < channels.Length; index++)
         {
             bool active = _session.Device.GetDigitalOutput(channels[index]);
-            _outputValues[index].Text = active ? "● ON" : "○ OFF";
-            _outputValues[index].ForeColor = active ? PlatformUi.Success : PlatformUi.Muted;
+            PlatformUi.UpdateStatusChip(
+                _outputValues[index],
+                active ? "● ON" : "○ OFF",
+                active ? PlatformStatusTone.Normal : PlatformStatusTone.Disabled);
         }
 
         _counters.Text = $"SIM C/R/W/CMD: {_session.Counters.SimulatedConnections}/"
@@ -590,9 +601,9 @@ internal sealed class IndustrialTesterControl : UserControl
         grid.Controls.Add(fieldContainer, index % 5, index / 5);
     }
 
-    private static ComboBox Combo(params string[] items)
+    private static IndustrialComboBox Combo(params string[] items)
     {
-        IndustrialComboBox combo = new() { DropDownStyle = ComboBoxStyle.DropDown, Height = 32 };
+        IndustrialComboBox combo = new() { DropDownStyle = ComboBoxStyle.DropDownList, Height = 32 };
         combo.Items.AddRange(items);
         if (items.Length > 0)
         {
@@ -685,10 +696,10 @@ internal sealed class IndustrialTesterControl : UserControl
         process.AccessibleDescription = processAlias;
         process.TextAlign = ContentAlignment.MiddleLeft;
         value.Width = 150;
+        value.Name = $"{processAliasControlName}Status";
         value.Height = 28;
         value.AutoSize = false;
         value.TextAlign = ContentAlignment.MiddleLeft;
-        value.ForeColor = PlatformUi.Success;
         row.Controls.Add(name);
         row.Controls.Add(process);
         row.Controls.Add(value);
@@ -714,9 +725,14 @@ internal sealed class IndustrialTesterControl : UserControl
         _ioMap?.ApplyTheme();
         foreach (Label value in _digitalValues.Concat(_analogValues).Concat(_outputValues))
         {
-            value.ForeColor = value.Text.Contains("ON", StringComparison.Ordinal)
-                ? palette.Success
-                : palette.TextSecondary;
+            PlatformStatusTone tone = value.Text.Contains("DESCONHECIDO", StringComparison.Ordinal)
+                ? PlatformStatusTone.Disabled
+                : value.Text.Contains("ON", StringComparison.Ordinal)
+                    ? PlatformStatusTone.Normal
+                    : value.Text.Contains("raw", StringComparison.Ordinal)
+                        ? PlatformStatusTone.Active
+                        : PlatformStatusTone.Disabled;
+            PlatformUi.UpdateStatusChip(value, value.Text.Trim(), tone);
         }
 
         _tabs.Invalidate();
