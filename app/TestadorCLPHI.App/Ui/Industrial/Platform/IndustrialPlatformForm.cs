@@ -233,9 +233,13 @@ internal sealed class IndustrialPlatformForm : Form
         };
         identity.Controls.Add(brand, 0, 0);
         identity.Controls.Add(context, 0, 1);
-        _offlineStatus.Anchor = AnchorStyles.None;
-        _modeStatus.Anchor = AnchorStyles.None;
-        _safetyStatus.Anchor = AnchorStyles.None;
+        foreach (Label status in new[] { _offlineStatus, _modeStatus, _safetyStatus })
+        {
+            status.AutoSize = false;
+            status.Dock = DockStyle.Fill;
+            status.Margin = new Padding(IndustrialSpacing.Xs, IndustrialSpacing.Sm, IndustrialSpacing.Xs, IndustrialSpacing.Sm);
+            status.AutoEllipsis = true;
+        }
         header.Controls.Add(identity, 0, 0);
         header.Controls.Add(_equipmentStatus, 1, 0);
         header.Controls.Add(_offlineStatus, 2, 0);
@@ -537,6 +541,19 @@ internal sealed class IndustrialPlatformForm : Form
         ConfigureNavigationButton(_simulatorButton, compact ? "S" : "SIMULADOR", width);
         _sidebarMode.Width = Math.Max(40, width - (_sidebar.Padding.Horizontal));
         _sidebarMode.Text = compact ? "OFF" : "■ OFFLINE • FÍSICA BLOQUEADA";
+
+        TableLayoutPanel? header = Controls.Find("industrialHeader", searchAllChildren: true)
+            .OfType<TableLayoutPanel>()
+            .FirstOrDefault();
+        if (header is not null)
+        {
+            header.ColumnStyles[1].Width = compact ? 0F : 230F;
+            header.ColumnStyles[2].Width = compact ? 132F : 150F;
+            header.ColumnStyles[3].Width = compact ? 148F : 170F;
+            header.ColumnStyles[4].Width = compact ? 176F : 188F;
+            header.ColumnStyles[5].Width = compact ? 104F : 112F;
+            _equipmentStatus.Visible = !compact;
+        }
     }
 
     private void ConfigureNavigationButton(Button button, string text, int sidebarWidth)

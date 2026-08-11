@@ -50,7 +50,11 @@ internal static class IndustrialPlatformUiValidator
             ("renderer UI2 do Pivo usa cards e linguagem operacional", PivotRendererUsesUi2VisualLanguage),
             ("perfil Poco preserva editor agrupado sem renderer de Pivo", WellUsesGenericGroupedEditor),
             ("layout estrutural permanece utilizavel em 1366x768", () => LayoutFits(new Size(1366, 768))),
+            ("layout estrutural permanece utilizavel em 1600x900", () => LayoutFits(new Size(1600, 900))),
             ("layout estrutural permanece utilizavel em 1920x1080", () => LayoutFits(new Size(1920, 1080))),
+            ("layout estrutural permanece utilizavel em 2560x1440", () => LayoutFits(new Size(2560, 1440))),
+            ("shell compacto preserva navegacao e seguranca", CompactShellPreservesCriticalUi),
+            ("controles UI2 respeitam contrato de escala DPI", Ui2ControlsRespectDpiScalingContract),
             ("sessao padrao usa endereco fake 1", SessionUsesFakeAddressOne),
             ("perfil Pivo pode ser manipulado offline", PivotProfileIsInteractive),
             ("perfil Poco pode ser carregado offline", WellProfileLoads),
@@ -447,6 +451,64 @@ internal static class IndustrialPlatformUiValidator
         }
 
         return true;
+    }
+
+    private static bool CompactShellPreservesCriticalUi()
+    {
+        using IndustrialPlatformForm form = new()
+        {
+            ClientSize = new Size(1024, 680),
+            Opacity = 0,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000)
+        };
+        form.ShowTester();
+        IndustrialTesterControl? tester = form.TesterInstance;
+        form.ShowSimulator();
+        IndustrialSimulatorControl? simulator = form.SimulatorInstance;
+        form.Show();
+        PerformLayoutTree(form);
+
+        Label? safety = form.Controls.Find("platformSafetyStatus", searchAllChildren: true)
+            .OfType<Label>()
+            .FirstOrDefault();
+        return form.IsCompactNavigation
+            && tester is not null
+            && simulator is not null
+            && form.TesterModeButton.Visible
+            && form.SimulatorModeButton.Visible
+            && safety is { Visible: true, Width: > 120, Height: > 24 }
+            && safety.Text.Contains("READ-ONLY", StringComparison.Ordinal);
+    }
+
+    private static bool Ui2ControlsRespectDpiScalingContract()
+    {
+        using IndustrialPlatformForm form = new();
+        using IndustrialPlatformSession session = new("pivo-central");
+        using IndustrialTesterControl tester = new(session);
+        using IndustrialSimulatorControl simulator = new(session);
+        if (form.AutoScaleMode != AutoScaleMode.Dpi
+            || tester.AutoScaleMode != AutoScaleMode.Dpi
+            || simulator.AutoScaleMode != AutoScaleMode.Dpi)
+        {
+            return false;
+        }
+
+        using IndustrialLedIndicatorControl led = new() { LabelText = "DI00", IsOn = true };
+        using IndustrialPushButtonControl button = new() { Title = "DO00", IsActive = true };
+        foreach (float scale in new[] { 1F, 1.25F, 1.5F })
+        {
+            led.ClientSize = new Size((int)Math.Round(160F * scale), (int)Math.Round(44F * scale));
+            button.ClientSize = new Size((int)Math.Round(160F * scale), (int)Math.Round(44F * scale));
+            using Bitmap ledBitmap = new(led.ClientSize.Width, led.ClientSize.Height);
+            using Bitmap buttonBitmap = new(button.ClientSize.Width, button.ClientSize.Height);
+            led.DrawToBitmap(ledBitmap, led.ClientRectangle);
+            button.DrawToBitmap(buttonBitmap, button.ClientRectangle);
+        }
+
+        return led.Font.SizeInPoints >= 8.5F
+            && button.Font.SizeInPoints >= 8.5F;
     }
 
     private static void PerformLayoutTree(Control control)
