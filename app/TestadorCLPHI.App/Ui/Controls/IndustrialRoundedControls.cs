@@ -6,9 +6,24 @@ namespace TestadorCLPHI.App.Ui.Controls;
 
 internal sealed class IndustrialButton : Button
 {
-    private const int CornerRadius = 6;
     private Region? _ownedRegion;
     private bool _isSelected;
+    private bool _hovered;
+    private bool _pressed;
+
+    internal IndustrialButton()
+    {
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint
+            | ControlStyles.OptimizedDoubleBuffer
+            | ControlStyles.ResizeRedraw
+            | ControlStyles.UserPaint,
+            true);
+    }
+
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    internal bool UsesSinglePassBorderRenderer => true;
 
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -45,21 +60,158 @@ internal sealed class IndustrialButton : Button
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        base.OnPaint(e);
-        if (!IsNavigation || !IsSelected)
+        IndustrialPalette palette = IndustrialTheme.Palette;
+        SmoothingMode previousSmoothing = e.Graphics.SmoothingMode;
+        PixelOffsetMode previousPixelOffset = e.Graphics.PixelOffsetMode;
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+        Color fill = Enabled ? BackColor : palette.Surface;
+        Color text = Enabled ? ForeColor : palette.Disabled;
+        float borderWidth = IndustrialButtonVisuals.ScaleBorder(DeviceDpi);
+        bool showFocus = Focused && ShowFocusCues;
+        bool drawBorder = FlatAppearance.BorderSize > 0 || showFocus;
+        Color border = showFocus
+            ? palette.Focus
+            : Enabled ? FlatAppearance.BorderColor : palette.Border;
+        RectangleF strokeBounds = IndustrialButtonVisuals.InsetStrokeBounds(
+            ClientRectangle,
+            drawBorder ? borderWidth : 0F);
+        float radius = IndustrialButtonVisuals.ScaleRadius(DeviceDpi);
+
+        using (GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(strokeBounds, radius))
         {
-            return;
+            using SolidBrush background = new(fill);
+            e.Graphics.FillPath(background, path);
+
+            if (Enabled && (_hovered || _pressed))
+            {
+                Color overlay = _pressed
+                    ? IndustrialButtonVisuals.PressedOverlay(palette)
+                    : IndustrialButtonVisuals.HoverOverlay(palette);
+                using SolidBrush overlayBrush = new(overlay);
+                e.Graphics.FillPath(overlayBrush, path);
+            }
+
+            if (drawBorder)
+            {
+                using Pen borderPen = new(border, borderWidth)
+                {
+                    Alignment = PenAlignment.Center
+                };
+                e.Graphics.DrawPath(borderPen, path);
+            }
         }
 
-        int indicatorWidth = Math.Max(2, (int)Math.Round(3D * DeviceDpi / 96D));
-        int inset = Math.Max(3, (int)Math.Round(6D * DeviceDpi / 96D));
-        Rectangle indicator = new(
-            0,
-            inset,
-            indicatorWidth,
-            Math.Max(1, ClientSize.Height - (inset * 2)));
-        using SolidBrush brush = new(IndustrialTheme.Palette.Accent);
-        e.Graphics.FillRectangle(brush, indicator);
+        if (IsNavigation && IsSelected)
+        {
+            int indicatorWidth = Math.Max(2, (int)Math.Round(3D * DeviceDpi / 96D));
+            int inset = Math.Max(3, (int)Math.Round(6D * DeviceDpi / 96D));
+            Rectangle indicator = new(
+                0,
+                inset,
+                indicatorWidth,
+                Math.Max(1, ClientSize.Height - (inset * 2)));
+            using SolidBrush indicatorBrush = new(palette.Accent);
+            e.Graphics.FillRectangle(indicatorBrush, indicator);
+        }
+
+        Rectangle textBounds = new(
+            Padding.Left,
+            Padding.Top,
+            Math.Max(0, ClientSize.Width - Padding.Horizontal),
+            Math.Max(0, ClientSize.Height - Padding.Vertical));
+        TextFormatFlags flags = TextFormatFlags.SingleLine
+            | TextFormatFlags.VerticalCenter
+            | TextFormatFlags.EndEllipsis
+            | TextFormatFlags.NoPrefix;
+        flags |= TextAlign == ContentAlignment.MiddleLeft
+            ? TextFormatFlags.Left
+            : TextFormatFlags.HorizontalCenter;
+        TextRenderer.DrawText(e.Graphics, Text, Font, textBounds, text, flags);
+
+        e.Graphics.SmoothingMode = previousSmoothing;
+        e.Graphics.PixelOffsetMode = previousPixelOffset;
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        _hovered = true;
+        Invalidate();
+        base.OnMouseEnter(e);
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        _hovered = false;
+        _pressed = false;
+        Invalidate();
+        base.OnMouseLeave(e);
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        if (e.Button == MouseButtons.Left && Enabled)
+        {
+            _pressed = true;
+            Invalidate();
+        }
+
+        base.OnMouseDown(e);
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        _pressed = false;
+        Invalidate();
+        base.OnMouseUp(e);
+    }
+
+    protected override void OnKeyDown(KeyEventArgs kevent)
+    {
+        if (Enabled && kevent.KeyCode is Keys.Space or Keys.Enter)
+        {
+            _pressed = true;
+            Invalidate();
+        }
+
+        base.OnKeyDown(kevent);
+    }
+
+    protected override void OnKeyUp(KeyEventArgs kevent)
+    {
+        if (_pressed && kevent.KeyCode is Keys.Space or Keys.Enter)
+        {
+            _pressed = false;
+            Invalidate();
+        }
+
+        base.OnKeyUp(kevent);
+    }
+
+    protected override void OnGotFocus(EventArgs e)
+    {
+        base.OnGotFocus(e);
+        Invalidate();
+    }
+
+    protected override void OnLostFocus(EventArgs e)
+    {
+        _pressed = false;
+        base.OnLostFocus(e);
+        Invalidate();
+    }
+
+    protected override void OnEnabledChanged(EventArgs e)
+    {
+        if (!Enabled)
+        {
+            _hovered = false;
+            _pressed = false;
+        }
+
+        base.OnEnabledChanged(e);
+        Invalidate();
     }
 
     protected override void Dispose(bool disposing)
@@ -81,7 +233,7 @@ internal sealed class IndustrialButton : Button
             return;
         }
 
-        int radius = Math.Max(1, (int)Math.Round(CornerRadius * DeviceDpi / 96D));
+        int radius = Math.Max(1, (int)Math.Round(IndustrialButtonVisuals.CornerRadius * DeviceDpi / 96D));
         using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(ClientRectangle, radius);
         Region replacement = new(path);
         Region? previous = _ownedRegion;

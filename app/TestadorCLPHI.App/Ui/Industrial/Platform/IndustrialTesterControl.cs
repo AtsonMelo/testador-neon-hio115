@@ -323,7 +323,7 @@ internal sealed class IndustrialTesterControl : UserControl
         for (int index = 0; index < channels.Length; index++)
         {
             Layout3OutputChannel channel = channels[index];
-            Button activate = PlatformUi.Button("Acionar", $"activate{channel}Button", primary: true);
+            Button activate = PlatformUi.Button("Acionar", $"activate{channel}Button");
             Button turnOff = PlatformUi.Button("Desligar", $"turnOff{channel}Button");
             activate.Width = 110;
             turnOff.Width = 110;

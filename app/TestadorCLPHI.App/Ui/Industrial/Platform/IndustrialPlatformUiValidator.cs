@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using TestadorCLPHI.App.Hardware;
 using TestadorCLPHI.App.Industrial.Platform.Integration;
@@ -38,6 +39,9 @@ internal static class IndustrialPlatformUiValidator
             ("laboratorio visual instancia contratos sem entrar no startup", DesignSystemPreviewIsQaOnly),
             ("tema dark preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Dark)),
             ("tema light preserva contraste operacional", () => ThemeContrastIsAccessible(IndustrialPalette.Light)),
+            ("fundacao de botoes usa overlays sutis equivalentes em dark e light", ButtonFoundationUsesSubtleOverlays),
+            ("hierarquia de botoes reserva acento e neutraliza acoes secundarias", ButtonHierarchyUsesRestrainedAccent),
+            ("contorno dos botoes usa renderer unico com stroke contido em DPI", ButtonBorderUsesSingleContainedPass),
             ("controles industriais expoem estado e acessibilidade", IndustrialControlsExposeAccessibleStates),
             ("checkbox industrial preserva teclado tema foco e acessibilidade", IndustrialCheckBoxPreservesNativeSemantics),
             ("controles industriais nao apresentam crescimento GDI continuo", IndustrialControlsKeepGdiResourcesStable),
@@ -407,6 +411,125 @@ internal static class IndustrialPlatformUiValidator
     private static bool ThemeContrastIsAccessible(IndustrialPalette palette) =>
         IndustrialTheme.CriticalContrastRatios(palette).Values.All(ratio => ratio >= 4.5D);
 
+    private static bool ButtonFoundationUsesSubtleOverlays()
+    {
+        Color darkHover = IndustrialButtonVisuals.HoverOverlay(IndustrialPalette.Dark);
+        Color darkPressed = IndustrialButtonVisuals.PressedOverlay(IndustrialPalette.Dark);
+        Color lightHover = IndustrialButtonVisuals.HoverOverlay(IndustrialPalette.Light);
+        Color lightPressed = IndustrialButtonVisuals.PressedOverlay(IndustrialPalette.Light);
+        return darkHover.A is > 0 and <= 24
+            && lightHover.A is > 0 and <= 24
+            && darkPressed.A > darkHover.A
+            && lightPressed.A > lightHover.A
+            && darkPressed.A <= 40
+            && lightPressed.A <= 40
+            && darkHover.R == byte.MaxValue
+            && darkHover.G == byte.MaxValue
+            && darkHover.B == byte.MaxValue
+            && lightHover.R == 0
+            && lightHover.G == 0
+            && lightHover.B == 0;
+    }
+
+    private static bool ButtonHierarchyUsesRestrainedAccent()
+    {
+        IndustrialThemeMode original = IndustrialTheme.Mode;
+        try
+        {
+            foreach (IndustrialThemeMode mode in new[] { IndustrialThemeMode.Dark, IndustrialThemeMode.Light })
+            {
+                IndustrialTheme.SetMode(mode);
+                using IndustrialDesignSystemPreviewForm preview = new();
+                Dictionary<string, IndustrialButton> buttons = FindAll<IndustrialButton>(preview)
+                    .Where(button => !string.IsNullOrWhiteSpace(button.Name))
+                    .ToDictionary(button => button.Name, StringComparer.Ordinal);
+                IndustrialPalette palette = IndustrialTheme.Palette;
+                if (buttons["previewPrimaryButton"].Tag is not PlatformButtonTone.Primary
+                    || buttons["previewPrimaryButton"].BackColor != palette.Accent
+                    || buttons["previewSecondaryButton"].Tag is not PlatformButtonTone.Secondary
+                    || buttons["previewSecondaryButton"].BackColor != palette.SurfaceInteractive
+                    || buttons["previewSecondaryButton"].BackColor == palette.Accent
+                    || buttons["previewGhostButton"].Tag is not PlatformButtonTone.Ghost
+                    || buttons["previewGhostButton"].BackColor != palette.Surface
+                    || buttons["previewDangerButton"].Tag is not PlatformButtonTone.Danger
+                    || buttons["previewDangerButton"].BackColor != palette.DangerSurface
+                    || buttons["previewDangerButton"].BackColor == palette.Danger
+                    || buttons.Values.Any(button =>
+                        button.FlatAppearance.MouseOverBackColor != button.BackColor
+                        || button.FlatAppearance.MouseDownBackColor != button.BackColor))
+                {
+                    return false;
+                }
+            }
+
+            using IndustrialPlatformSession session = new(SimulationProfileLoader.Load("pivo-central"));
+            using IndustrialTesterControl tester = new(session);
+            return FindAll<IndustrialButton>(tester)
+                .Where(button => button.Name.StartsWith("activate", StringComparison.Ordinal))
+                .All(button => button.Tag is PlatformButtonTone.Secondary);
+        }
+        finally
+        {
+            IndustrialTheme.SetMode(original);
+        }
+    }
+
+    private static bool ButtonBorderUsesSingleContainedPass()
+    {
+        using IndustrialButton button = (IndustrialButton)PlatformUi.Button(
+            "Validar",
+            "buttonBorderValidation",
+            primary: true);
+        using Form host = CreateOffscreenHost(button, new Size(420, 120));
+        button.Location = new Point(12, 12);
+        host.Show();
+        button.Focus();
+        foreach (int dpi in new[] { 96, 120, 144 })
+        {
+            float scale = dpi / 96F;
+            button.ClientSize = new Size(
+                (int)Math.Round(180F * scale),
+                (int)Math.Round(IndustrialSpacing.InteractiveHeight * scale));
+            float stroke = IndustrialButtonVisuals.ScaleBorder(dpi);
+            RectangleF bounds = IndustrialButtonVisuals.InsetStrokeBounds(button.ClientRectangle, stroke);
+            using GraphicsPath path = IndustrialControlDrawing.RoundedRectangle(
+                bounds,
+                IndustrialButtonVisuals.ScaleRadius(dpi));
+            RectangleF pathBounds = path.GetBounds();
+            if (!button.UsesSinglePassBorderRenderer
+                || pathBounds.Left < 0F
+                || pathBounds.Top < 0F
+                || pathBounds.Right > button.ClientRectangle.Right
+                || pathBounds.Bottom > button.ClientRectangle.Bottom)
+            {
+                return false;
+            }
+
+            InvokeControlEvent(button, "OnMouseEnter", EventArgs.Empty);
+            RenderButton(button);
+            InvokeControlEvent(
+                button,
+                "OnMouseDown",
+                new MouseEventArgs(MouseButtons.Left, 1, 4, 4, 0));
+            RenderButton(button);
+            InvokeControlEvent(
+                button,
+                "OnMouseUp",
+                new MouseEventArgs(MouseButtons.Left, 1, 4, 4, 0));
+            button.Enabled = false;
+            RenderButton(button);
+            button.Enabled = true;
+        }
+
+        return true;
+
+        static void RenderButton(IndustrialButton action)
+        {
+            using Bitmap bitmap = new(action.ClientSize.Width, action.ClientSize.Height);
+            action.DrawToBitmap(bitmap, action.ClientRectangle);
+        }
+    }
+
     private static bool IndustrialControlsExposeAccessibleStates()
     {
         using IndustrialLedIndicatorControl led = new() { LabelText = "DI01", IsOn = false };
@@ -491,13 +614,26 @@ internal static class IndustrialPlatformUiValidator
             using IndustrialLedIndicatorControl led = new() { IsOn = index % 2 != 0 };
             using IndustrialPushButtonControl button = new() { IsActive = index % 2 != 0 };
             using EmergencyStopButtonControl emergency = new();
+            using IndustrialButton action = (IndustrialButton)PlatformUi.Button(
+                "Validar",
+                $"gdiAction{index}",
+                primary: index % 2 != 0);
             using IndustrialCheckBox checkBox = new()
             {
                 Text = "Sinal simulado",
                 Checked = index % 2 != 0,
                 Size = new Size(180, IndustrialSpacing.InteractiveHeight)
             };
-            foreach (Control control in new Control[] { led, button, emergency, checkBox })
+            if (index % 2 != 0)
+            {
+                InvokeControlEvent(action, "OnMouseEnter", EventArgs.Empty);
+                InvokeControlEvent(
+                    action,
+                    "OnMouseDown",
+                    new MouseEventArgs(MouseButtons.Left, 1, 4, 4, 0));
+            }
+
+            foreach (Control control in new Control[] { led, button, emergency, checkBox, action })
             {
                 control.Size = new Size(control.Width + (index % 3), control.Height + (index % 2));
                 using Bitmap bitmap = new(Math.Max(1, control.Width), Math.Max(1, control.Height));
@@ -512,6 +648,14 @@ internal static class IndustrialPlatformUiValidator
             methodName,
             BindingFlags.Instance | BindingFlags.NonPublic);
         method?.Invoke(control, [new KeyEventArgs(key)]);
+    }
+
+    private static void InvokeControlEvent(Control control, string methodName, EventArgs eventArgs)
+    {
+        MethodInfo? method = control.GetType().GetMethod(
+            methodName,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        method?.Invoke(control, [eventArgs]);
     }
 
     [DllImport("user32.dll")]
@@ -1999,18 +2143,28 @@ internal static class IndustrialPlatformUiValidator
 
         using IndustrialLedIndicatorControl led = new() { LabelText = "DI00", IsOn = true };
         using IndustrialPushButtonControl button = new() { Title = "DO00", IsActive = true };
+        using IndustrialButton action = (IndustrialButton)PlatformUi.Button(
+            "Validar",
+            "dpiValidationButton",
+            primary: true);
         foreach (float scale in new[] { 1F, 1.25F, 1.5F })
         {
             led.ClientSize = new Size((int)Math.Round(160F * scale), (int)Math.Round(44F * scale));
             button.ClientSize = new Size((int)Math.Round(160F * scale), (int)Math.Round(44F * scale));
+            action.ClientSize = new Size(
+                (int)Math.Round(180F * scale),
+                (int)Math.Round(IndustrialSpacing.InteractiveHeight * scale));
             using Bitmap ledBitmap = new(led.ClientSize.Width, led.ClientSize.Height);
             using Bitmap buttonBitmap = new(button.ClientSize.Width, button.ClientSize.Height);
+            using Bitmap actionBitmap = new(action.ClientSize.Width, action.ClientSize.Height);
             led.DrawToBitmap(ledBitmap, led.ClientRectangle);
             button.DrawToBitmap(buttonBitmap, button.ClientRectangle);
+            action.DrawToBitmap(actionBitmap, action.ClientRectangle);
         }
 
         return led.Font.SizeInPoints >= 8.5F
-            && button.Font.SizeInPoints >= 8.5F;
+            && button.Font.SizeInPoints >= 8.5F
+            && action.Font.SizeInPoints >= 8.5F;
     }
 
     private static bool ThemeSwitchPreservesUiState()

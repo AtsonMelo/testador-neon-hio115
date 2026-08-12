@@ -1099,12 +1099,8 @@ internal static class PlatformUi
         button.FlatAppearance.BorderColor = primary
             ? IndustrialTheme.Palette.AccentHover
             : IndustrialTheme.Palette.BorderStrong;
-        button.FlatAppearance.MouseOverBackColor = primary
-            ? IndustrialTheme.Palette.AccentHover
-            : IndustrialTheme.Palette.SurfaceElevated;
-        button.FlatAppearance.MouseDownBackColor = primary
-            ? IndustrialTheme.Palette.AccentPressed
-            : IndustrialTheme.Palette.Surface;
+        button.FlatAppearance.MouseOverBackColor = button.BackColor;
+        button.FlatAppearance.MouseDownBackColor = button.BackColor;
         return button;
     }
 
@@ -1160,20 +1156,9 @@ internal static class PlatformUi
                 PlatformButtonTone.Navigation => palette.Surface,
                 _ => palette.Border
             };
-        button.FlatAppearance.MouseOverBackColor = tone switch
-        {
-            PlatformButtonTone.Primary => palette.AccentHover,
-            PlatformButtonTone.Danger => palette.DangerSurface,
-            PlatformButtonTone.Navigation => palette.SurfaceInteractive,
-            _ => palette.SurfaceElevated
-        };
-        button.FlatAppearance.MouseDownBackColor = tone switch
-        {
-            PlatformButtonTone.Primary => palette.AccentPressed,
-            PlatformButtonTone.Danger => palette.DangerSurface,
-            PlatformButtonTone.Navigation => palette.SelectedSurface,
-            _ => palette.Surface
-        };
+        button.FlatAppearance.MouseOverBackColor = button.BackColor;
+        button.FlatAppearance.MouseDownBackColor = button.BackColor;
+        button.Invalidate();
     }
 
     internal static void SetButtonTone(Button button, PlatformButtonTone tone)

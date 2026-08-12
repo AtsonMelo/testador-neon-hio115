@@ -6,16 +6,19 @@ namespace TestadorCLPHI.App.Ui.Controls;
 internal static class IndustrialControlDrawing
 {
     internal static GraphicsPath RoundedRectangle(Rectangle rectangle, int radius)
+        => RoundedRectangle(rectangle, (float)radius);
+
+    internal static GraphicsPath RoundedRectangle(RectangleF rectangle, float radius)
     {
         GraphicsPath path = new();
-        int diameter = Math.Min(Math.Min(rectangle.Width, rectangle.Height), radius * 2);
+        float diameter = Math.Min(Math.Min(rectangle.Width, rectangle.Height), radius * 2F);
         if (diameter <= 0)
         {
             path.AddRectangle(rectangle);
             return path;
         }
 
-        Rectangle arc = new(rectangle.Location, new Size(diameter, diameter));
+        RectangleF arc = new(rectangle.Location, new SizeF(diameter, diameter));
         path.AddArc(arc, 180, 90);
         arc.X = rectangle.Right - diameter;
         path.AddArc(arc, 270, 90);
